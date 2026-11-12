@@ -35,7 +35,7 @@ public class MessageOverlay implements IGuiOverlay {
    public static Message currentMessage = null;
    public static int ticker;
    public static boolean SV = false;
-   private static final int ICON_SIZE = 32;
+   private static final int ICON_SIZE = 20;
    private static final float BLACKBOXALPHA = 0.5F;
    private static final int VERTICLAMARGINS = 2;
    private static final int HORIZONTALMARGINS = 3;
@@ -67,9 +67,8 @@ public class MessageOverlay implements IGuiOverlay {
          MutableComponent message = currentMessage.message().copy();
          MutableComponent comp = speakerName.append(flavor).append(Component.literal(":").withStyle(ChatFormatting.WHITE)).append(" ").append(message);
          List<FormattedCharSequence> lines = gui.getFont().split(comp, MAXMESSAGEWIDTH);
-         int portraitHeight = NpcPortraits.height(currentMessage.speaker(), ICON_SIZE);
          int width = currentMessage.getBoxWidth(lines, gui.getFont(), MAXMESSAGEWIDTH, ICON_SIZE, 3);
-         int height = currentMessage.getBoxHeight(lines, gui.getFont(), MAXMESSAGEWIDTH, portraitHeight, 2);
+         int height = currentMessage.getBoxHeight(lines, gui.getFont(), MAXMESSAGEWIDTH, ICON_SIZE, 2);
          int yOffset = SV ? 60 : (ClientsideCutsceneHandler.currentData == null ? 50 : 25);
          int x = Minecraft.getInstance().getWindow().getGuiScaledWidth() / 2 - width / 2;
          int y = Minecraft.getInstance().getWindow().getGuiScaledHeight() - yOffset - height;
@@ -94,7 +93,7 @@ public class MessageOverlay implements IGuiOverlay {
          guiGraphics.pose().popPose();
          guiGraphics.pose().pushPose();
          RenderSystem.enableBlend();
-         if (!NpcPortraits.draw(guiGraphics, currentMessage.speaker(), x + 3, y + height / 2 - portraitHeight / 2, ICON_SIZE, alpha)) {
+         if (!NpcPortraits.draw(guiGraphics, currentMessage.speaker(), x + 3, y + height / 2 - ICON_SIZE / 2, ICON_SIZE, alpha)) {
             String icon = currentMessage.speaker().startsWith("glb:") ? "unknown" : currentMessage.speaker();
             ResourceLocation iconRL = St.id("textures/gui/chat/" + icon + ".png");
             RenderSystem.setShaderTexture(0, iconRL);

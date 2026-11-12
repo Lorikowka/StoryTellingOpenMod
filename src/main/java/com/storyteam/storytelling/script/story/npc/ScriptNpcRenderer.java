@@ -27,6 +27,7 @@ import org.lytharalab.gfbs.gltf.api.model.GltfAsset;
 /** Renders author supplied glTF models. The model and its named clips live in one file. */
 public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
    private static final ResourceLocation UNUSED_TEXTURE = new ResourceLocation("storytelling", "textures/entity/script_npc.png");
+   private static final float ANIMATION_BLEND_SECONDS = 0.25f;
    private final Map<String, CachedAsset> assets = new HashMap<>();
    private final Map<String, ModelStamp> failed = new HashMap<>();
    private final Map<ScriptNpcEntity, State> instances = new WeakHashMap<>();
@@ -131,7 +132,7 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
       state.lastTime = time;
       AnimationController controller = state.instance.animations();
       if ("once".equals(state.playingMode) && !state.onceFinished && !controller.isPlaying()) {
-         controller.stopLayer(AnimationController.BASE_LAYER, 0);
+         controller.stopLayer(AnimationController.BASE_LAYER, ANIMATION_BLEND_SECONDS);
          state.onceFinished = true;
       }
       String requested = entity.animation();
@@ -143,16 +144,16 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
       if (!requested.equals(state.playing) || !mode.equals(state.playingMode)) {
          if (state.instance.asset().animation(requested).isPresent()) {
             PlaybackOptions options = switch (mode) {
-               case "once" -> PlaybackOptions.once();
-               case "hold" -> new PlaybackOptions(1f, LoopMode.HOLD, 0, 0);
-               default -> PlaybackOptions.loop();
+               case "once" -> new PlaybackOptions(1f, LoopMode.ONCE, ANIMATION_BLEND_SECONDS, 0);
+               case "hold" -> new PlaybackOptions(1f, LoopMode.HOLD, ANIMATION_BLEND_SECONDS, 0);
+               default -> new PlaybackOptions(1f, LoopMode.LOOP, ANIMATION_BLEND_SECONDS, 0);
             };
             controller.play(requested, options);
             state.playing = requested;
             state.playingMode = mode;
             state.onceFinished = false;
          } else {
-            controller.stopLayer(AnimationController.BASE_LAYER, 0);
+            controller.stopLayer(AnimationController.BASE_LAYER, ANIMATION_BLEND_SECONDS);
             state.playing = requested;
             state.playingMode = mode;
             state.onceFinished = false;
