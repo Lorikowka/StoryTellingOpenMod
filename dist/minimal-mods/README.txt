@@ -5,7 +5,7 @@ Minecraft 1.20.1, Forge 47.x (проект собирался с 47.4.28), Java 
 Не смешивайте с файлами другой сборки. Для проверки старых миров сначала сделайте копию мира.
 
 Обязательные файлы:
-- storytelling-20.1.34-update-lua-alpha.10.jar  SHA256: 47F2290A5DBE6D536C30532E7798FBA525216BDEBBD5C2571EAF5A27B2DBF2CB
+- storytelling-20.1.34-update-lua-alpha.11.jar  SHA256: D7664CEA41295D332ECCD58E4A206E7605CBC7D32B6DF0875CB992B2C615E3C5
 - HammerLib-1.20.1-20.1.50.jar  SHA256: 118A192C8C215436D75BB7C64120DBA7DB37695ED0D823F6B4C0BA08D09325BF
 - HammerAnimations-1.20.1-20.1.57.jar  SHA256: F7A0C7505F2D702F5529382D5ABAA808B138EAEDB57B6584DF380861E8160EE1
 - gfbs_gltf-1.5.1-all.jar  SHA256: 25494D3685F5331FF47B4926F9863ACBB180D1C5736BE1538BFB3AA6030631B4
@@ -42,4 +42,7 @@ Lua: /script reload перечитывает файлы; anchor(name) созда
 
 
 Lua: /script validate проверяет файлы ST/scripts до запуска, без изменения мира.
+
+
+Lua: npc_use_block(key, x, y, z, dimension) использует близкий блок от лица NPC. Сначала подведите NPC с npc_move; требуется игровая проверка.
 

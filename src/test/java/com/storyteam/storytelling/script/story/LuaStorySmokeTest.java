@@ -59,10 +59,17 @@ public final class LuaStorySmokeTest {
          speech(1, "Проверка портрета")
          npc_animation("guide", "wave", "once")
          npc_move("guide", 3, 64, 1, 0.2)
+         npc_use_block("guide", 4, 64, 1)
          npc_animation("guide", "wave", "hold")
          npc_animation("guide", "auto", "loop")
          """, "gltf-npc.lua");
       if (gltfNpc.id() != 900008) throw new AssertionError("glTF NPC Lua actions did not load");
+      try {
+         LuaStory.parse("story(900013)\npart(\"main\")\nnpc_use_block(\"missing\", 1, 64, 1)", "invalid-use-block.lua");
+         throw new AssertionError("Unknown NPC was accepted for npc_use_block");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("must be defined")) throw expected;
+      }
       LuaStory gltfJsonNpc = LuaStory.parse("""
          story(900011)
          npc_model("guide", "guide.gltf", "Проводник")

@@ -5,6 +5,7 @@ import com.storyteam.storytelling.script.performer.action.WaitPlayerPositionActi
 import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfinderAction;
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
+import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
 import com.storyteam.storytelling.script.story.EntityRepository;
 import com.storyteam.storytelling.util.ScriptUtils;
 import com.storyteam.storytelling.util.world.Location;
@@ -37,6 +38,7 @@ import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
@@ -165,6 +167,10 @@ public final class LuaStory {
                }
             }
             case NPC_MOVE -> appendNpcPath(builder, characters.get(step.text), step.position);
+            case NPC_USE_BLOCK -> builder.thenRun(() -> NpcWorldInteraction.useBlock(
+               characters.get(step.text).repositoryEntity(),
+               new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
+               step.position.dimension));
             case NPC_INTERACT -> builder.thenAwaitEntityClick(characters.get(step.text));
             case NPC_REMOVE -> builder.removeEntity(characters.get(step.text));
             case NPC_ANIMATION -> builder.thenRun(() -> {
@@ -320,6 +326,23 @@ public final class LuaStory {
                throw new IllegalArgumentException("Invalid npc_move coordinates, speed or dimension");
             }
             builder.npcAction(Type.NPC_MOVE, key, new PositionSpec(dimension, x, y, z, 0, false, speed));
+            return NIL;
+         }
+      });
+      globals.set("npc_use_block", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 4 && args.narg() != 5) {
+               throw new IllegalArgumentException("npc_use_block(key, x, y, z, [dimension]) expects 4 or 5 arguments");
+            }
+            String key = nonempty(args.arg(1));
+            int x = args.arg(2).checkint();
+            int y = args.arg(3).checkint();
+            int z = args.arg(4).checkint();
+            String dimension = args.narg() == 5 ? nonempty(args.arg(5)) : "minecraft:overworld";
+            if (ResourceLocation.tryParse(dimension) == null) {
+               throw new IllegalArgumentException("Invalid npc_use_block dimension: " + dimension);
+            }
+            builder.npcAction(Type.NPC_USE_BLOCK, key, new PositionSpec(dimension, x, y, z, 0, false));
             return NIL;
          }
       });
@@ -479,7 +502,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
