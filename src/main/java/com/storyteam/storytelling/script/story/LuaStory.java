@@ -177,6 +177,15 @@ public final class LuaStory {
                Entity entity = characters.get(step.text).repositoryEntity();
                if (entity instanceof ScriptNpcEntity scriptNpc) scriptNpc.animation(step.arguments[0], step.arguments[1]);
             });
+            case NPC_LOOK -> builder.thenRun(() -> {
+               Entity entity = characters.get(step.text).repositoryEntity();
+               if (entity instanceof ScriptNpcEntity scriptNpc) {
+                  if (step.arguments[0].equals("player")) scriptNpc.lookAt(ScriptUtils.getPlayer());
+                  else if (step.arguments[0].equals("none")) scriptNpc.clearLook();
+                  else scriptNpc.lookAt(Double.parseDouble(step.arguments[0]),
+                     Double.parseDouble(step.arguments[1]), Double.parseDouble(step.arguments[2]));
+               }
+            });
          }
       }
    }
@@ -284,6 +293,25 @@ public final class LuaStory {
             }
             String mode = args.narg() == 3 ? nonempty(args.arg(3)) : "loop";
             builder.npcAnimation(nonempty(args.arg(1)), nonempty(args.arg(2)), mode);
+            return NIL;
+         }
+      });
+      globals.set("npc_look", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() == 2) {
+               builder.npcLook(nonempty(args.arg(1)), nonempty(args.arg(2)));
+            } else if (args.narg() == 4) {
+               double x = args.arg(2).checkdouble();
+               double y = args.arg(3).checkdouble();
+               double z = args.arg(4).checkdouble();
+               if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
+                  || Math.abs(x) > 30000000 || Math.abs(y) > 30000000 || Math.abs(z) > 30000000) {
+                  throw new IllegalArgumentException("Invalid npc_look coordinates");
+               }
+               builder.npcLook(nonempty(args.arg(1)), Double.toString(x), Double.toString(y), Double.toString(z));
+            } else {
+               throw new IllegalArgumentException("npc_look(key, 'player'|'none') or npc_look(key, x, y, z) expected");
+            }
             return NIL;
          }
       });
@@ -511,7 +539,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -589,6 +617,14 @@ public final class LuaStory {
             throw new IllegalArgumentException("npc_animation requires a declared npc_model, a clip name up to 128 characters, and mode once, hold or loop: " + key);
          }
          add(new Step(Type.NPC_ANIMATION, 0, key, null, new String[] {animation, mode}));
+      }
+
+      private void npcLook(String key, String... target) {
+         NpcSpec spec = npcs.get(key);
+         if (spec == null || spec.model == null || (target.length == 1 && !Set.of("player", "none").contains(target[0]))) {
+            throw new IllegalArgumentException("npc_look requires a declared npc_model and target player, none, or coordinates: " + key);
+         }
+         add(new Step(Type.NPC_LOOK, 0, key, null, target));
       }
 
       private void anchor(String name) {

@@ -1,6 +1,11 @@
 package com.storyteam.storytelling.script.story.npc;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import java.util.UUID;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -18,6 +23,12 @@ public final class ScriptNpcEntity extends PathfinderMob {
    private static final EntityDataAccessor<Boolean> WALKING = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.BOOLEAN);
    private static final EntityDataAccessor<Float> HITBOX_WIDTH = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Float> HITBOX_HEIGHT = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<String> LOOK_PLAYER = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.STRING);
+   private static final EntityDataAccessor<Boolean> LOOK_POINT = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.BOOLEAN);
+   private static final EntityDataAccessor<Float> LOOK_X = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Float> LOOK_Y = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Float> LOOK_Z = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   public static final float MAX_HEAD_YAW = 60f;
 
    public ScriptNpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
       super(type, level);
@@ -32,6 +43,11 @@ public final class ScriptNpcEntity extends PathfinderMob {
       entityData.define(WALKING, false);
       entityData.define(HITBOX_WIDTH, 0.6f);
       entityData.define(HITBOX_HEIGHT, 1.8f);
+      entityData.define(LOOK_PLAYER, "");
+      entityData.define(LOOK_POINT, false);
+      entityData.define(LOOK_X, 0f);
+      entityData.define(LOOK_Y, 0f);
+      entityData.define(LOOK_Z, 0f);
    }
 
    public String model() {
@@ -67,6 +83,61 @@ public final class ScriptNpcEntity extends PathfinderMob {
       entityData.set(WALKING, walking);
    }
 
+   public void lookAt(double x, double y, double z) {
+      if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
+         || Math.abs(x) > 30000000 || Math.abs(y) > 30000000 || Math.abs(z) > 30000000) {
+         throw new IllegalArgumentException("Invalid NPC look coordinates");
+      }
+      entityData.set(LOOK_PLAYER, "");
+      entityData.set(LOOK_X, (float) x);
+      entityData.set(LOOK_Y, (float) y);
+      entityData.set(LOOK_Z, (float) z);
+      entityData.set(LOOK_POINT, true);
+   }
+
+   public void lookAt(ServerPlayer player) {
+      entityData.set(LOOK_POINT, false);
+      entityData.set(LOOK_PLAYER, player.getUUID().toString());
+   }
+
+   public void clearLook() {
+      entityData.set(LOOK_PLAYER, "");
+      entityData.set(LOOK_POINT, false);
+      setYHeadRot(yBodyRot);
+   }
+
+   public Vec3 lookTarget() {
+      String playerId = entityData.get(LOOK_PLAYER);
+      if (!playerId.isEmpty()) {
+         try {
+            Player player = level().getPlayerByUUID(UUID.fromString(playerId));
+            return player == null ? null : player.getEyePosition();
+         } catch (IllegalArgumentException ignored) {
+            return null;
+         }
+      }
+      return entityData.get(LOOK_POINT) ? new Vec3(entityData.get(LOOK_X), entityData.get(LOOK_Y), entityData.get(LOOK_Z)) : null;
+   }
+
+   @Override
+   public void tick() {
+      super.tick();
+      if (level().isClientSide) return;
+      Vec3 target = lookTarget();
+      if (target == null) return;
+      double dx = target.x - getX();
+      double dz = target.z - getZ();
+      if (dx * dx + dz * dz < 0.0001) return;
+      float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
+      float difference = Mth.wrapDegrees(targetYaw - yBodyRot);
+      if (Math.abs(difference) > MAX_HEAD_YAW) {
+         float turn = Mth.clamp(difference - Math.copySign(MAX_HEAD_YAW, difference), -5f, 5f);
+         setYRot(getYRot() + turn);
+         yBodyRot += turn;
+      }
+      setYHeadRot(yBodyRot + Mth.clamp(Mth.wrapDegrees(targetYaw - yBodyRot), -MAX_HEAD_YAW, MAX_HEAD_YAW));
+   }
+
    public void hitbox(float width, float height) {
       if (!Float.isFinite(width) || !Float.isFinite(height) || width < 0.1f || width > 8f || height < 0.1f || height > 16f) {
          throw new IllegalArgumentException("NPC hitbox must have width 0.1–8 and height 0.1–16 blocks");
@@ -95,6 +166,11 @@ public final class ScriptNpcEntity extends PathfinderMob {
       tag.putString("StoryAnimationMode", animationMode());
       tag.putFloat("StoryHitboxWidth", entityData.get(HITBOX_WIDTH));
       tag.putFloat("StoryHitboxHeight", entityData.get(HITBOX_HEIGHT));
+      tag.putString("StoryLookPlayer", entityData.get(LOOK_PLAYER));
+      tag.putBoolean("StoryLookPoint", entityData.get(LOOK_POINT));
+      tag.putFloat("StoryLookX", entityData.get(LOOK_X));
+      tag.putFloat("StoryLookY", entityData.get(LOOK_Y));
+      tag.putFloat("StoryLookZ", entityData.get(LOOK_Z));
    }
 
    @Override
@@ -106,5 +182,10 @@ public final class ScriptNpcEntity extends PathfinderMob {
       if (tag.contains("StoryHitboxWidth") && tag.contains("StoryHitboxHeight")) {
          hitbox(tag.getFloat("StoryHitboxWidth"), tag.getFloat("StoryHitboxHeight"));
       }
+      entityData.set(LOOK_PLAYER, tag.getString("StoryLookPlayer"));
+      entityData.set(LOOK_POINT, tag.getBoolean("StoryLookPoint"));
+      entityData.set(LOOK_X, tag.getFloat("StoryLookX"));
+      entityData.set(LOOK_Y, tag.getFloat("StoryLookY"));
+      entityData.set(LOOK_Z, tag.getFloat("StoryLookZ"));
    }
 }

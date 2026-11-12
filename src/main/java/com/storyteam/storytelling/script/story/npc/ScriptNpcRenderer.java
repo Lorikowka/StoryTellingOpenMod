@@ -16,11 +16,15 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import org.lytharalab.gfbs.gltf.api.animation.AnimationController;
 import org.lytharalab.gfbs.gltf.api.animation.LoopMode;
 import org.lytharalab.gfbs.gltf.api.animation.PlaybackOptions;
 import org.lytharalab.gfbs.gltf.api.client.GltfInstance;
 import org.lytharalab.gfbs.gltf.api.client.GltfRenderer;
+import org.lytharalab.gfbs.gltf.api.client.node.GltfNodeState;
 import org.lytharalab.gfbs.gltf.api.io.GltfLoader;
 import org.lytharalab.gfbs.gltf.api.model.GltfAsset;
 
@@ -56,6 +60,7 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
                instances.put(entity, state);
             }
             updateAnimation(entity, state, partialTick);
+            updateHead(entity, state, yaw);
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(180f - yaw));
             GltfRenderer.render(state.instance, pose, buffers, packedLight, OverlayTexture.NO_OVERLAY);
@@ -161,8 +166,41 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
       }
    }
 
+   private void updateHead(ScriptNpcEntity entity, State state, float bodyYaw) {
+      if (state.head == null) return;
+      float wantedYaw = 0f;
+      float wantedPitch = 0f;
+      Vec3 target = entity.lookTarget();
+      if (target != null) {
+         double dx = target.x - entity.getX();
+         double dy = target.y - entity.getEyeY();
+         double dz = target.z - entity.getZ();
+         double horizontal = Math.sqrt(dx * dx + dz * dz);
+         if (horizontal > 0.01) {
+            float worldYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
+            wantedYaw = Mth.clamp(Mth.wrapDegrees(worldYaw - bodyYaw),
+               -ScriptNpcEntity.MAX_HEAD_YAW, ScriptNpcEntity.MAX_HEAD_YAW);
+         }
+         wantedPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, horizontal)), -40f, 40f);
+      }
+      state.headYaw = Mth.rotLerp(0.2f, state.headYaw, wantedYaw);
+      state.headPitch = Mth.lerp(0.2f, state.headPitch, wantedPitch);
+      if (Math.abs(state.headYaw) + Math.abs(state.headPitch) < 0.01f && target == null) {
+         state.head.postTransform(null);
+      } else {
+         float[] transform = new Matrix4f()
+            .rotateY((float) Math.toRadians(-state.headYaw))
+            .rotateX((float) Math.toRadians(-state.headPitch))
+            .get(new float[16]);
+         state.head.postTransform(transform);
+      }
+   }
+
    private static final class State {
       final GltfInstance instance;
+      final GltfNodeState head;
+      float headYaw;
+      float headPitch;
       String playing = "";
       String playingMode = "";
       boolean onceFinished;
@@ -170,6 +208,9 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
 
       State(GltfInstance instance) {
          this.instance = instance;
+         this.head = instance.nodes().all().stream()
+            .filter(node -> node.name().equalsIgnoreCase("head") && node.definition().children().length > 0)
+            .findFirst().orElse(null);
       }
    }
 
