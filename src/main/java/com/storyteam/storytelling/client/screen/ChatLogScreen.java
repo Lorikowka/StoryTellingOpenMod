@@ -89,8 +89,9 @@ public class ChatLogScreen extends Screen {
          MutableComponent comp = speakerName.append(flavor).append(Component.literal(":").withStyle(ChatFormatting.WHITE)).append(" ").append(text);
          Font font = Minecraft.getInstance().font;
          List<FormattedCharSequence> lines = font.split(comp, MAXMESSAGEWIDTH);
+         int portraitHeight = NpcPortraits.height(message.speaker(), ICON_SIZE);
          int width = message.getBoxWidth(lines, font, MAXMESSAGEWIDTH, ICON_SIZE, 3);
-         int height = message.getBoxHeight(lines, font, MAXMESSAGEWIDTH, ICON_SIZE, 2);
+         int height = message.getBoxHeight(lines, font, MAXMESSAGEWIDTH, portraitHeight, 2);
          int x = Minecraft.getInstance().getWindow().getGuiScaledWidth() / 2 - width / 2;
          int y = yOffset;
          guiGraphics.pose().pushPose();
@@ -121,7 +122,7 @@ public class ChatLogScreen extends Screen {
          guiGraphics.pose().popPose();
          guiGraphics.pose().pushPose();
          RenderSystem.enableBlend();
-         if (!NpcPortraits.draw(guiGraphics, message.speaker(), x + 3, y + height / 2 - ICON_SIZE / 2, ICON_SIZE, alpha)) {
+         if (!NpcPortraits.draw(guiGraphics, message.speaker(), x + 3, y + height / 2 - portraitHeight / 2, ICON_SIZE, alpha)) {
             String icon = message.speaker().startsWith("glb:") ? "unknown" : message.speaker();
             ResourceLocation iconRL = St.id("textures/gui/chat/" + icon + ".png");
             RenderSystem.setShaderTexture(0, iconRL);

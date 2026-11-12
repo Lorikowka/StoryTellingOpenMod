@@ -54,13 +54,51 @@ public final class NpcPortraits {
 
    private NpcPortraits() { }
 
+   /** Height of the visible head when it fits inside a square of the requested size. */
+   public static int height(String icon, int size) {
+      Portrait portrait = portrait(icon);
+      return portrait == null || portrait.bounds == null ? size : scaledHeight(portrait.bounds, size);
+   }
+
    public static boolean draw(GuiGraphics graphics, String icon, int x, int y, int size, float alpha) {
-      if (icon == null || !icon.startsWith("glb:")) return false;
+      Portrait portrait = portrait(icon);
+      if (portrait == null || portrait.texture == null || portrait.bounds == null) return false;
+      Bounds bounds = portrait.bounds;
+      int width = scaledWidth(bounds, size);
+      int height = scaledHeight(bounds, size);
+      x += (size - width) / 2;
+      RenderSystem.enableBlend();
+      RenderSystem.setShader(GameRenderer::getPositionTexShader);
+      RenderSystem.setShaderTexture(0, portrait.texture);
+      RenderSystem.setShaderColor(1f, 1f, 1f, alpha);
+      Matrix4f matrix = graphics.pose().last().pose();
+      BufferBuilder vertices = Tesselator.getInstance().getBuilder();
+      vertices.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+      vertices.vertex(matrix, x, y + height, 0).uv(bounds.left / (float) SIZE, bounds.bottom / (float) SIZE).endVertex();
+      vertices.vertex(matrix, x + width, y + height, 0).uv(bounds.right / (float) SIZE, bounds.bottom / (float) SIZE).endVertex();
+      vertices.vertex(matrix, x + width, y, 0).uv(bounds.right / (float) SIZE, bounds.top / (float) SIZE).endVertex();
+      vertices.vertex(matrix, x, y, 0).uv(bounds.left / (float) SIZE, bounds.top / (float) SIZE).endVertex();
+      BufferUploader.drawWithShader(vertices.end());
+      RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+      RenderSystem.disableBlend();
+      return true;
+   }
+
+   private static int scaledWidth(Bounds bounds, int size) {
+      return Math.max(1, Math.round(size * bounds.width() / (float) Math.max(bounds.width(), bounds.height())));
+   }
+
+   private static int scaledHeight(Bounds bounds, int size) {
+      return Math.max(1, Math.round(size * bounds.height() / (float) Math.max(bounds.width(), bounds.height())));
+   }
+
+   private static Portrait portrait(String icon) {
+      if (icon == null || !icon.startsWith("glb:")) return null;
       String model = icon.substring(4);
-      if (!model.matches("models/[a-z0-9_/-]+\\.(?:glb|gltf)")) return false;
+      if (!model.matches("models/[a-z0-9_/-]+\\.(?:glb|gltf)")) return null;
       Path root = StoryWorkspace.assets().toAbsolutePath().normalize();
       Path file = root.resolve(model).normalize();
-      if (!file.startsWith(root) || !Files.isRegularFile(file)) return false;
+      if (!file.startsWith(root) || !Files.isRegularFile(file)) return null;
       try {
          long stamp = Files.getLastModifiedTime(file).toMillis() ^ Files.size(file);
          Portrait portrait = CACHE.get(model);
@@ -73,26 +111,11 @@ public final class NpcPortraits {
                CACHE.remove(oldest).close();
             }
          }
-         if (portrait.texture == null) return false;
-         RenderSystem.enableBlend();
-         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-         RenderSystem.setShaderTexture(0, portrait.texture);
-         RenderSystem.setShaderColor(1f, 1f, 1f, alpha);
-         Matrix4f matrix = graphics.pose().last().pose();
-         BufferBuilder vertices = Tesselator.getInstance().getBuilder();
-         vertices.begin(Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-         vertices.vertex(matrix, x, y + size, 0).uv(0, 1).endVertex();
-         vertices.vertex(matrix, x + size, y + size, 0).uv(1, 1).endVertex();
-         vertices.vertex(matrix, x + size, y, 0).uv(1, 0).endVertex();
-         vertices.vertex(matrix, x, y, 0).uv(0, 0).endVertex();
-         BufferUploader.drawWithShader(vertices.end());
-         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-         RenderSystem.disableBlend();
-         return true;
+         return portrait;
       } catch (IOException | RuntimeException error) {
-         CACHE.put(model, new Portrait(fileStamp(file), null));
+         CACHE.put(model, new Portrait(fileStamp(file), null, null));
          Storytelling.LOG.warn("Cannot create NPC portrait from ST/assets/{}", model, error);
-         return false;
+         return null;
       }
    }
 
@@ -106,14 +129,29 @@ public final class NpcPortraits {
       Head head = headGeometry(source, model, stamp);
       if (head == null) {
          Storytelling.LOG.warn("No head geometry found in ST/assets/{}; using the default chat icon", model);
-         return new Portrait(stamp, null);
+         return new Portrait(stamp, null, null);
       }
       NativeImage image = rasterize(head);
-      if (image == null) return new Portrait(stamp, null);
+      if (image == null) return new Portrait(stamp, null, null);
+      Bounds bounds = visibleBounds(image);
       ResourceLocation texture = new ResourceLocation("storytelling", "portrait/" +
          Integer.toHexString(model.hashCode()) + "_" + Long.toHexString(stamp));
       Minecraft.getInstance().getTextureManager().register(texture, new DynamicTexture(image));
-      return new Portrait(stamp, texture);
+      return new Portrait(stamp, texture, bounds);
+   }
+
+   /** Inclusive pixels become an exclusive UV rectangle with a small visual margin. */
+   private static Bounds visibleBounds(NativeImage image) {
+      int left = SIZE, top = SIZE, right = 0, bottom = 0;
+      for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
+         if ((image.getPixelRGBA(x, y) >>> 24) == 0) continue;
+         left = Math.min(left, x);
+         top = Math.min(top, y);
+         right = Math.max(right, x + 1);
+         bottom = Math.max(bottom, y + 1);
+      }
+      return new Bounds(Math.max(0, left - 2), Math.max(0, top - 2),
+         Math.min(SIZE, right + 2), Math.min(SIZE, bottom + 2));
    }
 
    private static NativeImage rasterize(Head head) throws IOException {
@@ -377,7 +415,12 @@ public final class NpcPortraits {
    record Head(GltfAsset asset, float minX, float minY, float minZ,
       float maxX, float maxY, float maxZ, Set<Integer> visibleNodes, int selectedMeshes) { }
 
-   private record Portrait(long stamp, ResourceLocation texture) {
+   private record Bounds(int left, int top, int right, int bottom) {
+      int width() { return right - left; }
+      int height() { return bottom - top; }
+   }
+
+   private record Portrait(long stamp, ResourceLocation texture, Bounds bounds) {
       void close() { if (texture != null) Minecraft.getInstance().getTextureManager().release(texture); }
    }
 }
