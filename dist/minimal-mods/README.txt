@@ -5,7 +5,7 @@ Minecraft 1.20.1, Forge 47.x (проект собирался с 47.4.28), Java 
 Не смешивайте с файлами другой сборки. Для проверки старых миров сначала сделайте копию мира.
 
 Обязательные файлы:
-- storytelling-20.1.34-update-lua-alpha.9.jar  SHA256: 91346C53689C6A967F7A1BB83E1AC89D6A3C046E2C32F678E3814CC773660EA7
+- storytelling-20.1.34-update-lua-alpha.10.jar  SHA256: 47F2290A5DBE6D536C30532E7798FBA525216BDEBBD5C2571EAF5A27B2DBF2CB
 - HammerLib-1.20.1-20.1.50.jar  SHA256: 118A192C8C215436D75BB7C64120DBA7DB37695ED0D823F6B4C0BA08D09325BF
 - HammerAnimations-1.20.1-20.1.57.jar  SHA256: F7A0C7505F2D702F5529382D5ABAA808B138EAEDB57B6584DF380861E8160EE1
 - gfbs_gltf-1.5.1-all.jar  SHA256: 25494D3685F5331FF47B4926F9863ACBB180D1C5736BE1538BFB3AA6030631B4
@@ -39,4 +39,7 @@ Lua: /script reload перечитывает файлы; anchor(name) созда
 Портреты GLB/glTF-NPC из группы Head снова выводятся в компактной плашке 20×20 в alpha.9, без переворота. Переходы анимации walk/idle сглажены за 0,25 секунды. Проверка PNG: reg.gltf и fox.glb; игровой рендер нового JAR ещё нужно проверить.
 
 
+
+
+Lua: /script validate проверяет файлы ST/scripts до запуска, без изменения мира.
 

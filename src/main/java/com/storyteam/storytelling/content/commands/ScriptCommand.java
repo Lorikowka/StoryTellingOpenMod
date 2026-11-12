@@ -23,6 +23,8 @@ import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.action.PerformerAction;
 import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
 import com.storyteam.storytelling.script.story.ScriptEnvironment;
+import com.storyteam.storytelling.script.story.LuaStoryValidator;
+import com.storyteam.storytelling.script.story.LuaStory;
 import com.storyteam.storytelling.util.ServerScheduler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
@@ -34,6 +36,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -690,6 +694,31 @@ public class ScriptCommand {
          sendSuccess(ctx, Component.literal("Сценарии перезагружены: " + env.constructors.size()
             + " (Lua: " + env.luaStories.size() + "). Уже запущенные сценарии продолжат прежнюю версию."), true);
          return env.luaStories.size();
+      })));
+      dispatcher.register(Commands.literal("script").then(Commands.literal("validate").executes(ctx -> {
+         Set<Integer> javaIds = new HashSet<>();
+         for (int id : env.constructors.keySet()) {
+            if (!env.luaStories.containsKey(id)) javaIds.add(id);
+         }
+         try {
+            LuaStoryValidator.Report report = LuaStoryValidator.validate(LuaStory.storyDirectory(), javaIds);
+            if (report.valid()) {
+               sendSuccess(ctx, Component.literal("Lua: проверено файлов " + report.checked() + ", ошибок нет."), false);
+               return report.checked();
+            }
+            ctx.getSource().sendFailure(Component.literal("Lua: проверено файлов " + report.checked()
+               + ", найдено ошибок " + report.issues().size() + ":"));
+            for (int i = 0; i < Math.min(10, report.issues().size()); i++) {
+               LuaStoryValidator.Issue issue = report.issues().get(i);
+               ctx.getSource().sendFailure(Component.literal(issue.file() + ": " + issue.message()));
+            }
+            if (report.issues().size() > 10) {
+               ctx.getSource().sendFailure(Component.literal("Остальные ошибки: " + (report.issues().size() - 10)));
+            }
+         } catch (IOException error) {
+            ctx.getSource().sendFailure(Component.literal("Не удалось проверить ST/scripts: " + error.getMessage()));
+         }
+         return 0;
       })));
    }
 }

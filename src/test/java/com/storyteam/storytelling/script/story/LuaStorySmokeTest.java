@@ -139,6 +139,19 @@ public final class LuaStorySmokeTest {
          if (environment.createInstance(900001).getMainPerformer() == null) {
             throw new AssertionError("New Lua story has no main performer");
          }
+         LuaStoryValidator.Report clean = LuaStoryValidator.validate(storyDirectory, java.util.Set.of());
+         if (clean.checked() != 3 || !clean.valid()) {
+            throw new AssertionError("Valid Lua files failed validation: " + clean.issues());
+         }
+         Files.writeString(storyDirectory.resolve("900090.lua"), "story(900090)\npart(\"main\")\nspeech(1, \"unfinished\n");
+         Files.writeString(storyDirectory.resolve("900091.lua"), "story(900092)\npart(\"main\")\nwait_f8()\n");
+         LuaStoryValidator.Report invalid = LuaStoryValidator.validate(storyDirectory, java.util.Set.of(900001));
+         if (invalid.checked() != 5
+            || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900090.lua"))
+            || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900091.lua") && issue.message().contains("filename"))
+            || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900001.lua") && issue.message().contains("Java script"))) {
+            throw new AssertionError("Validator missed syntax, filename or ID errors: " + invalid.issues());
+         }
       } finally {
          try (var paths = Files.walk(storyDirectory)) {
             for (Path path : paths.sorted(java.util.Comparator.reverseOrder()).toList()) {
