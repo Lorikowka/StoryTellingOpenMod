@@ -335,9 +335,9 @@ public final class LuaStory {
                throw new IllegalArgumentException("npc_use_block(key, x, y, z, [dimension]) expects 4 or 5 arguments");
             }
             String key = nonempty(args.arg(1));
-            int x = args.arg(2).checkint();
-            int y = args.arg(3).checkint();
-            int z = args.arg(4).checkint();
+            int x = blockCoordinate(args.arg(2));
+            int y = blockCoordinate(args.arg(3));
+            int z = blockCoordinate(args.arg(4));
             String dimension = args.narg() == 5 ? nonempty(args.arg(5)) : "minecraft:overworld";
             if (ResourceLocation.tryParse(dimension) == null) {
                throw new IllegalArgumentException("Invalid npc_use_block dimension: " + dimension);
@@ -463,6 +463,15 @@ public final class LuaStory {
          throw new IllegalArgumentException("Ticks must be between 1 and 72000");
       }
       return ticks;
+   }
+
+   private static int blockCoordinate(LuaValue value) {
+      double number = value.checkdouble();
+      if (!Double.isFinite(number) || number != Math.rint(number)
+         || number < Integer.MIN_VALUE || number > Integer.MAX_VALUE) {
+         throw new IllegalArgumentException("npc_use_block coordinates must be whole numbers within the integer range");
+      }
+      return (int) number;
    }
 
    private static String nonempty(LuaValue value) {

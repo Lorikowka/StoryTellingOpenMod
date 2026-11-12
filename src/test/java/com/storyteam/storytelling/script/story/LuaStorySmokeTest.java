@@ -70,6 +70,12 @@ public final class LuaStorySmokeTest {
       } catch (IllegalArgumentException expected) {
          if (!expected.getMessage().contains("must be defined")) throw expected;
       }
+      try {
+         LuaStory.parse("story(900014)\nnpc_model(\"guide\", \"guide.glb\", \"Guide\")\npart(\"main\")\nnpc_use_block(\"guide\", 1.5, 64, 1)", "fractional-use-block.lua");
+         throw new AssertionError("Fractional block coordinate was accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("whole numbers")) throw expected;
+      }
       LuaStory gltfJsonNpc = LuaStory.parse("""
          story(900011)
          npc_model("guide", "guide.gltf", "Проводник")
