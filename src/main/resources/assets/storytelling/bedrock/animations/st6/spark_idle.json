@@ -1,0 +1,32 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"spark_idle": {
+			"loop": true,
+			"animation_length": 6,
+			"bones": {
+				"bone": {
+					"rotation": ["math.abs(query.anim_time*360/4)", "-math.abs(query.anim_time*360/4)", 0],
+					"scale": "1+math.sin(query.anim_time*360/2)/3"
+				},
+				"bone2": {
+					"rotation": [0, "-math.abs(query.anim_time*360/4)", 0],
+					"scale": "1+math.cos(query.anim_time*360/2)/10"
+				},
+				"bone6": {
+					"rotation": ["math.cos(query.anim_time*360/2)*10", "math.abs(query.anim_time*360/6)", 0]
+				},
+				"bone4": {
+					"rotation": [0, 0, 0],
+					"position": [0, 0, 0]
+				},
+				"bone5": {
+					"rotation": ["math.abs(query.anim_time*360/6)*2", 0, 0]
+				},
+				"bone7": {
+					"rotation": [0, 0, "math.abs(query.anim_time*360/6)"]
+				}
+			}
+		}
+	}
+}

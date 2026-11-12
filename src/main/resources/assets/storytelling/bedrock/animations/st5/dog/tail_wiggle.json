@@ -1,0 +1,17 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"tail_wiggle": {
+			"loop": true,
+			"animation_length": 0.33333,
+			"bones": {
+				"body_rotation": {
+					"rotation": [0, 0, "math.sin(q.anim_time*360*3+65)"]
+				},
+				"tail": {
+					"rotation": [0, "-math.sin(q.anim_time*360*3)*4", "math.sin(q.anim_time*360*3-45)*24"]
+				}
+			}
+		}
+	}
+}

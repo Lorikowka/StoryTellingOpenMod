@@ -1,0 +1,18 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"rat_tail_wigle": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"Legs": {
+					"rotation": [0, "math.sin(query.anim_time*360)", 0]
+				},
+				"tail": {
+					"rotation": [0, "math.sin(query.anim_time*360)*32", 0],
+					"position": ["math.cos(query.anim_time*360)/4", 0, 0]
+				}
+			}
+		}
+	}
+}

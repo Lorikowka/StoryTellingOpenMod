@@ -1,0 +1,32 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"raccoon_hover_cycle": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"Model": {
+					"position": [0, "math.sin(query.anim_time*360/2)/2", -7]
+				},
+				"Body": {
+					"rotation": ["-95+-math.cos(query.anim_time*360/2)/2", 0, 0]
+				},
+				"Head": {
+					"rotation": ["102.5+math.cos(query.anim_time*360/2)*2", 0, 0],
+					"position": [0, 1.2525, -1.85236]
+				},
+				"Tail": {
+					"rotation": [90, 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["75+math.cos(query.anim_time*360/2)*2", 0, -70],
+					"position": [2, 0, 0]
+				},
+				"RightArm": {
+					"rotation": ["75+math.cos(query.anim_time*360/2)*2", 0, 70],
+					"position": [-2, 0, 0]
+				}
+			}
+		}
+	}
+}

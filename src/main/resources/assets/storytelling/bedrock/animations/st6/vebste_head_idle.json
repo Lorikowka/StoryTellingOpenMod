@@ -1,0 +1,15 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"vebste_head_idle": {
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"Head": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360/4)*1.5"],
+					"scale": ["0.97+math.cos(query.anim_time*360/2+45)/18", "0.97+math.sin(query.anim_time*360/2)/18", "0.97+math.cos(query.anim_time*360/2+45)/18"]
+				}
+			}
+		}
+	}
+}

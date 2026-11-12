@@ -1,0 +1,35 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"drunk_cycle": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"model": {
+					"rotation": [-2.5, 0, "math.cos(query.anim_time*180)"]
+				},
+				"Body": {
+					"rotation": [-7.50186, -2.80485, -2.15234]
+				},
+				"BodyUp": {
+					"rotation": [35, "math.cos(query.anim_time*180)*4", "math.sin(query.anim_time*180)*8"]
+				},
+				"Head": {
+					"rotation": [36.03939, "-math.cos(query.anim_time*180)*8", 3.55097]
+				},
+				"RightArm": {
+					"rotation": [-25, 0, "-math.cos(query.anim_time*180)*8"]
+				},
+				"LeftArm": {
+					"rotation": [-25, 0, "math.cos(query.anim_time*180)*8"]
+				},
+				"LeftLeg": {
+					"rotation": [2.62116, -17.48281, -5.78795]
+				},
+				"RightLeg": {
+					"rotation": [-7.67995, 12.39135, 5.8425]
+				}
+			}
+		}
+	}
+}

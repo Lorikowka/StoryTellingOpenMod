@@ -1,0 +1,23 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"arm_sideways_right": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"RightArm": {
+					"rotation": [-90, 75, 0],
+					"position": [-1, 0, -2]
+				}
+			}
+		},
+		"arm_sideways_left": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"LeftArm": {
+					"rotation": [-90, -75, 0],
+					"position": [1, 0, -2]
+				}
+			}
+		}
+	}
+}

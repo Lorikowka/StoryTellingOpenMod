@@ -1,0 +1,161 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"run_prepare_start": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.2917,
+			"bones": {
+				"model": {
+					"rotation": {
+						"0.0": {
+							"post": [7.5, -5, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": [20, "math.sin(query.anim_time*360*3+90)", 0]
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -2, -4],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": {
+							"post": [0, 0, -2],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [12.69143, 17.4084, 0.47212],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["math.sin(query.anim_time*360*1.5)*4", 0, "math.sin(query.anim_time*360*1.5)*4"]
+					},
+					"position": [0, -1, 0]
+				},
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": [12.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["math.cos(query.anim_time*180*3+105)*4", "math.sin(query.anim_time*180*3+105)*8", "-math.sin(query.anim_time*360*1.5)*4"]
+					}
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [-30.58109, -11.73719, 5.41296],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["-14.5-math.cos(query.anim_time*360*1.5+105)*4", "0-math.sin(query.anim_time*180*3+105)*4", 0]
+					},
+					"position": [0, "-0.25-math.sin(query.anim_time*360*3)/4", 0]
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": [27.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["-1.9493-math.sin(query.anim_time*360*1.5+15)*64", "-19.2934+math.cos(query.anim_time*180*3+105)*16", 14.17505]
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.75, 1],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": [0, -0.5, "-math.sin(query.anim_time*360*1.5)*1.5"]
+					}
+				},
+				"RightHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-65, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["math.cos(query.anim_time*360*1.5+45)*24-70", 0, 0]
+					}
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": {
+							"post": [-45, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["1.6033+math.sin(query.anim_time*360*1.5+15)*64", "24.3693+math.cos(query.anim_time*180*3+105)*16", -2.72878]
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.75, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": [0, -0.5, "math.sin(query.anim_time*360*1.5)*1.5"]
+					}
+				},
+				"LeftHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-65, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["-math.cos(query.anim_time*360*1.5+45)*24-70", 0, 0]
+					}
+				},
+				"LeftLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [17.44638, 0.28339, -8.36275],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": [
+							"-34.8607-math.sin(query.anim_time*360*1.5)*64",
+							"-3.4778+math.cos(query.anim_time*360*1.5)*4",
+							"-0.6145-math.sin(query.anim_time*360*1.5+90)*4"
+						]
+					},
+					"position": [0, 0, "-math.sin(query.anim_time*360*1.5-30)*1.5"]
+				},
+				"LeftFoot": {
+					"rotation": {
+						"0.0": {
+							"post": [17.6125, -0.92392, 1.26128],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["math.max(math.sin(query.anim_time*360*1.5+70)*128,22)", 0, 0]
+					}
+				},
+				"RightLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [-34.99294, 0.32621, 2.47864],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": [
+							"-22.4238+math.sin(query.anim_time*360*1.5)*64",
+							"0.9516-math.cos(query.anim_time*360*1.5)*4",
+							"2.3059-math.sin(query.anim_time*360*1.5+90)*4"
+						]
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 1.7, -2],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": [0, 0, "math.sin(query.anim_time*360*1.5-30)*1.5"]
+					}
+				},
+				"RightFoot": {
+					"rotation": {
+						"0.0": {
+							"post": [22.50859, -0.00546, 0.32076],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": ["math.max(-math.sin(query.anim_time*360*1.5+70)*128,22)", 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

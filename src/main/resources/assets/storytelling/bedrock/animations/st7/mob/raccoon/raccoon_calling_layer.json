@@ -1,0 +1,81 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"raccoon_calling_layer": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 2.375,
+			"bones": {
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": ["math.sin(query.anim_time*360*2)", 0, "math.cos(query.anim_time*360*2)*3"],
+						"1.7917": ["math.sin(query.anim_time*360*2)", 0, "math.cos(query.anim_time*360*2)"],
+						"2.375": {
+							"pre": [0, 0, 0],
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"post": [-15.68195, -16.90652, 4.58627],
+							"lerp_mode": "catmullrom"
+						},
+						"1.7917": {
+							"post": [-15.68195, -16.90652, 4.58627],
+							"lerp_mode": "catmullrom"
+						},
+						"2.375": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": [0, 0, 0],
+						"0.4583": [0.99897, 0.00547, -0.045],
+						"1.7917": [0.99897, 0.00547, -0.045],
+						"2.375": [0, 0, 0]
+					}
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": [
+							"-104.3228+-math.sin(query.anim_time*360*2)*48",
+							"-9.5774799504+-math.cos(query.anim_time*360*2)*12",
+							"-8.0704+-math.cos(query.anim_time*360*2)*24"
+						],
+						"1.7917": [
+							"-104.3228+-math.sin(query.anim_time*360*2)*48",
+							"-9.5774799504+-math.cos(query.anim_time*360*2)*12",
+							"-8.0704+-math.cos(query.anim_time*360*2)*24"
+						],
+						"2.375": {
+							"pre": [0, 0, 0],
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": [0, 0, 0],
+						"0.4583": ["math.cos(query.anim_time*360*2)", 0, "math.sin(query.anim_time*360*2)"],
+						"1.7917": ["math.cos(query.anim_time*360*2)", 0, "math.sin(query.anim_time*360*2)"],
+						"2.375": [0, 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

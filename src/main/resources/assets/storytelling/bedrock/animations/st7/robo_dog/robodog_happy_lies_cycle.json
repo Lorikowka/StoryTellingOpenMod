@@ -1,0 +1,62 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"robodog_happy_lies_cycle": {
+			"loop": true,
+			"animation_length": 12,
+			"bones": {
+				"model": {
+					"rotation": [6.93488, 2.86313, 157.67352],
+					"position": [-3, 6.75, 0]
+				},
+				"body_rotation": {
+					"rotation": [-7.5, "math.cos(query.anim_time*360*3)*1.5", 0]
+				},
+				"tail": {
+					"rotation": [55.15059, "0.8548+math.sin(query.anim_time*360*3)*10", 19.98247]
+				},
+				"RightWing": {
+					"rotation": [0, 0, -12.5]
+				},
+				"LeftWing": {
+					"rotation": [0, 0, 62.5]
+				},
+				"mane": {
+					"rotation": [0, "math.sin(query.anim_time*360*3)*1", 0]
+				},
+				"head": {
+					"rotation": [79.69709, -12.80882, "-30.0231+math.cos(query.anim_time*360*3)*1"],
+					"position": [-0.84135, -0.72463, -1.38053]
+				},
+				"LeftEar": {
+					"rotation": ["-121.004+math.sin(query.anim_time*360*3)*3", -21.15048, 86.27314],
+					"position": [0.84306, 0.07023, -0.31116]
+				},
+				"RightEar": {
+					"rotation": ["-65.295+math.sin(query.anim_time*360*3)*3", 26.77998, -54.23512],
+					"position": [-0.35987, 0.37367, -0.89071]
+				},
+				"mouth_down": {
+					"rotation": ["40+math.sin(query.anim_time*360*3)*5", "math.cos(query.anim_time*360*3)*2", 0]
+				},
+				"Legs": {
+					"rotation": [0, "math.sin(query.anim_time*360*3)", 0]
+				},
+				"RightLeg": {
+					"rotation": [59.67342, -1.81165, "6.8315+math.cos(query.anim_time*(360-30)*3)"]
+				},
+				"LeftLeg": {
+					"rotation": [68.17902, 16.83273, "-15.959+math.cos(query.anim_time*(360-30)*3)"]
+				},
+				"LeftFrontLeg": {
+					"rotation": [68.17902, "16.8327+math.sin(query.anim_time*(360-30)*3)", -15.959],
+					"position": [0, 0.13053, -0.99144]
+				},
+				"RightFrontLeg": {
+					"rotation": [59.67342, "-1.8117+math.sin(query.anim_time*(360-30)*3)", 6.83154],
+					"position": [0, 0.13053, -0.99144]
+				}
+			}
+		}
+	}
+}

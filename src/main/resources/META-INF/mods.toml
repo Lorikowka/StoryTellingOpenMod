@@ -1,0 +1,44 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved, don't fucking steal!"
+
+[[mods]]
+modId="storytelling"
+version="${mod_version}"
+displayName="Storytelling Lua Alpha"
+credits="Storytelling Team"
+authors="StorytellingTeam"
+description = '''
+Minecraft mod that enables script creation for let's plays.
+'''
+
+[[dependencies.storytelling]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.storytelling]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.storytelling]]
+    modId="hammeranims"
+    mandatory=true
+    versionRange="[20.1.38,)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.storytelling]]
+    modId="hammerlib"
+    mandatory=true
+    versionRange="[20.1.48,)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.storytelling]]
+    modId="gfbs_gltf"
+    mandatory=true
+    versionRange="[1.5.1,2.0.0)"
+    ordering="AFTER"
+    side="BOTH"

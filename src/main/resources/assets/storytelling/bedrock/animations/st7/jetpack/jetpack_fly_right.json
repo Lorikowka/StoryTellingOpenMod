@@ -1,0 +1,51 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"jetpack_fly_right": {
+			"loop": true,
+			"animation_length": 1.6,
+			"bones": {
+				"model": {
+					"rotation": ["12.3298-math.cos(query.anim_time*360*1.25)", 1.98397, -9.80318],
+					"position": ["math.sin(query.anim_time*360*1.25)*0.5", "math.cos(query.anim_time*360*1.25)*0.5", "math.sin(query.anim_time*360*1.25)*0.5"]
+				},
+				"Body": {
+					"rotation": ["-math.sin(query.anim_time*360*1.25)*2", "-7.5+math.sin(query.anim_time*360*1.25)*2", -10]
+				},
+				"BodyUp": {
+					"rotation": ["1.0241+math.cos(query.anim_time*360*1.25)*8", "11.6284+math.sin(query.anim_time*360*1.25)*2", 6.81662],
+					"position": [0, "+math.sin(query.anim_time*360*1.25)*0.5", 0]
+				},
+				"Head": {
+					"rotation": ["math.sin(query.anim_time*360*1.25)*6", "-math.sin(query.anim_time*360*1.25)*4", "15-math.cos(query.anim_time*360*1.25)*2"]
+				},
+				"RightArm": {
+					"rotation": [-10.67947, -10.81205, "8.2701-math.sin(query.anim_time*360*1.25)*4"],
+					"position": [0, "-1-math.sin(query.anim_time*360*1.25)*1", 0]
+				},
+				"RightHand": {
+					"rotation": ["-15+math.cos(query.anim_time*360*1.25)*4", 0, "0+math.cos(query.anim_time*360*1.25)*8"]
+				},
+				"LeftArm": {
+					"rotation": [10.61024, 4.68637, "-35.8836+math.sin(query.anim_time*360*1.25)*6"],
+					"position": [0, "-1-math.sin(query.anim_time*360*1.25)*1 ", 0]
+				},
+				"LeftHand": {
+					"rotation": ["-15-math.cos(query.anim_time*360*1.25)*8", 0, "0-math.cos(query.anim_time*360*1.25)*8 "]
+				},
+				"LeftLeg": {
+					"rotation": ["9.5932+math.sin(query.anim_time*360*1.25)*8", -4.14451, "-34.6014-math.cos(query.anim_time*360*1.25)*8"]
+				},
+				"LeftFoot": {
+					"rotation": ["20.5-math.cos(query.anim_time*360*1.25)*10", 0, 0]
+				},
+				"RightLeg": {
+					"rotation": ["22.1132-math.sin(query.anim_time*360*1.25)*10", 7.81118, "-23.9634-math.cos(query.anim_time*360*1.25)*8 "]
+				},
+				"RightFoot": {
+					"rotation": ["20.5-math.cos(query.anim_time*360*1.25)*10", 0, 0]
+				}
+			}
+		}
+	}
+}

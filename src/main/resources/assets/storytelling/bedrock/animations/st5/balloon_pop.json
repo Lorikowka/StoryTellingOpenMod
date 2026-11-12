@@ -1,0 +1,18 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"balloon_pop": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.08333,
+			"bones": {
+				"model": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.0417": [1.2, 1.2, 1.2],
+						"0.0833": {"pre": [1.2, 1.2, 1.2], "post": [0, 0, 0]}
+					}
+				}
+			}
+		}
+	}
+}

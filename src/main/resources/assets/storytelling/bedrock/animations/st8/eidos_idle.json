@@ -1,0 +1,46 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"eidos_idle": {
+			"loop": true,
+			"animation_length": 10,
+			"bones": {
+				"ExSun": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"10.0": [0, 0, "-360-360"]
+					},
+					"scale": "1+math.sin(query.anim_time*360/2.5)/6"
+				},
+				"BaseSun": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"10.0": [0, 0, 360]
+					},
+					"scale": 0.8
+				},
+				"BigCirce": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"10.0": [0, 0, "1440+1440"]
+					},
+					"scale": "0.75+-math.cos(query.anim_time*360/2.5)/4"
+				},
+				"SmallCirce": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"10.0": [0, 0, "-1440-1440"]
+					},
+					"scale": "1+math.cos(query.anim_time*360/2.5)/4"
+				},
+				"Light": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"10.0": [0, 0, 360]
+					},
+					"scale": 0.9
+				}
+			}
+		}
+	}
+}

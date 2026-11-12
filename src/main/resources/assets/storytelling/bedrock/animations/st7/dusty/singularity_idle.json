@@ -1,0 +1,15 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"singularity_idle": {
+			"loop": true,
+			"animation_length": 25,
+			"bones": {
+				"singularity": {
+					"rotation": ["math.cos(query.anim_time*360/2.5)*2 ", 0, "-math.abs(query.anim_time*360/25)"],
+					"position": ["math.sin(query.anim_time*360/5)/5", "-math.cos(query.anim_time*360/5)/3", 0]
+				}
+			}
+		}
+	}
+}

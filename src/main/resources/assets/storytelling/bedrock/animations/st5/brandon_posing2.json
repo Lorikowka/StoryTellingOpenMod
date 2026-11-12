@@ -1,0 +1,54 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"brandon_posing2": {
+			"loop": true,
+			"animation_length": 0.25,
+			"bones": {
+				"model": {
+					"rotation": [0, 0, 12.5],
+					"position": [0, -1, 0]
+				},
+				"Body": {
+					"rotation": [8.44236, 27.24513, 3.88714],
+					"position": [0, 0, 0]
+				},
+				"BodyUp": {
+					"rotation": [-4.83686, 4.45865, -24.05647],
+					"position": [0, 0.25, -0.75]
+				},
+				"Head": {
+					"rotation": [9.93472, -30.49813, 15.34418]
+				},
+				"RightArm": {
+					"rotation": ["71.3292+math.sin(query.anim_time*360*4)*2", 80.45469, 235.27754],
+					"position": [0, 1, 0]
+				},
+				"RightHand": {
+					"rotation": ["-122.0559+math.cos(query.anim_time*360*4)*2", 9.39981, -47.6194]
+				},
+				"LeftArm": {
+					"rotation": ["-269.4091+math.sin(query.anim_time*360*4)*2", -52.79443, 113.4407],
+					"position": [-1, 0, 2]
+				},
+				"LeftHand": {
+					"rotation": ["-84.8397+math.cos(query.anim_time*360*4)*2", 12.213, 83.64252]
+				},
+				"LeftLeg": {
+					"rotation": [-410.59036, -74.27212, 357.54466],
+					"position": [1, 0, -1]
+				},
+				"LeftFoot": {
+					"rotation": [37.3492, -0.98331, 1.06799]
+				},
+				"RightLeg": {
+					"rotation": [10, 40, 15],
+					"position": [0, 0, 0]
+				},
+				"RightFoot": {
+					"rotation": [0, 0, 0]
+				}
+			}
+		}
+	}
+}

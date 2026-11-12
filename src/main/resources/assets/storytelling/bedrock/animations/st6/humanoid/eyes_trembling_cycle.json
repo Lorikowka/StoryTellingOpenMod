@@ -1,0 +1,25 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"eyes_trembling_cycle": {
+			"loop": true,
+			"animation_length": 1.5,
+			"bones": {
+				"ocular_right": {
+					"position": {
+						"0.0": ["math.sin(query.anim_time*360*8)/16", 0, 0],
+						"0.75": ["math.cos(query.anim_time*360*9)/16", 0, 0],
+						"1.5": ["math.sin(query.anim_time*360*8)/16", 0, 0]
+					}
+				},
+				"ocular_left": {
+					"position": {
+						"0.0": ["math.sin(query.anim_time*360*8)/16", 0, 0],
+						"0.75": ["math.cos(query.anim_time*360*9)/16", 0, 0],
+						"1.5": ["math.sin(query.anim_time*360*8)/16", 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

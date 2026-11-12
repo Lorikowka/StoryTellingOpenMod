@@ -1,0 +1,53 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"battle_run_cycle": {
+			"loop": true,
+			"animation_length": 0.66667,
+			"bones": {
+				"model": {
+					"rotation": [0, "math.sin(query.anim_time*360*3+90)", 0],
+					"position": [0, "-math.cos(query.anim_time*360*3)/2", 0]
+				},
+				"Body": {
+					"rotation": [22.5, 0, "math.sin(query.anim_time*360*1.5)*4"]
+				},
+				"Head": {
+					"rotation": ["-14.5-math.cos(query.anim_time*360*1.5+105)*4", "0-math.sin(query.anim_time*180*3+105)*4", 0],
+					"position": [0, "-0.25-math.sin(query.anim_time*360*3)/4", 0]
+				},
+				"RightArm": {
+					"rotation": ["-math.sin(query.anim_time*360*1.5+15)*64", "math.cos(query.anim_time*180*3+105)*16", 0],
+					"position": [0, -0.5, "-math.sin(query.anim_time*360*1.5-25)"]
+				},
+				"RightHand": {
+					"rotation": ["math.cos(query.anim_time*360*1.5+45)*24-50", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["math.sin(query.anim_time*360*1.5+15)*64", "math.cos(query.anim_time*180*3+105)*16", 0],
+					"position": [0, -0.5, "math.sin(query.anim_time*360*1.5-25)"]
+				},
+				"LeftHand": {
+					"rotation": ["-math.cos(query.anim_time*360*1.5+55)*24-50", 0, 0]
+				},
+				"LeftLeg": {
+					"rotation": ["-math.sin(query.anim_time*360*1.5)*48", "math.cos(query.anim_time*360*1.5)*4", "-math.sin(query.anim_time*360*1.5+90)*6"],
+					"position": [0, 0, "-math.sin(query.anim_time*360*1.5-25)*2"]
+				},
+				"LeftFoot": {
+					"rotation": ["math.max(math.sin(query.anim_time*360*1.5+70)*128,0)", 0, 0]
+				},
+				"RightLeg": {
+					"rotation": ["math.sin(query.anim_time*360*1.5)*48", "-math.cos(query.anim_time*360*1.5)*4", "-math.sin(query.anim_time*360*1.5+90)*6"],
+					"position": [0, 0, "math.sin(query.anim_time*360*1.5-25)*2"]
+				},
+				"RightFoot": {
+					"rotation": ["math.max(-math.sin(query.anim_time*360*1.5+70)*128,0)", 0, 0]
+				},
+				"BodyUp": {
+					"rotation": ["math.cos(query.anim_time*180*3+105)*4", "math.sin(query.anim_time*180*3+105)*8", "-math.sin(query.anim_time*360*1.5)*4"]
+				}
+			}
+		}
+	}
+}

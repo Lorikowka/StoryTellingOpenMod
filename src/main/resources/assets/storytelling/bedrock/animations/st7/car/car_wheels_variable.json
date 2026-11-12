@@ -1,0 +1,22 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"car_wheels_variable": {
+			"loop": true,
+			"bones": {
+				"WheelRightBack": {
+					"rotation": ["variable.wheelRotation", 0, 0]
+				},
+				"WheelLeftBack": {
+					"rotation": ["variable.wheelRotation", 0, 0]
+				},
+				"WheelRightFront": {
+					"rotation": ["variable.wheelRotation", 0, 0]
+				},
+				"WheelLeftFront": {
+					"rotation": ["variable.wheelRotation", 0, 0]
+				}
+			}
+		}
+	}
+}

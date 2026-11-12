@@ -1,0 +1,26 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"raya_shorts_idle": {
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"model2": {
+					"rotation": ["math.sin(query.anim_time*360/2)", "math.cos(query.anim_time*360/2)", "math.cos(query.anim_time*360+45)/4"]
+				},
+				"body2": {
+					"position": ["math.sin(query.anim_time*360/2)/4", "math.cos(query.anim_time*360/2)/4", "math.sin(query.anim_time*360-45)/12"]
+				},
+				"engine_right2": {
+					"rotation": ["-math.sin(query.anim_time*360/2)*2", "-math.cos(query.anim_time*360/2)*2", 0]
+				},
+				"engine_left2": {
+					"rotation": ["math.sin(query.anim_time*360/2)*2", "math.cos(query.anim_time*360/2)*2", 0]
+				},
+				"engine_bottom2": {
+					"rotation": ["math.cos(query.anim_time*360/2)*4", 0, "math.sin(query.anim_time*360/2+45)"]
+				}
+			}
+		}
+	}
+}

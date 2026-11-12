@@ -1,0 +1,47 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"shield_standing_pose": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 1.7917,
+			"bones": {
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 15, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Head": {
+					"rotation": [2.58807, -14.98539, -0.66963]
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": [-10.41866, 55.97923, 17.16099],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [0, -1, 0]
+				},
+				"RightHand": {
+					"rotation": {
+						"0.0": {
+							"post": [32.73879, -61.25922, -118.83177],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [-0.02779, -0.74508, -0.66639]
+				},
+				"LeftArm": {
+					"rotation": [5, -10, 0],
+					"position": [-0.12941, 0, 0.48296]
+				},
+				"LeftHand": {
+					"rotation": [-10, 0, 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,48 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"glasses_fall_endanimated": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 1.45833,
+			"bones": {
+				"googles": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": [15, 0, 0],
+						"0.6667": [15, 0, 0],
+						"1.0": {
+							"pre": [110, 0, 0],
+							"post": [110, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.125": {
+							"post": [182.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.2083": {
+							"post": [180, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": [0, -1, 0],
+						"0.6667": [0, -1, 0],
+						"1.0": [0, -24.5, -4],
+						"1.125": [0, -26, -6.5],
+						"1.2083": [0, -26, -6.5]
+					}
+				},
+				"bone": {
+					"position": [0, 0, 8]
+				}
+			}
+		}
+	}
+}

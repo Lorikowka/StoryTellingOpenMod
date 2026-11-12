@@ -1,0 +1,56 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"shangrin_walk_cycle": {
+			"loop": true,
+			"animation_length": 3,
+			"bones": {
+				"model": {
+					"rotation": ["-math.cos(q.anim_time*360/1.5)", 0, "math.sin(q.anim_time*360/1.5)*3"],
+					"position": [0, 0, 0]
+				},
+				"body": {
+					"rotation": ["math.sin(q.anim_time*360/1.5)", "math.sin(q.anim_time*-360/1.5)*2", "math.sin(q.anim_time*-360/1.5)*2"],
+					"position": [0, "math.max(math.sin(q.anim_time*360-90)/2,math.sin(q.anim_time*360-90)/4)", 0]
+				},
+				"BodyUp": {
+					"rotation": [0, 0, "-math.sin(q.anim_time*-360/1.5-90)*3"]
+				},
+				"Head": {
+					"rotation": ["math.sin(q.anim_time*-360/1.5)", "math.cos(q.anim_time*-360/1.5)", "-math.sin(q.anim_time*-360/1.5+90)"],
+					"position": [0, "-0.2-math.cos(q.anim_time*360/1.5-90)/6", 0]
+				},
+				"RightArm": {
+					"rotation": ["-0.0519+math.cos(q.anim_time*-360/1.5+180)*8", "9.9025-math.sin(q.anim_time*360/1.5+45)*4", "-1.3954+math.sin(q.anim_time*-360/1.5-90)*2"],
+					"position": [0, "-0.5+math.sin(q.anim_time*-720/1.5)/6", "0.75+math.sin(q.anim_time*360/1.5)/-3.5"]
+				},
+				"RightHand": {
+					"rotation": ["-math.cos(-q.anim_time*360/1.5-20)*4", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["0.1929+math.cos(q.anim_time*360/1.5)*8", "-9.9008-math.sin(q.anim_time*360/1.5+45)*4", "-1.4196+math.sin(q.anim_time*-360/1.5-90)*2"],
+					"position": [0, "-0.5+math.sin(q.anim_time*-720/1.5)/6", "0.75+math.sin(q.anim_time*360/1.5)/4"]
+				},
+				"LeftHand": {
+					"rotation": ["math.cos(-q.anim_time*360/1.5-20)*4", 0, 0]
+				},
+				"LeftLeg": {
+					"rotation": ["math.sin(q.anim_time*-360/1.5-90)*16", "math.sin(q.anim_time*-360/1.5-90)*1.5", "math.sin(q.anim_time*-360/1.5-90)*2"],
+					"position": [0, "math.max(math.cos(q.anim_time*-360/1.5-90), 0.2)", "1+math.max(math.sin(q.anim_time*360/1.5-90)/2, -2)"]
+				},
+				"LeftFoot": {
+					"rotation": ["math.max(-math.sin(q.anim_time*360/1.5-20)*48, -math.sin(q.anim_time*360/1.5-40)*16)", 0, 0],
+					"position": [0, 0, 1]
+				},
+				"RightLeg": {
+					"rotation": ["-math.sin(q.anim_time*360/1.5-90)*16", "math.sin(q.anim_time*-360/1.5-90)*1.5", "math.sin(q.anim_time*-360/1.5-90)*2"],
+					"position": [0, "math.max(math.cos(q.anim_time*360/1.5-90), 0.2)", "1+math.max(math.sin(q.anim_time*360/1.5-90)/-2, -2)"]
+				},
+				"RightFoot": {
+					"rotation": ["math.max(math.sin(q.anim_time*360/1.5-20)*48, math.sin(q.anim_time*360/1.5-40)*16)", 0, 0],
+					"position": [0, 0, 1]
+				}
+			}
+		}
+	}
+}

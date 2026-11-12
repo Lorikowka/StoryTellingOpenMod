@@ -1,0 +1,109 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"lying_waving_cycle": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": [-90, 0, 0],
+					"position": [0, 2, -16]
+				},
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": [15, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [67.61243, -12.98057, -11.08882],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 0.5, -0.5],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightArm": {
+					"rotation": [6.35333, -56.09366, 22.38935],
+					"position": [1.26667, -1, 0]
+				},
+				"RightHand": {
+					"rotation": [-87.47846, -7.49282, -0.32902]
+				},
+				"Right_placeholder": {
+					"rotation": [28.44207, -14.86279, 13.90191],
+					"position": [2.86503, 1.54428, 1.79401]
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": {
+							"post": [7.5, 27.5, -5],
+							"lerp_mode": "catmullrom"
+						},
+						"0.3333": {
+							"post": [11.20451, 27.90635, -7.78621],
+							"lerp_mode": "catmullrom"
+						},
+						"0.6667": {
+							"post": [7.61682, 32.80456, -7.03629],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [7.5, 27.5, -5],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-0.26667, -1, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-89.45857, -2.4407, -102.51153],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5": {
+							"post": [-24.45857, -2.4407, -102.51153],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [-89.45857, -2.4407, -102.51153],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.5, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftLeg": {
+					"rotation": [-76.66088, -22.14598, 92.59392]
+				},
+				"LeftFoot": {
+					"rotation": [92.5, 0, 0]
+				},
+				"RightLeg": {
+					"rotation": [-60, 0, 0],
+					"position": [0, 0, 2]
+				},
+				"RightFoot": {
+					"rotation": [117.5, 0, 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,64 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"placeholder_pose_blockattack": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"BodyUp": {
+					"rotation": [7.5, 0, 0]
+				},
+				"Head": {
+					"rotation": [-7.5, 0, 0]
+				},
+				"RightArm": {
+					"rotation": [-80.00416, -10.55916, 58.73893],
+					"position": [0, -1, -1]
+				},
+				"RightHand": {
+					"rotation": [-44.97272, -1.76749, -1.76833]
+				},
+				"Right_placeholder": {
+					"rotation": [8.06724, 13.99545, -46.78082]
+				},
+				"LeftArm": {
+					"rotation": [-83.17835, 17.6671, -7.47974],
+					"position": [0, 0, -1]
+				},
+				"LeftHand": {
+					"rotation": [-11.57518, 4.75113, 22.01816]
+				},
+				"Left_placeholder2": {
+					"rotation": [0, 42.5, 0]
+				},
+				"LeftLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [14.94548, 1.29256, -4.83045],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 0, 1],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [-9.96271, 0.86717, 4.92442],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 0, -1],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	}
+}

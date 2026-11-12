@@ -1,0 +1,191 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"head_up_from_lean_on_arms": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.5833,
+			"bones": {
+				"model": {
+					"position": [0, -5.375, 0]
+				},
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [24.63839, -63.21838, 18.60657],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-5.16053, -6.32961, 2.88121],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": [43.30011, -8.93975, -0.53758],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [0, -0.15, -0.13]
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [19.06903, -5.1522, 6.45774],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [-56.68816, -3.90674, 7.76877],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-0.24575, 0.99586, 1.99111],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [-0.25, 1.625, 0.015],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"scale": 1
+				},
+				"eye_right": {
+					"scale": {
+						"0.0": [1, 0.0875, 1],
+						"0.2083": [1, 1.6225, 1]
+					}
+				},
+				"ocular_right": {
+					"position": [0.025, -0.1, 0],
+					"scale": [0.7925, 0.6625, 1]
+				},
+				"eyebrow_left": {
+					"rotation": [0, 0, -11.75],
+					"position": {
+						"0.0": [0.51909, 0.08244, 0],
+						"0.2083": [-0.39, 1.365, 0]
+					}
+				},
+				"eye_left": {
+					"scale": {
+						"0.0": [1, 0.0875, 1],
+						"0.2083": [1, 1.6225, 1]
+					}
+				},
+				"ocular_left": {
+					"position": [0.025, -0.1, 0],
+					"scale": [0.7925, 0.6625, 1]
+				},
+				"eyebrow_right": {
+					"rotation": [0, 0, 11.75],
+					"position": {
+						"0.0": [-0.39181, 0.69434, 0],
+						"0.2083": [-0.39, 1.365, 0]
+					}
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": [-132.41547, 9.72167, 12.65281],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-0.67449, 4.08142, -2.07498],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightHand": {
+					"rotation": [-122.68187, -4.34295, -8.24043],
+					"position": {
+						"0.0": {
+							"post": [-0.08902, 0.72267, -1.13681],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": {
+							"post": [-131.23772, -24.65466, 10.11613],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0.16754, 2.21211, -1.98397],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-132.23462, 6.05428, 14.02449],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [-0.1108, 0.75778, -1.53075]
+				},
+				"LeftLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [-208.3719, 0.93934, 91.01354],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-6.63088, -5.45926, 6.12811],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftFoot": {
+					"rotation": {
+						"0.0": {
+							"post": [152.14, 16.14, -7.52],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0.67816, 1.30754, 1.5846],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [-48.07133, -3.61306, -83.57979],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-4.9028, -5.73754, 1.88898],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightFoot": {
+					"rotation": {
+						"0.0": {
+							"post": [85.74254, 8.84981, 3.07159],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [-0.646, 1.10617, 0.82077]
+				}
+			}
+		}
+	}
+}

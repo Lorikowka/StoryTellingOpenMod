@@ -1,0 +1,41 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"scythe_fight_cycle": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": ["-math.sin(query.anim_time*360)", 0, 0]
+				},
+				"Body": {
+					"position": [0, "math.sin(query.anim_time*360)/4", 0]
+				},
+				"BodyUp": {
+					"rotation": ["math.cos(query.anim_time*360)*4", "-math.sin(query.anim_time*360)*2", 0]
+				},
+				"Head": {
+					"rotation": ["-math.cos(query.anim_time*360)*4", 0, "-math.sin(query.anim_time*360)*2"]
+				},
+				"RightArm": {
+					"rotation": [0, 0, 0]
+				},
+				"RightHand": {
+					"rotation": ["math.cos(query.anim_time*360)", "math.cos(query.anim_time*360)*4", 0]
+				},
+				"LeftArm": {
+					"rotation": [0, 0, 0]
+				},
+				"LeftHand": {
+					"rotation": ["math.cos(query.anim_time*360)", "math.cos(query.anim_time*360)*4", 0]
+				},
+				"LeftLeg": {
+					"rotation": ["math.sin(query.anim_time*360)*4", 0, 0]
+				},
+				"LeftFoot": {
+					"rotation": ["-math.sin(query.anim_time*360)*8", 0, 0]
+				}
+			}
+		}
+	}
+}

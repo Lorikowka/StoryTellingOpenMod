@@ -1,0 +1,17 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"elite_robodog_wings_cycle": {
+			"loop": true,
+			"animation_length": 5,
+			"bones": {
+				"RightWing": {
+					"rotation": [0, 0, "math.cos(query.anim_time*360/5)*5"]
+				},
+				"LeftWing": {
+					"rotation": [0, 0, "-(math.cos(query.anim_time*360/5)*5)"]
+				}
+			}
+		}
+	}
+}

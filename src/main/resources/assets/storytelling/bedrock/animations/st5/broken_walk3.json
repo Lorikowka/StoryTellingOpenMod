@@ -1,0 +1,77 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"broken_walk3": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": [0, 0, "-math.sin(q.anim_time*360)"],
+					"position": [0, 0, 0]
+				},
+				"Body": {
+					"rotation": ["19.9717+math.sin(q.anim_time*360)", "0.6518+math.sin(q.anim_time*-360+)*2", "-4.9574+math.sin(q.anim_time*-360-90)*2"],
+					"position": {
+						"0.0": [0, "-1+math.max(math.sin(q.anim_time*360*2-90)/2,math.sin(q.anim_time*360*2-90)/4)", 0],
+						"0.125": [0, "-1.7+math.max(math.sin(q.anim_time*360*2-90)/2,math.sin(q.anim_time*360*2-90)/4)", 0],
+						"0.25": [0, "-1+math.max(math.sin(q.anim_time*360*2-90)/2,math.sin(q.anim_time*360*2-90)/4)", 0],
+						"0.5": [0, "0.25+math.max(math.sin(q.anim_time*360*2-90)/2,math.sin(q.anim_time*360*2-90)/4)", 0],
+						"1.0": [0, "-1+math.max(math.sin(q.anim_time*360*2-90)/2,math.sin(q.anim_time*360*2-90)/4)", 0]
+					}
+				},
+				"BodyUp": {
+					"rotation": ["math.sin(q.anim_time*-360-60)*3", 0, "-math.sin(q.anim_time*-360-90)*3"]
+				},
+				"Head": {
+					"rotation": {
+						"0.0": ["-17.2836+math.sin(q.anim_time*-360)*-4", "-0.0237+math.cos(q.anim_time*-360)", "12.502-math.sin(q.anim_time*-360+90)"],
+						"0.125": ["-15.3836+math.sin(q.anim_time*-360)*-4", "-0.0237+math.cos(q.anim_time*-360)", "12.502-math.sin(q.anim_time*-360+90)"],
+						"0.25": ["-21.0836+math.sin(q.anim_time*-360)*-4", "-0.0237+math.cos(q.anim_time*-360)", "12.502-math.sin(q.anim_time*-360+90)"],
+						"0.375": [-13.33782, "1.71+math.cos(q.anim_time*-360)", "19.7992-math.sin(q.anim_time*-360+90)"],
+						"0.4583": ["-11.2836+math.sin(q.anim_time*-360)*-4", "-0.0237+math.cos(q.anim_time*-360)", "12.502-math.sin(q.anim_time*-360+90)"],
+						"1.0": ["-17.2836+math.sin(q.anim_time*-360)*-4", "-0.0237+math.cos(q.anim_time*-360)", "12.502-math.sin(q.anim_time*-360+90)"]
+					},
+					"position": {
+						"0.0": [0, "-0.2-math.cos(q.anim_time*360*2-90)/6", 0],
+						"0.2083": [0, "-0.45-math.cos(q.anim_time*360*2-90)/6", 0],
+						"0.3333": [0, "0.05-math.cos(q.anim_time*360*2-90)/6", 0],
+						"0.5833": [0, "-0.2-math.cos(q.anim_time*360*2-90)/6", 0]
+					}
+				},
+				"RightArm": {
+					"rotation": ["-19.0627+math.cos(q.anim_time*-360+180)*8", "10.8903-math.sin(q.anim_time*360+45)*4", "6.1047+math.sin(q.anim_time*-360-90)*2"],
+					"position": [0, "-0.5+math.sin(q.anim_time*-720)/6", "0.75+math.sin(q.anim_time*360)/-3.5"]
+				},
+				"RightHand": {
+					"rotation": ["-math.max(-math.sin(q.anim_time*-360-45)*16, 0)", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["-21.451+math.sin(q.anim_time*360)*8", "-9.2293-math.sin(q.anim_time*360+45)", "6.2288+math.sin(q.anim_time*-360-90)/4"]
+				},
+				"LeftLeg": {
+					"rotation": ["math.sin(q.anim_time*-360-90)*16", "math.sin(q.anim_time*-360-90)*1.5", "math.sin(q.anim_time*-360-90)*2"],
+					"position": {
+						"0.0": [0, "-1+ math.max(math.cos(q.anim_time*-360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/2, -2)"],
+						"0.5417": [0, "-0.75+ math.max(math.cos(q.anim_time*-360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/2, -2)"],
+						"1.0": [0, "-1+ math.max(math.cos(q.anim_time*-360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/2, -2)"]
+					}
+				},
+				"LeftFoot": {
+					"rotation": ["math.max(math.sin(q.anim_time*-360-45)*32, 0)", 0, 0]
+				},
+				"RightLeg": {
+					"rotation": ["math.sin(q.anim_time*-360-90)*-16", "math.sin(q.anim_time*-360-90)*1.5", "math.sin(q.anim_time*-360-90)*2"],
+					"position": {
+						"0.0": [0, "math.max(math.cos(q.anim_time*360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/-2, -2)"],
+						"0.2083": [0, "math.max(math.cos(q.anim_time*360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/-2, -2)"],
+						"0.25": [0, "1+math.max(math.cos(q.anim_time*360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/-2, -2)"],
+						"0.5": [0, "math.max(math.cos(q.anim_time*360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/-2, -2)"]
+					}
+				},
+				"RightFoot": {
+					"rotation": ["math.max(-math.sin(q.anim_time*-360-45)*32, 0)", 0, 0]
+				}
+			}
+		}
+	}
+}

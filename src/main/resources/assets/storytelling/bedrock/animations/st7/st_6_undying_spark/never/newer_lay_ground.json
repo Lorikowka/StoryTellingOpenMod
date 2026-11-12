@@ -1,0 +1,111 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"newer_lay_ground": {
+			"loop": true,
+			"bones": {
+				"model": {
+					"rotation": {
+						"0.0": {
+							"post": [-85, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 4, -9],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [-2.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": [-2.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Head": {
+					"rotation": [-12.30099, 2.17964, 0.27413],
+					"position": [0, 1, 3]
+				},
+				"RightArm": {
+					"rotation": [22.5, 0, 10]
+				},
+				"RightHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-83.28077, 69.85335, -82.73124],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftArm": {
+					"rotation": [22.5, 0, -10]
+				},
+				"LeftHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-83.28077, -69.85335, 82.73124],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [7.50198, -0.54707, -0.10228],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftFoot": {
+					"rotation": {
+						"0.0": {
+							"post": [-5.89782, -12.61242, 0.61292],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [7.50198, 0.54707, 0.10228],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightFoot": {
+					"rotation": {
+						"0.0": {
+							"post": [-5.89782, 12.61242, -0.61292],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"cape": {
+					"rotation": [-3.64757, 0.46312, 0.91212],
+					"position": [0, 0, -1]
+				},
+				"hood": {
+					"rotation": [-7.5, 0, 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"placeholder_pose_hatfall": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"hat": {
+					"rotation": {
+						"0.0": {
+							"post": [180, -6.5, -180],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [-16, -29.5, 1],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	}
+}

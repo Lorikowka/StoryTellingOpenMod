@@ -1,0 +1,18 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"goose_run_wiggle_layered": {
+			"loop": true,
+			"animation_length": 2.0417,
+			"bones": {
+				"Body": {
+					"rotation": ["math.sin(query.anim_time*360*5)", "math.cos(query.anim_time*360*3)*10", 0],
+					"position": ["math.cos(query.anim_time*360*3)*0.5", 0, 0]
+				},
+				"head": {
+					"rotation": ["math.sin(query.anim_time*360*5)*(-1)", "math.cos(query.anim_time*360*3)*(-10)", 0]
+				}
+			}
+		}
+	}
+}

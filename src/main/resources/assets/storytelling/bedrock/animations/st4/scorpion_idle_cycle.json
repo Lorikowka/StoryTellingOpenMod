@@ -1,0 +1,72 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"scorpion_idle_cycle": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": ["math.cos(query.anim_time*360)", 0, "-math.cos(query.anim_time*360)/4"],
+					"position": [0, "math.sin(query.anim_time*360)/4", "-math.cos(query.anim_time*360)/8"]
+				},
+				"Body": {
+					"rotation": ["-math.cos(query.anim_time*360)*1.5", 0, "math.sin(query.anim_time*360)*1.5"]
+				},
+				"tail": {
+					"rotation": [0, 0, "math.cos(query.anim_time*360)*2"]
+				},
+				"tail_up": {
+					"rotation": ["-math.sin(query.anim_time*360)*2", 0, "-math.cos(query.anim_time*360)*2"]
+				},
+				"RightHand": {
+					"rotation": ["math.cos(query.anim_time*360)*4", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360)*2"]
+				},
+				"LeftHand": {
+					"rotation": ["math.cos(query.anim_time*360)*4", 0, 0]
+				},
+				"Head": {
+					"rotation": ["math.cos(query.anim_time*360)*4", 0, "-math.sin(query.anim_time*360)*2"]
+				},
+				"LeftBackLeg": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360)*4"]
+				},
+				"LeftBackFoot": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360)*3"]
+				},
+				"LeftLeg": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360)*4"]
+				},
+				"LeftFoot": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360)*3.5"]
+				},
+				"LeftFrontLeg": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360)*4"]
+				},
+				"LeftFrontFoot": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360)*3.5"]
+				},
+				"RightBackLeg": {
+					"rotation": [0, 0, "-(math.sin(query.anim_time*360)*4)"]
+				},
+				"RightBackFoot": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360)*3"]
+				},
+				"RightLeg": {
+					"rotation": [0, 0, "-(math.sin(query.anim_time*360)*4)"]
+				},
+				"RightFoot": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360)*3.5"]
+				},
+				"RightFrontLeg": {
+					"rotation": [0, 0, "-(math.sin(query.anim_time*360)*4)"]
+				},
+				"RightFrontFoot": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360)*3.5"]
+				}
+			}
+		}
+	}
+}

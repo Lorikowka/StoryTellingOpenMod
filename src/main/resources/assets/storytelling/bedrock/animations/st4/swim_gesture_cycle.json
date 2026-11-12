@@ -1,0 +1,116 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"swim_gesture_cycle": {
+			"loop": true,
+			"animation_length": 1.58333,
+			"bones": {
+				"Body": {
+					"rotation": [0, "math.sin(query.anim_time*227)*4", 0]
+				},
+				"BodyUp": {
+					"rotation": [10, 0, 0]
+				},
+				"Head": {
+					"rotation": [0, "math.cos(query.anim_time*227)*2", "math.cos(query.anim_time*227)*8"]
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": {
+							"post": [9.91777, -10.16351, -14.45384],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [109.29841, -77.55617, -251.20607],
+							"lerp_mode": "catmullrom"
+						},
+						"0.9583": {
+							"post": [-62.9725, -75.39992, -118.41908],
+							"lerp_mode": "catmullrom"
+						},
+						"1.1667": {
+							"post": [-105.5254, 8.13422, -25.00394],
+							"lerp_mode": "catmullrom"
+						},
+						"1.375": {
+							"post": [-20.78247, -6.45045, 0.74246],
+							"lerp_mode": "catmullrom"
+						},
+						"1.5833": {
+							"post": [9.91777, -10.16351, -14.45384],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftHand": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [-60, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.9583": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.5833": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": [109.29841, 77.55617, 251.20607],
+							"lerp_mode": "catmullrom"
+						},
+						"0.1667": {
+							"post": [-62.9725, 75.39992, 118.41908],
+							"lerp_mode": "catmullrom"
+						},
+						"0.375": {
+							"post": [-105.5254, -8.13422, 25.00394],
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": {
+							"post": [-20.78247, 6.45045, -0.74246],
+							"lerp_mode": "catmullrom"
+						},
+						"0.875": {
+							"post": [9.91777, 10.16351, 14.45384],
+							"lerp_mode": "catmullrom"
+						},
+						"1.5833": {
+							"post": [109.29841, 77.55617, 251.20607],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-60, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.1667": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.875": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.5833": {
+							"post": [-60, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	}
+}

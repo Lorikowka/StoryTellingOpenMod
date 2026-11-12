@@ -1,0 +1,32 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"lizard_idle": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"model": {
+					"rotation": [0, "math.sin(query.anim_time*360/2)/4", "math.cos(query.anim_time*360/2)/4"]
+				},
+				"Body": {
+					"rotation": [0, "math.sin(query.anim_time*360/2)", "math.cos(query.anim_time*360/2)"]
+				},
+				"LeftFrontLeg": {
+					"rotation": [0, "-math.sin(query.anim_time*360/2)", "-math.cos(query.anim_time*360/2)"]
+				},
+				"RightFrontLeg": {
+					"rotation": [0, "-math.sin(query.anim_time*360/2)", "-math.cos(query.anim_time*360/2)"]
+				},
+				"Tale1": {
+					"rotation": [0, "-math.cos(query.anim_time*360/2)*2", 0]
+				},
+				"Tale2": {
+					"rotation": [0, "-math.cos(query.anim_time*360/2+45)*2", 0]
+				},
+				"Tale3": {
+					"rotation": [0, "-math.cos(query.anim_time*360/2+45)*2", 0]
+				}
+			}
+		}
+	}
+}

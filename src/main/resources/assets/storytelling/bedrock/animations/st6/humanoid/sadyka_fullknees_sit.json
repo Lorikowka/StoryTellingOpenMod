@@ -1,0 +1,52 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"sadyka_fullknees_sit": {
+			"loop": true,
+			"animation_length": 2.5,
+			"bones": {
+				"model": {
+					"position": [0, -9.5, 0]
+				},
+				"LeftLeg": {
+					"rotation": [-57.45532, -9.07076, -2.57442],
+					"position": [0, 0, 0]
+				},
+				"LeftFoot": {
+					"rotation": [149.01834, 12.81992, 11.6011],
+					"position": [0, 1.5, 1]
+				},
+				"RightLeg": {
+					"rotation": {
+						"0.0": {
+							"post": [-54.37814, 13.08973, 5.61227],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightFoot": {
+					"rotation": [143.98183, -13.18319, -11.35433],
+					"position": [0, 1.5, 1]
+				},
+				"Body": {
+					"rotation": [-5, 0, 0]
+				},
+				"BodyUp": {
+					"rotation": [5, 0, 0]
+				},
+				"dagger_right": {
+					"rotation": [37, 0, 0]
+				},
+				"dagger_left": {
+					"rotation": [37, 0, 0]
+				}
+			}
+		}
+	}
+}

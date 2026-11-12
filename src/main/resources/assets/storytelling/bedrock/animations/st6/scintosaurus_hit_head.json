@@ -1,0 +1,211 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"scintosaurus_hit_head_right": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.125": {
+							"post": [8.4012, 12.70728, -7.51871],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": {
+							"post": [13.36822, 9.25435, 0.61564],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5": {
+							"post": [5.62923, 3.70044, 7.01929],
+							"lerp_mode": "catmullrom"
+						},
+						"0.8333": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Mouth": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.125": {
+							"post": [2.5, -5, -10],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": {
+							"post": [8.37555, 4.4791, 7.71964],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"post": [11.37193, -1.58801, 14.38048],
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": {
+							"post": [10.33982, -2.781, -3.77272],
+							"lerp_mode": "catmullrom"
+						},
+						"0.8333": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_head_left": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.125": {
+							"post": [8.4012, -12.70728, 7.51871],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": {
+							"post": [13.36822, -9.25435, -0.61564],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5": {
+							"post": [5.62923, -3.70044, -7.01929],
+							"lerp_mode": "catmullrom"
+						},
+						"0.8333": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Mouth": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.125": {
+							"post": [2.5, 5, 10],
+							"lerp_mode": "catmullrom"
+						},
+						"0.2917": {
+							"post": [8.37555, -4.4791, -7.71964],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"post": [11.37193, 1.58801, -14.38048],
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": {
+							"post": [10.33982, 2.781, 3.77272],
+							"lerp_mode": "catmullrom"
+						},
+						"0.8333": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_eye1": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"eye1": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.125": [1, 0, 1],
+						"0.2083": [1, 0, 1],
+						"0.375": [1, -0.25, 1],
+						"0.5": [1, 0, 1]
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_eye2": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"eye2": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.125": [1, 0, 1],
+						"0.2083": [1, 0, 1],
+						"0.375": [1, -0.25, 1],
+						"0.5": [1, 0, 1]
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_eye3": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"eye3": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.125": [1, 0, 1],
+						"0.2083": [1, 0, 1],
+						"0.375": [1, -0.25, 1],
+						"0.5": [1, 0, 1]
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_eye4": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"eye4": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.125": [1, 0, 1],
+						"0.2083": [1, 0, 1],
+						"0.375": [1, -0.25, 1],
+						"0.5": [1, 0, 1]
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_eye5": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"eye5": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.125": [1, 0, 1],
+						"0.2083": [1, 0, 1],
+						"0.375": [1, -0.25, 1],
+						"0.5": [1, 0, 1]
+					}
+				}
+			}
+		},
+		"scintosaurus_hit_eye6": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.8333,
+			"bones": {
+				"eye6": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.125": [1, 0, 1],
+						"0.2083": [1, 0, 1],
+						"0.375": [1, -0.25, 1],
+						"0.5": [1, 0, 1]
+					}
+				}
+			}
+		}
+	}
+}

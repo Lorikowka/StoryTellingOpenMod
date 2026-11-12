@@ -1,0 +1,31 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"worlder_spears_spin_cycle": {
+			"loop": true,
+			"animation_length": 10,
+			"bones": {
+				"spear1": {
+					"rotation": [0, "-math.abs(q.anim_time*360)/2", 0],
+					"position": [0, "math.sin(query.anim_time*360/2+180)*4", 0]
+				},
+				"spear2": {
+					"rotation": [0, "-math.abs(q.anim_time*360)/2", 0],
+					"position": [0, "math.sin(query.anim_time*360/2+540)*4", 0]
+				},
+				"spear3": {
+					"rotation": [0, "-math.abs(q.anim_time*360)/2", 0],
+					"position": [0, "math.sin(query.anim_time*360/2+360)*4", 0]
+				},
+				"spear7": {
+					"rotation": [0, "-math.abs(q.anim_time*360)/2", 0],
+					"position": [0, "math.sin(query.anim_time*360/2+450)*4", 0]
+				},
+				"spear8": {
+					"rotation": [0, "-math.abs(q.anim_time*360)/2", 0],
+					"position": [0, "math.sin(query.anim_time*360/2+270)*4", 0]
+				}
+			}
+		}
+	}
+}

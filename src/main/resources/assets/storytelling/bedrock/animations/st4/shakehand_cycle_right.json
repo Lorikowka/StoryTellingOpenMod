@@ -1,0 +1,34 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"shakehand_cycle_right": {
+			"loop": true,
+			"animation_length": 0.91667,
+			"bones": {
+				"Body": {
+					"rotation": [7.60757, 9.9351, 0.99106]
+				},
+				"BodyUp": {
+					"rotation": [-7.54679, 8.08768, "3.9751+math.sin(query.anim_time*1200)"]
+				},
+				"Head": {
+					"rotation": [33.31159, 25.34847, "4.0496-math.cos(query.anim_time*1200)"]
+				},
+				"LeftArm": {
+					"rotation": [14.06046, 34.97898, -18.03897],
+					"position": [0, -0.5, 0]
+				},
+				"LeftHand": {
+					"rotation": ["-50+math.cos(query.anim_time*1200)", 0, 0]
+				},
+				"RightArm": {
+					"rotation": ["-42.5+math.sin(query.anim_time*1200)*8", -27.5, 42.5],
+					"position": [0, -0.5, 0]
+				},
+				"RightHand": {
+					"rotation": ["-47.5-math.cos(query.anim_time*1200)*32", 0, "-(math.sin(query.anim_time*1200)*16)"]
+				}
+			}
+		}
+	}
+}

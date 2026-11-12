@@ -1,0 +1,33 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"train_rolling": {
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"train": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"4.0": [0, -360, 0]
+					}
+				},
+				"vagon": {
+					"rotation": ["(math.cos(query.anim_time*360*4))/2", "-(math.sin(query.anim_time*360*6))/2", "-(math.cos(query.anim_time*360*8))/2"],
+					"position": [0, "-(math.sin(query.anim_time*360*8))/16", 0]
+				},
+				"vagon2": {
+					"rotation": ["-(math.cos(query.anim_time*360*4))/2", "(math.sin(query.anim_time*360*6))/2", "(math.cos(query.anim_time*360*8))/2"],
+					"position": [0, "(math.sin(query.anim_time*360*8))/16", 0]
+				},
+				"vagon3": {
+					"rotation": ["(math.cos(query.anim_time*360*4))/2", "-(math.sin(query.anim_time*360*6))/2", "-(math.cos(query.anim_time*360*8))/2"],
+					"position": [0, "-(math.sin(query.anim_time*360*8))/16", 0]
+				},
+				"vagon4": {
+					"rotation": ["-(math.cos(query.anim_time*360*4))/2", "(math.sin(query.anim_time*360*6))/2", "(math.cos(query.anim_time*360*8))/2"],
+					"position": [0, "(math.sin(query.anim_time*360*8))/16", 0]
+				}
+			}
+		}
+	}
+}

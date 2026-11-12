@@ -1,0 +1,53 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  },
+  "vertex": "storytelling:hyperspeed1",
+  "fragment": "storytelling:hyperspeed1",
+  "samplers": [
+    { "name": "DiffuseSampler" }
+  ],
+  "attributes": [
+    "Position"
+  ],
+  "uniforms": [
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]
+    },
+    {
+      "name": "InSize",
+      "type": "float",
+      "count": 2,
+      "values": [ 1.0, 1.0 ]
+    },
+    {
+      "name": "OutSize",
+      "type": "float",
+      "count": 2,
+      "values": [ 1.0, 1.0 ]
+    },
+    {
+      "name": "TimeC",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "Resolution",
+      "type": "float",
+      "count": 2,
+      "values": [1920.0, 1080.0]
+    },
+    {
+      "name": "Reversed",
+      "type": "int",
+      "count": 1,
+      "values": [0]
+    }
+  ]
+}

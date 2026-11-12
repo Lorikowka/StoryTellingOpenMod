@@ -1,0 +1,15 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"sighnboard_levitation": {
+			"loop": true,
+			"animation_length": 8,
+			"bones": {
+				"model": {
+					"rotation": [0, "math.cos(query.anim_time*45)/3", "math.sin(query.anim_time*45)/3"],
+					"position": [0, "math.sin(query.anim_time*90)/3", 0]
+				}
+			}
+		}
+	}
+}

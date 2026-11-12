@@ -1,0 +1,26 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"parrot_dance": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": [0, 0, 0]
+				},
+				"Body": {
+					"rotation": ["30-math.sin(query.anim_time*360*3)*8", 0, "-math.cos(query.anim_time*360*3)*8*2"],
+					"position": ["math.cos(query.anim_time*360*3)/2", "1.5+ math.sin(query.anim_time*360*3)", 0]
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": ["-20+math.cos(query.anim_time*360*3)*8", 0, "5+math.cos(query.anim_time*360*3)*30"],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	}
+}

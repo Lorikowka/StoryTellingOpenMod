@@ -1,0 +1,67 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.unknown",
+				"texture_width": 128,
+				"texture_height": 128,
+				"visible_bounds_width": 4,
+				"visible_bounds_height": 2.5,
+				"visible_bounds_offset": [0, 0.75, 0]
+			},
+			"bones": [
+				{
+					"name": "model",
+					"pivot": [0, 1, 1],
+					"cubes": [
+						{
+							"origin": [-7, 0, -8],
+							"size": [15, 12, 18],
+							"inflate": -0.2,
+							"pivot": [0, 1, 1],
+							"rotation": [0, 180, 0],
+							"uv": {
+								"north": {"uv": [34, 19], "uv_size": [15, -12]},
+								"east": {"uv": [34, 19], "uv_size": [18, 12]},
+								"south": {"uv": [19, 19], "uv_size": [15, 12]},
+								"west": {"uv": [52, 19], "uv_size": [-18, 12]},
+								"up": {"uv": [19, 1], "uv_size": [15, 18]},
+								"down": {"uv": [19, 19], "uv_size": [15, -18]}
+							}
+						},
+						{
+							"origin": [-1, -0.75, 4],
+							"size": [12, 9, 12],
+							"inflate": -0.2,
+							"uv": {
+								"north": {"uv": [24, 66], "uv_size": [-12, 9]},
+								"east": {"uv": [12, 66], "uv_size": [12, 9]},
+								"south": {"uv": [36, 66], "uv_size": [-12, 9]},
+								"west": {"uv": [24, 66], "uv_size": [12, 9]},
+								"up": {"uv": [12, 54], "uv_size": [12, 12]},
+								"down": {"uv": [12, 66], "uv_size": [12, -12]}
+							}
+						},
+						{
+							"origin": [-10, -0.5, -13.75],
+							"size": [15, 9, 12],
+							"inflate": -0.2,
+							"uv": {
+								"north": {"uv": [13, 45], "uv_size": [15, 9]},
+								"east": {"uv": [40, 45], "uv_size": [-12, 9]},
+								"south": {"uv": [13, 33], "uv_size": [15, 9]},
+								"west": {"uv": [28, 45], "uv_size": [12, 9]},
+								"up": {"uv": [13, 33], "uv_size": [15, 12]},
+								"down": {"uv": [13, 45], "uv_size": [15, -12]}
+							}
+						},
+						{"origin": [-10, -0.5, -13.75], "size": [15, 9, 12], "inflate": 0.25, "uv": [74, 86]},
+						{"origin": [-8, 0, -8], "size": [15, 12, 18], "inflate": 0.25, "uv": [62, 54]},
+						{"origin": [-1, -0.75, 4], "size": [12, 9, 12], "inflate": 0.25, "uv": [80, 107]}
+					]
+				}
+			]
+		}
+	]
+}

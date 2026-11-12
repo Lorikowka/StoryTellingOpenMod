@@ -1,0 +1,17 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"idle_camel": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"Body": {
+					"rotation": ["math.sin(query.anim_time*180)", 0, "math.cos(query.anim_time*180)"]
+				},
+				"neck": {
+					"rotation": ["-math.cos(query.anim_time*180)", 0, "math.sin(query.anim_time*180)"]
+				}
+			}
+		}
+	}
+}

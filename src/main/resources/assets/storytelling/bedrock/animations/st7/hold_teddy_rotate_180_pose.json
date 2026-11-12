@@ -1,0 +1,60 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"hold_teddy_rotate_180_pose": {
+			"loop": true,
+			"bones": {
+				"Body": {
+					"rotation": [0.22118, 9.99519, 2.52889],
+					"position": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"BodyUp": {
+					"rotation": [0, -2.5, -7.5]
+				},
+				"Head": {
+					"rotation": [5.4241, -9.5567, 5.00333],
+					"position": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightArm": {
+					"rotation": [-12.50529, -36.2837, 4.97012],
+					"position": [0, -1, -2]
+				},
+				"RightHand": {
+					"rotation": [-55, 0, 0]
+				},
+				"Right_placeholder": {
+					"rotation": [87.57203, -15.84397, -109.08202],
+					"position": [0.22724, 2.62036, -1.07419],
+					"scale": [1.429, 1.429, 1.429]
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": {
+							"post": [4.2038, 8.34297, 5.98598],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -2.25, -0.5],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftHand": {
+					"rotation": [-60, 0, 0]
+				}
+			}
+		}
+	}
+}

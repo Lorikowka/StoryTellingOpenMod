@@ -1,0 +1,99 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"fastbookread_cycle_placeholder": {
+			"loop": true,
+			"animation_length": 1.0833,
+			"bones": {
+				"BodyUp": {
+					"rotation": [-2.5, 0, 0]
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [17.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.3333": {
+							"post": [20.15874, -7.04533, -2.57816],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [18.07779, 14.2906, 4.60659],
+							"lerp_mode": "catmullrom"
+						},
+						"0.9167": {
+							"post": [23.07779, 14.2906, 4.60659],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0833": {
+							"post": [17.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightArm": {
+					"rotation": [-44.31282, 8.80348, 8.90928],
+					"position": [0, 0, -2]
+				},
+				"RightHand": {
+					"rotation": [0, 0, -55]
+				},
+				"Right_placeholder": {
+					"rotation": [0, 0, 60]
+				},
+				"boock_page": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4167": [0, 0, 0],
+						"0.6667": [0, 0, 0],
+						"0.9167": {
+							"pre": [0, 135, 0],
+							"post": [0, 135, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": [-54.76837, -6.13784, -4.31837],
+						"0.3333": {
+							"pre": [-54.76837, -6.13784, -4.31837],
+							"post": [-54.76837, -6.13784, -4.31837],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [-54.90304, 28.32785, 20.2855],
+							"lerp_mode": "catmullrom"
+						},
+						"0.8333": {
+							"post": [-68.71433, 14.26008, 10.25103],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0833": [-54.76837, -6.13784, -4.31837]
+					},
+					"position": {
+						"0.0": [-1, 0, -2],
+						"0.3333": [-1, 0, -2],
+						"0.5833": [-2, 0, -3],
+						"0.8333": [-1, 0, -2]
+					}
+				},
+				"LeftHand": {
+					"rotation": {
+						"0.0": [-24.04887, 51.67952, 37.77804],
+						"0.8333": {
+							"pre": [-6.19173, 51.67952, 37.77804],
+							"post": [-6.19173, 51.67952, 37.77804],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0833": [-24.04887, 51.67952, 37.77804]
+					}
+				}
+			}
+		}
+	}
+}

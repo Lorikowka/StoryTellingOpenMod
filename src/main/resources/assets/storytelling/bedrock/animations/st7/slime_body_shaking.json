@@ -1,0 +1,23 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"slime_body_shaking": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"slimes1": {
+					"rotation": ["-math.cos(query.anim_time*360*3)", "-math.sin(query.anim_time*360*3)", 0],
+					"position": [0, "-math.cos(query.anim_time*360*4)/6", 0]
+				},
+				"slimes3": {
+					"rotation": ["math.sin(query.anim_time*360*3)", "math.cos(query.anim_time*360*3)", 0],
+					"position": [0, "math.cos(query.anim_time*360*4)/6", 0]
+				},
+				"slimes4": {
+					"rotation": ["-math.cos(query.anim_time*360*3)", "-math.sin(query.anim_time*360*3)", 0],
+					"position": [0, "-math.sin(query.anim_time*360*4)/6", 0]
+				}
+			}
+		}
+	}
+}

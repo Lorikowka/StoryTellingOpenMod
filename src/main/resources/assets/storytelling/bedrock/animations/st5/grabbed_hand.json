@@ -1,0 +1,35 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"grabbed_hand_right": {
+			"loop": true,
+			"bones": {
+				"BodyUp": {
+					"rotation": [-0.17632, -9.99846, 1.01542]
+				},
+				"Head": {
+					"rotation": [0, 10, 0]
+				},
+				"RightArm": {
+					"rotation": [-7.5, -20, 0],
+					"position": [0, 0, -0.25]
+				}
+			}
+		},
+		"grabbed_hand_left": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"BodyUp": {
+					"rotation": [-0.17632, 9.99846, -1.01542]
+				},
+				"Head": {
+					"rotation": [0, -10, 0]
+				},
+				"LeftArm": {
+					"rotation": [-7.5, 20, 0],
+					"position": [0, 0, -0.25]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"scarecrow_idle": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"model": {
+					"rotation": ["math.cos(query.anim_time*360/2)*0.2", 0, "math.sin(query.anim_time*360/2)*0.2"]
+				},
+				"head": {
+					"rotation": [0, "math.cos(query.anim_time*360/2)*0.3", 0]
+				},
+				"bodyup": {
+					"rotation": [0, "math.sin(query.anim_time*360/2)*0.3", 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,99 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"stella_thinking_cycle": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [-7.38733, 1.29876, -0.08385],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": [4.88206, -1.08088, 7.45392],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [-0.06644, -0.74104, 0.09456]
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [-10.2764, 10.36104, -3.76473],
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"post": [-7.07756, 10.36104, -3.76473],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [-10.2764, 10.36104, -3.76473],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Eyes": {
+					"scale": [1, 0.6, 1]
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": [-61.34445, -33.394, 28.44288],
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": {
+							"post": [-62.83368, -34.56449, 31.10702],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [-61.34445, -33.394, 28.44288],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0.75604, -0.07743, -2.24879],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [0.75604, -0.07743, -2.24879],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightHand": {
+					"rotation": {
+						"0.0": {
+							"post": [-112.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5417": {
+							"post": [-123.75327, -15.29924, 8.46165],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [-112.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftArm": {
+					"rotation": [5.30806, 75.29515, -28.28011],
+					"position": [0, 0, 0.75]
+				},
+				"LeftHand": {
+					"rotation": [-67.5, 0, 0]
+				},
+				"SlimeBodyUp": {
+					"rotation": [0, 0, -5]
+				}
+			}
+		}
+	}
+}

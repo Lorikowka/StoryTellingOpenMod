@@ -1,0 +1,30 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"rotate_head_180_left": {
+			"loop": true,
+			"bones": {
+				"Head": {
+					"rotation": [0, -180, 0]
+				}
+			}
+		},
+		"rotate_head_180_right": {
+			"loop": true,
+			"bones": {
+				"Head": {
+					"rotation": [0, 180, 0]
+				}
+			}
+		},
+		"rotate_head_180_z": {
+			"loop": true,
+			"bones": {
+				"Head": {
+					"rotation": [0, 0, -180],
+					"position": [0, 8, 0]
+				}
+			}
+		}
+	}
+}

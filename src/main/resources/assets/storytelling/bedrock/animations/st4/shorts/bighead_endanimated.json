@@ -1,0 +1,66 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"bighead_endanimated": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.875,
+			"bones": {
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.1667": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.3333": {
+							"post": [8.24893, -0.71916, 4.94814],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5833": {
+							"post": [-7.47178, -0.65182, -4.95744],
+							"lerp_mode": "catmullrom"
+						},
+						"0.875": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"scale": {
+						"0.0": {
+							"post": [1, 1, 1],
+							"lerp_mode": "catmullrom"
+						},
+						"0.25": {
+							"post": [1.1, 0.8, 1.1],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5": {
+							"post": [1.7, 2.2, 1.7],
+							"lerp_mode": "catmullrom"
+						},
+						"0.75": {
+							"post": [2, 2, 2],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Mouth": {
+					"position": {
+						"0.2083": [0, 0, 0],
+						"0.4167": [0, 0, -1]
+					},
+					"scale": {
+						"0.4167": [1, 1, 1],
+						"0.625": [1.8, 1.6, 1]
+					}
+				},
+				"teath": {
+					"scale": [1, 0, 1]
+				}
+			}
+		}
+	}
+}

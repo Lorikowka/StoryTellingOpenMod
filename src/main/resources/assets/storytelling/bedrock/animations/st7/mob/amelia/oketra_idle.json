@@ -1,0 +1,67 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"oketra_idle": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"body": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360/2-45)"],
+					"position": [0, "math.sin(query.anim_time*360/2)/4", 0]
+				},
+				"tail": {
+					"rotation": [0, 0, "-math.cos(query.anim_time*360/2-45)*2"]
+				},
+				"BodyUp": {
+					"rotation": [0, "math.cos(query.anim_time*360/2)/4", "math.sin(query.anim_time*360/2-45)/4"]
+				},
+				"neck": {
+					"rotation": ["-math.sin(query.anim_time*360/2-15)", 0, 0]
+				},
+				"head": {
+					"rotation": ["math.sin(query.anim_time*360/2)*2", "math.sin(query.anim_time*360/2-90)", "-math.cos(query.anim_time*360/2-90)"]
+				},
+				"Mouth": {
+					"rotation": ["-math.sin(query.anim_time*360/2-45)*2", 0, 0],
+					"position": [0, 0, "-math.sin(query.anim_time*360/2)/4"]
+				},
+				"Right_Leg": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360/2-45)"],
+					"position": [0, "-math.sin(query.anim_time*360/2)/4", 0]
+				},
+				"LeftFeet": {
+					"rotation": ["-math.sin(query.anim_time*360/2-45)", 0, 0],
+					"position": [0, 0, "math.cos(query.anim_time*360/2)/8"]
+				},
+				"Left_Leg": {
+					"rotation": [0, 0, "-math.sin(query.anim_time*360/2-45)*1.2"],
+					"position": [0, "-math.sin(query.anim_time*360/2)/4", 0]
+				},
+				"RightFeet": {
+					"rotation": ["math.sin(query.anim_time*360/2-45)", 0, 0],
+					"position": [0, 0, "math.cos(query.anim_time*360/2)/8"]
+				},
+				"Leftt_BackLeg": {
+					"rotation": ["math.sin(query.anim_time*360/2-45)", 0, 0]
+				},
+				"LeftBackFoot": {
+					"rotation": ["-math.sin(query.anim_time*360/2-45-45)", 0, 0]
+				},
+				"bone2": {
+					"rotation": ["-math.sin(query.anim_time*360/2-45)*2", 0, 0],
+					"position": [0, 0, "-math.sin(query.anim_time*360/2)/4"]
+				},
+				"Right_BackLeg": {
+					"rotation": ["-math.sin(query.anim_time*360/2-45)", 0, 0]
+				},
+				"RightBackFoot": {
+					"rotation": ["math.sin(query.anim_time*360/2-45-45)", 0, 0]
+				},
+				"bone": {
+					"rotation": ["math.sin(query.anim_time*360/2-45)*2", 0, 0],
+					"position": [0, 0, "math.sin(query.anim_time*360/2)/4"]
+				}
+			}
+		}
+	}
+}

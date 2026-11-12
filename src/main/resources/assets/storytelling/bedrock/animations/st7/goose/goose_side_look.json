@@ -1,0 +1,35 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"goose_side_look_right": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"Body": {
+					"rotation": [-2.66399, 14.76689, -10.34527],
+					"position": [-0.25, 0, 0]
+				},
+				"head": {
+					"rotation": [37.73987, 69.91647, 38.79858]
+				},
+				"LeftLeg": {
+					"rotation": [0, 0, -7.5]
+				}
+			}
+		},
+		"goose_side_look_left": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"Body": {
+					"rotation": [-2.66399, -14.76689, 10.34527],
+					"position": [0.25, 0, 0]
+				},
+				"head": {
+					"rotation": [37.73987, -69.91647, -38.79858]
+				},
+				"RightLeg": {
+					"rotation": [0, 0, 7.5]
+				}
+			}
+		}
+	}
+}

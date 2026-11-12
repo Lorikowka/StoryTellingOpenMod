@@ -1,0 +1,29 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"simulator_block_idle": {
+			"loop": true,
+			"animation_length": 8,
+			"bones": {
+				"bone": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"8.0": [0, -360, 0]
+					}
+				},
+				"bone3": {
+					"rotation": ["math.sin(query.anim_time*360/4)", 0, "math.cos(query.anim_time*360/4)"],
+					"position": [0, "math.sin(query.anim_time*360/4)", 0]
+				},
+				"bone2": {
+					"rotation": ["math.cos(query.anim_time*360/4)", 0, "math.sin(query.anim_time*360/4)"],
+					"position": [0, "math.cos(query.anim_time*360/4)", 0]
+				},
+				"bone4": {
+					"rotation": ["math.sin(query.anim_time*360/8)", 0, "math.cos(query.anim_time*360/8)"],
+					"position": [0, "math.cos(query.anim_time*360/8-45)", 0]
+				}
+			}
+		}
+	}
+}

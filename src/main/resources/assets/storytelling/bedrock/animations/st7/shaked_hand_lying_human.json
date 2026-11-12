@@ -1,0 +1,25 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"shaked_hand_lying_human": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 2.5,
+			"bones": {
+				"RightArm2": {
+					"rotation": {
+						"0.4583": [0, 0, 0],
+						"0.5833": [0, "math.sin(query.anim_time*360*3.5)*3", "math.sin(query.anim_time*360*3.5)*5 "],
+						"2.2917": [0, "math.sin(query.anim_time*360*3.5)*3", "math.sin(query.anim_time*360*3.5)*5 "],
+						"2.5": [0, 0, 0]
+					},
+					"position": {
+						"0.4583": [0, 0, 0],
+						"0.5833": [0, 0, 0],
+						"2.2917": [0, 0, 0],
+						"2.5": [0, 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

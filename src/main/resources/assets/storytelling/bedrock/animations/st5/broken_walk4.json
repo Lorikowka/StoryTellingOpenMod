@@ -1,0 +1,54 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"broken_walk4": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": [0, 0, "-math.cos(q.anim_time*360)/4"],
+					"position": [0, -11, 0]
+				},
+				"Body": {
+					"rotation": ["32.4079+math.sin(q.anim_time*360)", "2.3099+math.sin(q.anim_time*-360+)*2", "1.4493+math.sin(q.anim_time*-360-90)*4"],
+					"position": [0, "math.sin(q.anim_time*360*2-90)/6", 0]
+				},
+				"BodyUp": {
+					"rotation": ["57.3377+math.cos(q.anim_time*-360-90)*8", -2.92054, "-22.0861-math.sin(q.anim_time*-360-90)*3"]
+				},
+				"Head": {
+					"rotation": ["-86.179+math.cos(q.anim_time*-360)*8", "11.9703+math.cos(q.anim_time*-360)", "18.8219-math.sin(q.anim_time*-360+90)"],
+					"position": [0, "-0.2-math.cos(q.anim_time*360*2-90)/6", 0]
+				},
+				"RightArm": {
+					"rotation": [-78.16773, "41.4258-math.sin(q.anim_time*-360-90)*8", 27.9451],
+					"position": [0, 0, 1]
+				},
+				"RightHand": {
+					"rotation": ["-math.max(-math.sin(q.anim_time*-360-45)*16, 0)", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["-84.8071+math.cos(q.anim_time*360)*32", "-9.9008-math.sin(q.anim_time*360+45)*4", "-1.4196+math.sin(q.anim_time*-360-90)*2"],
+					"position": [0, "-0.5+math.sin(q.anim_time*-720)/6", "0.75+math.sin(q.anim_time*360)/4"]
+				},
+				"LeftHand": {
+					"rotation": ["-37.5-math.max(math.cos(q.anim_time*-360-45)*32, 0)", 0, 0]
+				},
+				"LeftLeg": {
+					"rotation": [90, "math.sin(q.anim_time*-360-90)*1.5", "math.sin(q.anim_time*-360-90)*2"],
+					"position": [0, " math.max(math.cos(q.anim_time*-360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/2, -2)"]
+				},
+				"LeftFoot": {
+					"rotation": [0, 0, 0]
+				},
+				"RightLeg": {
+					"rotation": ["math.sin(q.anim_time*-360-90)*+74", "math.sin(q.anim_time*-360-90)*1.5", "math.sin(q.anim_time*-360-90)*2"],
+					"position": [0, "math.max(math.cos(q.anim_time*360-90), 0.2)", "math.max(math.sin(q.anim_time*360-90)/-2, -2)"]
+				},
+				"RightFoot": {
+					"rotation": ["math.max(-math.sin(q.anim_time*-360-45)*32, 0)", 0, 0]
+				}
+			}
+		}
+	}
+}

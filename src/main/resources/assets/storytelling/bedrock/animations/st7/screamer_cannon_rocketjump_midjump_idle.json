@@ -1,0 +1,24 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"screamer_cannon_rocketjump_midjump_idle": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"model": {
+					"rotation": ["math.sin(query.anim_time*360*3)", "-math.cos(query.anim_time*360*3)", "-math.cos(query.anim_time*360*3)"],
+					"position": ["math.sin(query.anim_time*360*2)/3", "-math.cos(query.anim_time*360*2)/3", "math.cos(query.anim_time*360*2)/3"]
+				},
+				"BodyUp": {
+					"rotation": ["math.sin(query.anim_time*360*3)", "-math.cos(query.anim_time*360*3)", "-math.cos(query.anim_time*360*3)"]
+				},
+				"Head": {
+					"rotation": ["-math.sin(query.anim_time*360*3)*2", "math.cos(query.anim_time*360*3)*2", "math.cos(query.anim_time*360*3)*2"]
+				},
+				"LeftLeg": {
+					"rotation": ["math.sin(query.anim_time*360*3)*3", "-math.cos(query.anim_time*360*3)*3", "-math.cos(query.anim_time*360*3)*3"]
+				}
+			}
+		}
+	}
+}

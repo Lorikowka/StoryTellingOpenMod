@@ -1,0 +1,29 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"hold_hand_left": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"LeftArm": {
+					"rotation": [-11.05405, 79.82308, -54.27248],
+					"position": [0.5, -0.75, 0.75]
+				},
+				"LeftHand": {
+					"rotation": [0, 0, 0]
+				}
+			}
+		},
+		"hold_hand_right": {
+			"loop": true,
+			"bones": {
+				"RightArm": {
+					"rotation": [38.0668, 80.27255, 78.90273],
+					"position": [-0.5, -0.75, -0.75]
+				},
+				"RightHand": {
+					"rotation": [0, 0, -10]
+				}
+			}
+		}
+	}
+}

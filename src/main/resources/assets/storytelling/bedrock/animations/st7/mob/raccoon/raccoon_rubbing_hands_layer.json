@@ -1,0 +1,24 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"raccoon_rubbing_hands_layer": {
+			"loop": true,
+			"bones": {
+				"Body": {
+					"rotation": ["math.cos(query.anim_time*360*2)/4", 0, "math.sin(query.anim_time*360*2)/4"]
+				},
+				"Head": {
+					"rotation": ["-math.cos(query.anim_time*360*2+30)/2", 0, "-math.sin(query.anim_time*360*2+30)/2"]
+				},
+				"LeftArm": {
+					"rotation": ["-50+math.sin(query.anim_time*360*2)*4", 0, "155+math.cos(query.anim_time*360*2)*4"],
+					"position": [0, -2, 2]
+				},
+				"RightArm": {
+					"rotation": ["-50+-math.sin(query.anim_time*360*2)*5", 0, "-152.5+-math.cos(query.anim_time*360*2)*5"],
+					"position": [0, -2, 2]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,23 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"scint_sphere_idle": {
+			"loop": true,
+			"animation_length": 20,
+			"bones": {
+				"model": {
+					"position": [0, "1.25+math.sin(query.anim_time*360/5)/2", 0],
+					"scale": 1.1
+				},
+				"scint": {
+					"rotation": [0, "-math.abs(query.anim_time*360)/10", 0],
+					"position": [0, "math.cos(query.anim_time*360/5)/2", 0],
+					"scale": 0.9
+				},
+				"D20": {
+					"rotation": [0, "math.abs(query.anim_time*360)/20", 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,60 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"body_pose_sit_stairs": {
+			"loop": true,
+			"bones": {
+				"model": {
+					"position": [0, -3, 0]
+				},
+				"LeftLeg": {
+					"rotation": [-63.96842, -23.90931, 7.9945]
+				},
+				"LeftFoot": {
+					"rotation": [69.84126, 7.04533, -2.57816]
+				},
+				"RightLeg": {
+					"rotation": [-59.71571, 8.98895, -0.55516]
+				},
+				"RightFoot": {
+					"rotation": [57.47282, -1.84293, 1.68956]
+				}
+			}
+		},
+		"arms_cry_layer": {
+			"loop": true,
+			"bones": {
+				"Head": {
+					"rotation": [32.5, 0, 0],
+					"position": [0, -1, 0]
+				}
+			}
+		},
+		"arms_cry_head_layer": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"Body": {
+					"rotation": [7.5, 0, 0],
+					"position": [0, -1, 0]
+				},
+				"BodyUp": {
+					"rotation": [45, 0, 0]
+				},
+				"RightArm": {
+					"rotation": [-46.1453, -12.80911, -12.02501],
+					"position": [1, -1, -2]
+				},
+				"RightHand": {
+					"rotation": [-81.28269, -20.05606, -67.8905]
+				},
+				"LeftArm": {
+					"rotation": [-46.1453, 12.80911, 12.02501],
+					"position": [-1, -1, -2]
+				},
+				"LeftHand": {
+					"rotation": [-82.19487, 20.41534, 65.25367]
+				}
+			}
+		}
+	}
+}

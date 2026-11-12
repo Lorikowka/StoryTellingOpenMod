@@ -1,0 +1,36 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"heart_attack_breath_cycle_layer": {
+			"loop": true,
+			"animation_length": 1,
+			"bones": {
+				"BodyUp": {
+					"rotation": ["math.sin(q.anim_time * 360 + 270) + 1", 0, 0],
+					"position": [0, "math.sin(q.anim_time * 360) / 9", "-math.sin(q.anim_time * 360) / 9"]
+				},
+				"Head": {
+					"rotation": ["math.sin(q.anim_time * 360 + 180) + 1", 0, 0],
+					"position": [0, 0, "math.sin(q.anim_time * 360) / 9"]
+				},
+				"eyebrow": {
+					"position": [0, "math.sin(q.anim_time * 360) / 20", 0]
+				},
+				"RightArm": {
+					"rotation": ["-1.5*(math.sin(q.anim_time * 360 + 270) + 0.5)", 0, 0],
+					"position": [0, "math.sin(q.anim_time * 360) / 9 + (math.pi / 30)", 0]
+				},
+				"RightHand": {
+					"rotation": ["-1.5*(math.sin(q.anim_time * 360 + 270) + 0.5)", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["-1.5*(math.sin(q.anim_time * 360 + 270) + 0.5)", 0, 0],
+					"position": [0, "math.sin(q.anim_time * 360) / 9 + (math.pi / 30)", 0]
+				},
+				"LeftHand": {
+					"rotation": ["-1.5*(math.sin(q.anim_time * 360 + 270) + 0.5)", 0, 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,15 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"cloud_circling_cycle": {
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"model": {
+					"rotation": [0, "math.cos(query.anim_time*360/4)*72", "math.sin(query.anim_time*360/4)*16"],
+					"position": ["math.cos(query.anim_time*360/4+90)*16", 0, "math.sin(query.anim_time*360/2)*6"]
+				}
+			}
+		}
+	}
+}

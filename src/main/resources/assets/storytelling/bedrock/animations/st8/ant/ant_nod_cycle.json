@@ -1,0 +1,26 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"ant_nod_cycle": {
+			"loop": true,
+			"animation_length": 0.4,
+			"bones": {
+				"BodyUp": {
+					"rotation": ["math.sin(query.anim_time*360*2.5)*7", 0, 0]
+				},
+				"LeftOccularEye": {
+					"position": [0, "math.sin(query.anim_time*360*2.5)/15", 0]
+				},
+				"RightOccularEye": {
+					"position": [0, "math.sin(query.anim_time*360*2.5)/15", 0]
+				},
+				"RightArm": {
+					"rotation": ["math.cos(query.anim_time*360*2.5)*2 + -math.sin(query.anim_time*360*2.5)*7", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": ["math.cos(query.anim_time*360*2.5)*2 + -math.sin(query.anim_time*360*2.5)*7", 0, 0]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,51 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"shoulderlook_pose_right": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"Body": {
+					"rotation": [0, 0, 0]
+				},
+				"BodyUp": {
+					"rotation": [0, 34, 0]
+				},
+				"Head": {
+					"rotation": [-20.77637, 71.29672, -17.06275]
+				},
+				"ocular_right": {
+					"position": [-1, 0, 0]
+				},
+				"RightArm": {
+					"rotation": [2.47864, -0.32621, 7.49294]
+				}
+			}
+		},
+		"shoulderlook_pose_left": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"Body": {
+					"rotation": [0, 0, 0]
+				},
+				"BodyUp": {
+					"rotation": [0, -34, 0]
+				},
+				"Head": {
+					"rotation": [-20.77637, -71.29672, 17.06275]
+				},
+				"ocular_right": {
+					"position": [0, 0, 0]
+				},
+				"RightArm": {
+					"rotation": [2.47864, -0.32621, 7.49294]
+				},
+				"ocular_left": {
+					"position": [1, 0, 0]
+				},
+				"LeftArm": {
+					"rotation": [2.47864, 0.32621, -7.49294]
+				}
+			}
+		}
+	}
+}

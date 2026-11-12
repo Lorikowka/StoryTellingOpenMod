@@ -1,0 +1,137 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"deer_held_by_back_cycle": {
+			"loop": true,
+			"animation_length": 0.3333,
+			"bones": {
+				"model": {
+					"rotation": ["math.sin(query.anim_time*360*3+10)*2", 0, "math.sin(query.anim_time*360*3+10)"],
+					"position": [0, "4-math.cos(query.anim_time*360*3+45)", 0]
+				},
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [17.5, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": ["50+-math.sin(query.anim_time*360*3+10)", 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightArm": {
+					"rotation": {
+						"0.0": {
+							"post": ["-32.7072+-math.cos(query.anim_time*360*3+10)*4", -6.58301, 3.60155],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.35355, -1.06066],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftArm": {
+					"rotation": {
+						"0.0": {
+							"post": ["-32.7072+-math.cos(query.anim_time*360*3+10)*4", 6.58301, -3.60155],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.35355, -1.06066],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Legs": {
+					"rotation": {
+						"0.0": {
+							"post": [-20, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightLeg": {
+					"relative_to": {
+						"rotation": "entity"
+					},
+					"rotation": {
+						"0.0": {
+							"post": ["2.5552+-math.cos(query.anim_time*360*3+10)*4", -7.45242, -0.8459],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.35355, -1.06066],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightFoot": {
+					"rotation": ["12.5-math.sin(query.anim_time*360*3+10)*8", 0, 0]
+				},
+				"LeftLeg": {
+					"relative_to": {
+						"rotation": "entity"
+					},
+					"rotation": {
+						"0.0": {
+							"post": ["2.5552+-math.cos(query.anim_time*360*3+10)*4", 7.45242, 0.8459],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": [0, -0.35355, -1.06066],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"LeftFoot": {
+					"rotation": ["12.5-math.sin(query.anim_time*360*3+10)*8", 0, 0]
+				},
+				"tail": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"Body2": {
+					"rotation": {
+						"0.0": {
+							"post": [20, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"BodyUp": {
+					"rotation": {
+						"0.0": {
+							"post": ["math.cos(query.anim_time*360*3+10)*4", 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightHand": {
+					"rotation": ["-math.sin(query.anim_time*360*3+10)*8", 0, 0]
+				},
+				"LeftHand": {
+					"rotation": ["-math.sin(query.anim_time*360*3+10)*8", 0, 0]
+				}
+			}
+		}
+	}
+}

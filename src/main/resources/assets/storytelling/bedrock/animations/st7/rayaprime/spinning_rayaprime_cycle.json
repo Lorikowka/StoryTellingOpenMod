@@ -1,0 +1,20 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"spinning_rayaprime_cycle": {
+			"loop": true,
+			"animation_length": 0.33333,
+			"bones": {
+				"model": {
+					"rotation": {
+						"0.0": {
+							"post": ["-130+math.abs(query.anim_time*360)*3", 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": [0, 34, 12]
+				}
+			}
+		}
+	}
+}

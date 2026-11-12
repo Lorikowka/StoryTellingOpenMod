@@ -1,0 +1,45 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"stronghug_cycle": {
+			"loop": true,
+			"bones": {
+				"Body": {
+					"rotation": [-0.00108, -0.09286, -0.05129]
+				},
+				"BodyUp": {
+					"rotation": [10, 0, 0]
+				},
+				"Head": {
+					"rotation": [-24.76754, -47.20447, 31.31663]
+				},
+				"RightArm": {
+					"rotation": ["-54.9196+math.sin(query.anim_time*360*4)", 17.8664, 73.87171],
+					"position": [1, 0, -2]
+				},
+				"RightHand": {
+					"rotation": ["-94.5027+math.sin(query.anim_time*360*4)", 13.92917, -72.81838]
+				},
+				"LeftArm": {
+					"rotation": ["-54.9196+math.sin(query.anim_time*360*4)", -17.8664, -73.87171],
+					"position": [-1, 0, -2]
+				},
+				"LeftHand": {
+					"rotation": ["-83.9356+-math.cos(query.anim_time*360*4)", -7.33758, 75.1687]
+				},
+				"eyebrow": {
+					"position": [0, -0.5, 0]
+				},
+				"eyebrow_right": {
+					"rotation": [0, 0, -2.5]
+				},
+				"eyebrow_left": {
+					"rotation": [0, 0, 2.5]
+				},
+				"Eyes": {
+					"scale": [1, 0, 1]
+				}
+			}
+		}
+	}
+}

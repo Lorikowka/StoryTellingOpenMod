@@ -1,0 +1,30 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"camel_drink": {
+			"loop": true,
+			"bones": {
+				"body": {
+					"rotation": ["15+math.cos(query.anim_time * 180)*2", 0, "Math.sqrt( Math.pow((Math.cos(query.anim_time*180)+1), 3)+1)-1"],
+					"position": [0, "-6+Math.sqrt( Math.pow((Math.sin(query.anim_time*180))+1, 2)+2)-1", 1]
+				},
+				"neck": {
+					"rotation": ["65+Math.sqrt( Math.pow((Math.cos(query.anim_time*180)+1), 4)+1)-1", 0, 0],
+					"position": [0, 0, 0]
+				},
+				"head": {
+					"rotation": ["0+Math.sqrt( Math.pow((Math.cos(query.anim_time*180-45)+1), 4)+1)-1", -2.5, 0],
+					"position": [0, -0.75, 0]
+				},
+				"front_left_leg": {
+					"rotation": [-25, 0, -12.5],
+					"position": [-1, -2, 3]
+				},
+				"front_right_leg": {
+					"rotation": [-25, 0, 12.5],
+					"position": [1, -2, 3]
+				}
+			}
+		}
+	}
+}

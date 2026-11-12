@@ -1,0 +1,70 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"heavy_breathing": {
+			"loop": true,
+			"animation_length": 0.65,
+			"bones": {
+				"Body": {
+					"rotation": {
+						"0.0": {
+							"post": [0, 0, "-math.cos(query.anim_time*360*1.54-55)/4"],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"BodyUp": {
+					"rotation": ["12.5-math.sin(query.anim_time*360*1.54)", 0, "0+math.cos(query.anim_time*360*1.54)/12"],
+					"position": [0, "math.sin(query.anim_time*360*1.54-25)/4", "math.sin(query.anim_time*360*1.54+45)/12"]
+				},
+				"Head": {
+					"rotation": {
+						"0.0": {
+							"post": ["10+math.cos(query.anim_time*360*1.54+55)*2", 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"RightArm": {
+					"rotation": ["-7.4927+math.sin(query.anim_time*360*1.54+15)*2", 7.49918, 0.11127]
+				},
+				"eyebrow_right": {
+					"rotation": [0, 0, 2.5]
+				},
+				"eyebrow_left": {
+					"rotation": [0, 0, -2.5]
+				},
+				"ocular_right": {
+					"scale": [1, 0.6, 1]
+				},
+				"ocular_left": {
+					"scale": [1, 0.6, 1]
+				},
+				"Mouth": {
+					"position": [0, 0, -1],
+					"scale": {
+						"0.0": [0.6, 1.4, 1],
+						"0.05": [0.6, 1.4, 1],
+						"0.15": [1, 1.9, 1],
+						"0.3": [1, 1.9, 1],
+						"0.45": [0.6, 1.4, 1],
+						"0.6": [0.6, 1.4, 1]
+					}
+				},
+				"teath": {
+					"scale": [1, 0, 1]
+				},
+				"RightHand": {
+					"rotation": ["-5+math.sin(query.anim_time*360*1.54+22)/2", 0, 0]
+				},
+				"LeftArm": {
+					"rotation": [-107.83601, 68.62824, -114.37257],
+					"position": [0, -0.25, -0.25]
+				},
+				"LeftHand": {
+					"rotation": [-106.44874, -3.68817, 21.97654]
+				}
+			}
+		}
+	}
+}

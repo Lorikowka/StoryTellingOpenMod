@@ -1,0 +1,20 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"model_swing_left_right": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"model": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360/2)*3"]
+				},
+				"Body": {
+					"rotation": [0, 0, "math.sin(query.anim_time*360/2-40)*3"]
+				},
+				"Head": {
+					"rotation": [0, 0, "-math.cos(query.anim_time*360/2)"]
+				}
+			}
+		}
+	}
+}
