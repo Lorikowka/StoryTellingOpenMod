@@ -50,6 +50,8 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -376,6 +378,26 @@ public final class LuaStory {
                @Override public boolean isDone() { return applied; }
                @Override public void reset() { applied = false; }
             });
+            case PARTICLE -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean applied;
+               private String marker() { return "lua.action." + performer.getActionIndex(this); }
+               @Override public void tick() {
+                  if (script.getFlags().has(marker())) { applied = true; return; }
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (player == null) return;
+                  ParticleType<?> type = ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(step.text));
+                  if (!(type instanceof SimpleParticleType simple)) {
+                     throw new IllegalArgumentException("Particle must be a registered simple particle: " + step.text);
+                  }
+                  player.serverLevel().sendParticles(simple, Double.parseDouble(step.arguments[0]),
+                     Double.parseDouble(step.arguments[1]), Double.parseDouble(step.arguments[2]),
+                     Integer.parseInt(step.arguments[3]), 0.3, 0.3, 0.3, 0.02);
+                  script.getFlags().set(marker());
+                  applied = true;
+               }
+               @Override public boolean isDone() { return applied; }
+               @Override public void reset() { applied = false; }
+            });
          }
       }
    }
@@ -503,6 +525,14 @@ public final class LuaStory {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() < 1 || args.narg() > 2) throw new IllegalArgumentException("give_item(id, [count]) expected");
             builder.giveItem(nonempty(args.arg(1)), args.narg() == 2 ? args.arg(2).checkint() : 1);
+            return NIL;
+         }
+      });
+      globals.set("spawn_particle", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 5) throw new IllegalArgumentException("spawn_particle(id, x, y, z, count) expected");
+            builder.particle(nonempty(args.arg(1)), args.arg(2).checkdouble(), args.arg(3).checkdouble(),
+               args.arg(4).checkdouble(), args.arg(5).checkint());
             return NIL;
          }
       });
@@ -815,7 +845,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, PLAY_SOUND, GIVE_ITEM }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, PLAY_SOUND, GIVE_ITEM, PARTICLE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -950,6 +980,16 @@ public final class LuaStory {
             throw new IllegalArgumentException("give_item requires an item ID and count 1–64");
          }
          add(new Step(Type.GIVE_ITEM, 0, id, null, new String[] {Integer.toString(count)}));
+      }
+
+      private void particle(String id, double x, double y, double z, int count) {
+         if (ResourceLocation.tryParse(id) == null || !Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
+            || Math.abs(x) > 30000000 || Math.abs(y) > 30000000 || Math.abs(z) > 30000000
+            || count < 1 || count > 200) {
+            throw new IllegalArgumentException("spawn_particle requires particle ID, finite coordinates and count 1–200");
+         }
+         add(new Step(Type.PARTICLE, 0, id, null,
+            new String[] {Double.toString(x), Double.toString(y), Double.toString(z), Integer.toString(count)}));
       }
 
       private void npcAction(Type type, String key, PositionSpec position) {
