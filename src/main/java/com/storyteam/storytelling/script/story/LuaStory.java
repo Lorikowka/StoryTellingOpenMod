@@ -217,6 +217,7 @@ public final class LuaStory {
                private boolean applied;
                private int waiting;
                private boolean approaching;
+               private final Set<BlockPos> attemptedStands = new HashSet<>();
                private String marker() { return "lua.block." + performer.getActionIndex(this); }
                private void finish(boolean success) {
                   Entity npcEntity = characters.get(step.text).repositoryEntity();
@@ -242,21 +243,39 @@ public final class LuaStory {
                      if (++waiting > 400) { finish(false); return; }
                      if (!approaching) {
                         if (!(npc.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
-                        BlockPos stand = java.util.Arrays.stream(new net.minecraft.core.Direction[] {
-                              net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH,
-                              net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST})
-                           .map(block::relative).filter(pos -> level.getBlockState(pos).isAir())
-                           .min(java.util.Comparator.comparingDouble(pos -> npc.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))))
-                           .orElse(null);
-                        if (stand == null || !npc.getNavigation().moveTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 0.8)) {
+                        List<BlockPos> stands = new ArrayList<>();
+                        for (int dy = -2; dy <= 1; dy++) {
+                           for (int dx = -2; dx <= 2; dx++) {
+                              for (int dz = -2; dz <= 2; dz++) {
+                                 if (Math.abs(dx) + Math.abs(dz) < 1 || Math.abs(dx) + Math.abs(dz) > 3) continue;
+                                 BlockPos pos = block.offset(dx, dy, dz);
+                                 if (attemptedStands.contains(pos) || !level.hasChunkAt(pos)
+                                    || !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                                    || !level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
+                                    || level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty()) continue;
+                                 stands.add(pos);
+                              }
+                           }
+                        }
+                        stands.sort(java.util.Comparator.comparingDouble(pos -> npc.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))));
+                        BlockPos selected = null;
+                        for (BlockPos stand : stands) {
+                           attemptedStands.add(stand);
+                           if (npc.getNavigation().moveTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 0.8)) {
+                              selected = stand;
+                              break;
+                           }
+                        }
+                        if (selected == null) {
+                           Storytelling.LOG.info("NPC could not find a reachable stand near block: story={}, npc={}, block={}", id, step.text, block);
                            finish(false);
                            return;
                         }
+                        Storytelling.LOG.info("NPC approaching block: story={}, npc={}, stand={}, block={}", id, step.text, selected, block);
                         npc.walking(true);
                         approaching = true;
                      } else if (npc.getNavigation().isDone()) {
-                        finish(false);
-                        return;
+                        approaching = false;
                      }
                      return;
                   }
@@ -275,7 +294,7 @@ public final class LuaStory {
                }
 
                @Override public boolean isDone() { return applied; }
-               @Override public void reset() { applied = false; waiting = 0; approaching = false; }
+               @Override public void reset() { applied = false; waiting = 0; approaching = false; attemptedStands.clear(); }
             });
             case NPC_INTERACT -> builder.thenAwaitEntityClick(characters.get(step.text));
             case NPC_REMOVE -> builder.removeEntity(characters.get(step.text));
