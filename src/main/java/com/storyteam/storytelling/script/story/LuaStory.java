@@ -46,6 +46,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.ChatFormatting;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Item;
@@ -310,7 +312,10 @@ public final class LuaStory {
                   if (player == null) return;
                   player.sendSystemMessage(Component.literal(step.arguments[0]));
                   for (int i = 1; i < step.arguments.length; i++) {
-                     player.sendSystemMessage(Component.literal(i + ". " + step.arguments[i]));
+                     int option = i;
+                     player.sendSystemMessage(Component.literal(i + ". " + step.arguments[i])
+                        .withStyle(style -> style.withColor(ChatFormatting.AQUA)
+                           .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, Integer.toString(option)))));
                   }
                   displayed = true;
                }
