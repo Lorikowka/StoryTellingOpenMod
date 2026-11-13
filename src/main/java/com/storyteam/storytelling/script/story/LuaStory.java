@@ -223,7 +223,10 @@ public final class LuaStory {
                   Entity npcEntity = characters.get(step.text).repositoryEntity();
                   if (npcEntity instanceof ScriptNpcEntity npc) {
                      npc.walking(false);
-                     if (approaching) npc.getNavigation().stop();
+                     if (approaching) {
+                        var controller = script.env.server.getEntityRepository().get(characters.get(step.text));
+                        if (controller != null) controller.navigator.stop();
+                     }
                   }
                   script.getFlags().set("lua.var." + step.arguments[0], Boolean.toString(success));
                   script.getFlags().set(marker());
@@ -243,6 +246,8 @@ public final class LuaStory {
                      if (++waiting > 400) { finish(false); return; }
                      if (!approaching) {
                         if (!(npc.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
+                        var controller = script.env.server.getEntityRepository().get(characters.get(step.text));
+                        if (controller == null) { finish(false); return; }
                         List<BlockPos> stands = new ArrayList<>();
                         for (int dy = -2; dy <= 1; dy++) {
                            for (int dx = -4; dx <= 4; dx++) {
@@ -260,29 +265,33 @@ public final class LuaStory {
                            }
                         }
                         stands.sort(java.util.Comparator.comparingDouble(pos -> npc.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))));
-                        BlockPos selected = null;
-                        for (BlockPos stand : stands) {
-                           attemptedStands.add(stand);
-                           if (npc.getNavigation().moveTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 0.8)) {
-                              selected = stand;
-                              break;
-                           }
-                        }
+                        BlockPos selected = stands.isEmpty() ? null : stands.get(0);
                         if (selected == null) {
                            Storytelling.LOG.info("NPC could not find a reachable stand near block: story={}, npc={}, block={}, pos={}, candidates={}",
                               id, step.text, block, npc.position(), stands.size());
                            finish(false);
                            return;
                         }
+                        attemptedStands.add(selected);
+                        controller.navigator.moveByPath(0.8f,
+                           new Location(level.dimension(), selected.getX() + 0.5, selected.getY(), selected.getZ() + 0.5));
                         Storytelling.LOG.info("NPC approaching block: story={}, npc={}, stand={}, block={}", id, step.text, selected, block);
                         npc.walking(true);
                         approaching = true;
-                     } else if (npc.getNavigation().isDone()) {
-                        approaching = false;
+                     } else {
+                        var controller = script.env.server.getEntityRepository().get(characters.get(step.text));
+                        if (controller == null || controller.navigator.currentJob == null
+                           || controller.navigator.currentJob.isStopped()) {
+                           if (controller != null) controller.navigator.stop();
+                           approaching = false;
+                        }
                      }
                      return;
                   }
-                  if (approaching && entity instanceof ScriptNpcEntity npc) npc.getNavigation().stop();
+                  if (approaching && entity instanceof ScriptNpcEntity npc) {
+                     var controller = script.env.server.getEntityRepository().get(characters.get(step.text));
+                     if (controller != null) controller.navigator.stop();
+                  }
                   boolean success;
                   try {
                      NpcWorldInteraction.useBlock(entity,
