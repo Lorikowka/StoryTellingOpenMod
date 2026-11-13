@@ -308,10 +308,20 @@ public final class LuaStory {
                @Override public void tick() { performer.gotoSavepoint(step.text, true); }
                @Override public boolean isDone() { return false; }
             });
-            case CHOICE -> builder.append(performer -> new ScriptPerformerAction(performer) {
+            case CHOICE, CHOICE_IF -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean displayed;
                private boolean chosen;
                private String marker() { return "lua.choice." + performer.getActionIndex(this); }
+               private int stride() { return step.type == Type.CHOICE_IF ? 4 : 1; }
+               private boolean visible(int offset) {
+                  if (step.type != Type.CHOICE_IF || step.arguments[offset + 1].isEmpty()) return true;
+                  String scope = step.arguments[offset + 3];
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (scope.equals("player") && player == null) return false;
+                  String actual = scope.equals("script") ? script.getFlags().get("lua.var." + step.arguments[offset + 1])
+                     : script.env.getVariable(scope, step.arguments[offset + 1], player);
+                  return step.arguments[offset + 2].equals(actual);
+               }
 
                @Override public void tick() {
                   if (script.getFlags().has(marker())) { chosen = true; return; }
@@ -319,9 +329,10 @@ public final class LuaStory {
                   ServerPlayer player = ScriptUtils.getPlayer();
                   if (player == null) return;
                   player.sendSystemMessage(Component.literal(step.arguments[0]));
-                  for (int i = 1; i < step.arguments.length; i++) {
-                     int option = i;
-                     player.sendSystemMessage(Component.literal(i + ". " + step.arguments[i])
+                  for (int i = 1; i < step.arguments.length; i += stride()) {
+                     if (!visible(i)) continue;
+                     int option = (i - 1) / stride() + 1;
+                     player.sendSystemMessage(Component.literal(option + ". " + step.arguments[i])
                         .withStyle(style -> style.withColor(ChatFormatting.AQUA)
                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, Integer.toString(option)))));
                   }
@@ -334,7 +345,8 @@ public final class LuaStory {
                   int index;
                   try { index = Integer.parseInt(answer); }
                   catch (NumberFormatException ignored) { return; }
-                  if (index < 1 || index >= step.arguments.length) return;
+                  int offset = 1 + (index - 1) * stride();
+                  if (index < 1 || offset >= step.arguments.length || !visible(offset)) return;
                   script.getFlags().set("lua.var." + step.text, Integer.toString(index));
                   script.getFlags().set(marker());
                   chosen = true;
@@ -508,6 +520,30 @@ public final class LuaStory {
             String[] values = new String[args.narg() - 1];
             for (int i = 2; i <= args.narg(); i++) values[i - 2] = nonempty(args.arg(i));
             builder.choice(nonempty(args.arg(1)), values);
+            return NIL;
+         }
+      });
+      globals.set("choice_if", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 4 || args.narg() > 8) {
+               throw new IllegalArgumentException("choice_if(name, prompt, option1, option2, ...) needs 2–6 option tables");
+            }
+            String[] values = new String[1 + (args.narg() - 2) * 4];
+            values[0] = nonempty(args.arg(2));
+            boolean unconditional = false;
+            for (int i = 3; i <= args.narg(); i++) {
+               LuaValue option = args.arg(i).checktable();
+               int offset = 1 + (i - 3) * 4;
+               values[offset] = nonempty(option.get("text"));
+               LuaValue condition = option.get("when");
+               values[offset + 1] = condition.isnil() ? "" : nonempty(condition);
+               values[offset + 2] = condition.isnil() ? "" : nonempty(option.get("equals"));
+               values[offset + 3] = condition.isnil() ? "script" :
+                  (option.get("scope").isnil() ? "script" : nonempty(option.get("scope")));
+               if (condition.isnil()) unconditional = true;
+            }
+            if (!unconditional) throw new IllegalArgumentException("choice_if needs at least one unconditional option");
+            builder.choiceIf(nonempty(args.arg(1)), values);
             return NIL;
          }
       });
@@ -845,7 +881,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, PLAY_SOUND, GIVE_ITEM, PARTICLE }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -965,6 +1001,17 @@ public final class LuaStory {
       private void choice(String name, String[] values) {
          if (!name.matches("[a-z][a-z0-9_]*")) throw new IllegalArgumentException("Invalid choice variable: " + name);
          add(new Step(Type.CHOICE, 0, name, null, values));
+      }
+
+      private void choiceIf(String name, String[] values) {
+         if (!name.matches("[a-z][a-z0-9_]*")) throw new IllegalArgumentException("Invalid choice variable: " + name);
+         for (int i = 1; i < values.length; i += 4) {
+            if (!values[i + 1].isEmpty() && (!values[i + 1].matches("[a-z][a-z0-9_]*")
+               || !Set.of("script", "world", "player").contains(values[i + 3]))) {
+               throw new IllegalArgumentException("Invalid choice_if condition or scope for option " + ((i - 1) / 4 + 1));
+            }
+         }
+         add(new Step(Type.CHOICE_IF, 0, name, null, values));
       }
 
       private void playSound(String id, float volume, float pitch) {
