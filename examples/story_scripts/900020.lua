@@ -8,7 +8,7 @@ npc_look("reg", "player", "auto")
 speaker_npc(1, "reg")
 speech(1, "Ты пойдёшь со мной?")
 wait_f8()
-choice("route", "Выбери цифрой в чате:", "Пойти вместе", "Остаться")
+choice("route", "Пойдём вместе?", "Пойти вместе", "Остаться")
 var_if("route", 1, "follow", "stay")
 
 anchor("stay")
