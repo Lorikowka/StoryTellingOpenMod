@@ -242,7 +242,7 @@ public final class LuaStory {
                   }
                   BlockPos block = new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z);
                   if (step.type == Type.NPC_APPROACH_USE_BLOCK && entity instanceof ScriptNpcEntity npc
-                     && npc.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)) > 4.5 * 4.5) {
+                     && npc.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)) > 2.5 * 2.5) {
                      if (++waiting > 400) { finish(false); return; }
                      if (!approaching) {
                         if (!(npc.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
@@ -255,7 +255,7 @@ public final class LuaStory {
                                  if (Math.abs(dx) + Math.abs(dz) < 1 || Math.abs(dx) + Math.abs(dz) > 5) continue;
                                  BlockPos pos = block.offset(dx, dy, dz);
                                  if (new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + npc.getEyeHeight(), pos.getZ() + 0.5)
-                                    .distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)) > 4.5 * 4.5) continue;
+                                    .distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)) > 2.5 * 2.5) continue;
                                  if (attemptedStands.contains(pos) || !level.hasChunkAt(pos)
                                     || !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
                                     || !level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
@@ -264,7 +264,10 @@ public final class LuaStory {
                               }
                            }
                         }
-                        stands.sort(java.util.Comparator.comparingDouble(pos -> npc.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))));
+                        stands.sort(java.util.Comparator
+                           .comparingDouble((BlockPos pos) -> net.minecraft.world.phys.Vec3.atCenterOf(pos)
+                              .distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)))
+                           .thenComparingDouble(pos -> npc.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))));
                         BlockPos selected = stands.isEmpty() ? null : stands.get(0);
                         if (selected == null) {
                            Storytelling.LOG.info("NPC could not find a reachable stand near block: story={}, npc={}, block={}, pos={}, candidates={}",
