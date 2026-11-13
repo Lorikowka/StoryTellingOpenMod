@@ -5,6 +5,8 @@ import com.storyteam.storytelling.script.performer.entity.EntityState;
 import com.storyteam.storytelling.script.performer.entity.behaviour.movement.EntityPathfinderBehaviour;
 import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
 import com.storyteam.storytelling.script.story.characters.Character;
+import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
+import com.storyteam.storytelling.script.story.npc.ScriptNpcs;
 import com.storyteam.storytelling.util.ToStringBuilder;
 import com.storyteam.storytelling.util.world.Location;
 import java.util.List;
@@ -15,6 +17,7 @@ public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, En
    Supplier<List<Location>> positions;
    protected final double speed;
    boolean parallel;
+   private int elapsedTicks;
 
    public EntityPathfinderAction(ScriptPerformer performer, Character<T> character, double speed, Supplier<List<Location>> poses) {
       super(performer, character);
@@ -31,7 +34,37 @@ public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, En
 
    @Override
    public boolean isDone() {
-      return this.parallel || super.isDone();
+      if (this.parallel) return true;
+      if (this.completed && this.character.getType() == ScriptNpcs.SCRIPT_NPC.get()) {
+         if (!(this.character.repositoryEntity() instanceof ScriptNpcEntity npc)) {
+            throw new IllegalStateException("NPC route ended while NPC is unloaded: " + this.character.getReferenceId());
+         }
+         List<Location> targets = this.positions.get();
+         if (targets != null && !targets.isEmpty()) {
+            Location target = targets.get(targets.size() - 1);
+            double dx = npc.getX() - target.x;
+            double dz = npc.getZ() - target.z;
+            double dy = npc.getY() - target.y;
+            if (dx * dx + dz * dz > 4.0 || Math.abs(dy) > 2.0) {
+               throw new IllegalStateException("NPC route ended before reaching destination: " + this.character.getReferenceId());
+            }
+         }
+      }
+      return super.isDone();
+   }
+
+   @Override
+   public void tick() {
+      super.tick();
+      if (!this.completed && ++elapsedTicks > 2400) {
+         throw new IllegalStateException("NPC route timed out after 120 seconds: " + this.character.getReferenceId());
+      }
+   }
+
+   @Override
+   public void reset() {
+      super.reset();
+      elapsedTicks = 0;
    }
 
    @Override
