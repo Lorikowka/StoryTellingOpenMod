@@ -202,6 +202,32 @@ public final class LuaStory {
                @Override public boolean isDone() { return applied; }
                @Override public void reset() { applied = false; }
             });
+            case VAR_SET -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean applied;
+
+               @Override public void tick() {
+                  if (!applied) {
+                     script.getFlags().set("lua.var." + step.text, step.arguments[0]);
+                     applied = true;
+                  }
+               }
+
+               @Override public boolean isDone() { return applied; }
+               @Override public void reset() { applied = false; }
+            });
+            case VAR_IF -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               @Override public void tick() {
+                  String current = script.getFlags().get("lua.var." + step.text);
+                  String destination = step.arguments[0].equals(current) ? step.arguments[1] : step.arguments[2];
+                  performer.gotoSavepoint(destination, true);
+               }
+
+               @Override public boolean isDone() { return false; }
+            });
+            case GOTO_ANCHOR -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               @Override public void tick() { performer.gotoSavepoint(step.text, true); }
+               @Override public boolean isDone() { return false; }
+            });
          }
       }
    }
@@ -283,6 +309,24 @@ public final class LuaStory {
       });
       globals.set("anchor", new OneArgFunction() {
          @Override public LuaValue call(LuaValue name) { builder.anchor(nonempty(name)); return NIL; }
+      });
+      globals.set("var_set", new TwoArgFunction() {
+         @Override public LuaValue call(LuaValue name, LuaValue value) {
+            builder.variableSet(nonempty(name), value);
+            return NIL;
+         }
+      });
+      globals.set("var_if", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 4) {
+               throw new IllegalArgumentException("var_if(name, value, yes_anchor, no_anchor) expects 4 arguments");
+            }
+            builder.variableIf(nonempty(args.arg(1)), args.arg(2), nonempty(args.arg(3)), nonempty(args.arg(4)));
+            return NIL;
+         }
+      });
+      globals.set("goto_anchor", new OneArgFunction() {
+         @Override public LuaValue call(LuaValue name) { builder.gotoAnchor(nonempty(name)); return NIL; }
       });
       globals.set("npc", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue key, LuaValue type, LuaValue name) {
@@ -557,7 +601,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -654,6 +698,24 @@ public final class LuaStory {
          add(new Step(Type.ANCHOR, 0, name));
       }
 
+      private void variableSet(String name, LuaValue value) {
+         if (!name.matches("[a-z][a-z0-9_]*") || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
+            throw new IllegalArgumentException("var_set requires a simple name and string, number or boolean value");
+         }
+         add(new Step(Type.VAR_SET, 0, name, null, new String[] {value.tojstring()}));
+      }
+
+      private void variableIf(String name, LuaValue value, String yes, String no) {
+         if (!name.matches("[a-z][a-z0-9_]*") || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
+            throw new IllegalArgumentException("var_if requires a simple name and string, number or boolean value");
+         }
+         add(new Step(Type.VAR_IF, 0, name, null, new String[] {value.tojstring(), yes, no}));
+      }
+
+      private void gotoAnchor(String name) {
+         add(new Step(Type.GOTO_ANCHOR, 0, name));
+      }
+
       private void npcAction(Type type, String key, PositionSpec position) {
          if (!npcs.containsKey(key)) {
             throw new IllegalArgumentException("NPC " + key + " must be defined before its actions in " + label);
@@ -683,6 +745,25 @@ public final class LuaStory {
          if (id == 0 || !parts.containsKey("main") || parts.get("main").isEmpty()) {
             throw new IllegalArgumentException("Lua story needs story(id) and a nonempty main part: " + label);
          }
+         parts.forEach((partName, actions) -> {
+            for (int index = 0; index < actions.size(); index++) {
+               Step step = actions.get(index);
+               if (step.type != Type.VAR_IF && step.type != Type.GOTO_ANCHOR) continue;
+               String[] targets = step.type == Type.GOTO_ANCHOR ? new String[] {step.text} :
+                  new String[] {step.arguments[1], step.arguments[2]};
+               for (String anchor : targets) {
+                  if (anchor.equals("final")) continue;
+                  int found = -1;
+                  for (int i = index + 1; i < actions.size(); i++) {
+                     if (actions.get(i).type == Type.ANCHOR && anchor.equals(actions.get(i).text)) {
+                        found = i;
+                        break;
+                     }
+                  }
+                  if (found < 0) throw new IllegalArgumentException("Forward anchor in " + partName + " is missing: " + anchor);
+               }
+            }
+         });
          Map<String, List<Step>> frozen = new LinkedHashMap<>();
          parts.forEach((name, actions) -> frozen.put(name, List.copyOf(actions)));
          return new LuaStory(id, Map.copyOf(frozen), Map.copyOf(npcs));
