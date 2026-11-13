@@ -2,6 +2,7 @@ package com.storyteam.storytelling.script.story;
 
 import com.storyteam.storytelling.script.performer.builder.ScriptPerformerBuilder;
 import com.storyteam.storytelling.Storytelling;
+import com.storyteam.storytelling.api.events.EventType;
 import com.storyteam.storytelling.script.performer.action.WaitPlayerPositionAction;
 import com.storyteam.storytelling.script.performer.action.ScriptPerformerAction;
 import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfinderAction;
@@ -44,6 +45,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -228,6 +230,38 @@ public final class LuaStory {
                @Override public void tick() { performer.gotoSavepoint(step.text, true); }
                @Override public boolean isDone() { return false; }
             });
+            case CHOICE -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean displayed;
+               private boolean chosen;
+               private String marker() { return "lua.choice." + performer.getActionIndex(this); }
+
+               @Override public void tick() {
+                  if (script.getFlags().has(marker())) { chosen = true; return; }
+                  if (displayed) return;
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (player == null) return;
+                  player.sendSystemMessage(Component.literal(step.arguments[0]));
+                  for (int i = 1; i < step.arguments.length; i++) {
+                     player.sendSystemMessage(Component.literal(i + ". " + step.arguments[i]));
+                  }
+                  displayed = true;
+               }
+
+               @Override public <T> void handleEvent(EventType<T> type, T event) {
+                  if (chosen || !displayed || type != EventType.CHAT_MESSAGE_SENT) return;
+                  String answer = String.valueOf(event).trim();
+                  int index;
+                  try { index = Integer.parseInt(answer); }
+                  catch (NumberFormatException ignored) { return; }
+                  if (index < 1 || index >= step.arguments.length) return;
+                  script.getFlags().set("lua.var." + step.text, Integer.toString(index));
+                  script.getFlags().set(marker());
+                  chosen = true;
+               }
+
+               @Override public boolean isDone() { return chosen; }
+               @Override public void reset() { displayed = false; chosen = false; }
+            });
          }
       }
    }
@@ -327,6 +361,17 @@ public final class LuaStory {
       });
       globals.set("goto_anchor", new OneArgFunction() {
          @Override public LuaValue call(LuaValue name) { builder.gotoAnchor(nonempty(name)); return NIL; }
+      });
+      globals.set("choice", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 4 || args.narg() > 8) {
+               throw new IllegalArgumentException("choice(name, prompt, option1, option2, ...) needs 2–6 options");
+            }
+            String[] values = new String[args.narg() - 1];
+            for (int i = 2; i <= args.narg(); i++) values[i - 2] = nonempty(args.arg(i));
+            builder.choice(nonempty(args.arg(1)), values);
+            return NIL;
+         }
       });
       globals.set("npc", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue key, LuaValue type, LuaValue name) {
@@ -601,7 +646,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -714,6 +759,11 @@ public final class LuaStory {
 
       private void gotoAnchor(String name) {
          add(new Step(Type.GOTO_ANCHOR, 0, name));
+      }
+
+      private void choice(String name, String[] values) {
+         if (!name.matches("[a-z][a-z0-9_]*")) throw new IllegalArgumentException("Invalid choice variable: " + name);
+         add(new Step(Type.CHOICE, 0, name, null, values));
       }
 
       private void npcAction(Type type, String key, PositionSpec position) {

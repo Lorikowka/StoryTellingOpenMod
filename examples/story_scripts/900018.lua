@@ -1,0 +1,13 @@
+story(900018)
+
+part("main")
+speaker(1, "Проводник")
+speech(1, "Как поступим?")
+choice("answer", "Выбери ответ цифрой в чате:", "Пойти вместе", "Остаться здесь")
+var_if("answer", 1, "together", "stay")
+anchor("stay")
+speech(1, "Хорошо, я подожду здесь.")
+goto_anchor("final")
+anchor("together")
+speech(1, "Отлично, идём вместе.")
+wait_f8()
