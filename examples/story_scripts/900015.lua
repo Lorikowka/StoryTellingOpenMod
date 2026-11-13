@@ -1,0 +1,10 @@
+story(900015)
+npc_model("reg", "reg.gltf", "Регир")
+npc_hitbox("reg", 0.6, 2.0)
+
+part("main")
+npc_spawn("reg", 0.5, -59, 8.5)
+npc_look("reg", "player")
+speaker_npc(1, "reg")
+speech(1, "Теперь цель взгляда назначена после появления NPC. Обойди меня.")
+wait_ticks(600)

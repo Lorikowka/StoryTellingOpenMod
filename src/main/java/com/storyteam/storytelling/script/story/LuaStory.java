@@ -3,6 +3,7 @@ package com.storyteam.storytelling.script.story;
 import com.storyteam.storytelling.script.performer.builder.ScriptPerformerBuilder;
 import com.storyteam.storytelling.Storytelling;
 import com.storyteam.storytelling.script.performer.action.WaitPlayerPositionAction;
+import com.storyteam.storytelling.script.performer.action.ScriptPerformerAction;
 import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfinderAction;
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
@@ -178,16 +179,27 @@ public final class LuaStory {
                Entity entity = characters.get(step.text).repositoryEntity();
                if (entity instanceof ScriptNpcEntity scriptNpc) scriptNpc.animation(step.arguments[0], step.arguments[1]);
             });
-            case NPC_LOOK -> builder.thenRun(() -> {
-               Entity entity = characters.get(step.text).repositoryEntity();
-               if (entity instanceof ScriptNpcEntity scriptNpc) {
+            case NPC_LOOK -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean applied;
+
+               @Override public void tick() {
+                  if (applied) return;
+                  Entity entity = characters.get(step.text).repositoryEntity();
+                  if (entity == null) return;
+                  if (!(entity instanceof ScriptNpcEntity scriptNpc)) {
+                     throw new IllegalStateException("npc_look expected a model NPC: " + step.text);
+                  }
                   if (step.arguments[0].equals("player")) scriptNpc.lookAt(ScriptUtils.getPlayer());
                   else if (step.arguments[0].equals("none")) scriptNpc.clearLook();
                   else scriptNpc.lookAt(Double.parseDouble(step.arguments[0]),
                      Double.parseDouble(step.arguments[1]), Double.parseDouble(step.arguments[2]));
                   Storytelling.LOG.info("NPC look: story={}, npc={}, target={}", id, step.text,
                      String.join(",", step.arguments));
+                  applied = true;
                }
+
+               @Override public boolean isDone() { return applied; }
+               @Override public void reset() { applied = false; }
             });
          }
       }
