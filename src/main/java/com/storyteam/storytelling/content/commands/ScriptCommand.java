@@ -720,5 +720,32 @@ public class ScriptCommand {
          }
          return 0;
       })));
+      dispatcher.register(Commands.literal("script").then(Commands.literal("inspect")
+         .then(Commands.argument("id", IntegerArgumentType.integer(1)).executes(ctx -> {
+            int id = IntegerArgumentType.getInteger(ctx, "id");
+            ScriptInstance instance = env.getScript(id);
+            if (instance == null) {
+               ctx.getSource().sendFailure(Component.literal("Сценарий " + id + " сейчас не запущен."));
+               return 0;
+            }
+            ScriptPerformer main = instance.getMainPerformer();
+            if (main == null) {
+               ctx.getSource().sendFailure(Component.literal("У сценария " + id + " нет главного исполнителя."));
+               return 0;
+            }
+            int index = main.getActionIndex();
+            String action = index < main.getActionsAmount()
+               ? main.getActions().get(index).getClass().getSimpleName() : "завершён";
+            if (action.isEmpty()) action = "Lua-действие";
+            sendSuccess(ctx, Component.literal("Сценарий " + id + ": шаг " + index + "/"
+               + main.getActionsAmount() + ", якорь " + main.getStage() + ", действие " + action), false);
+            instance.getFlags().getFlags().entrySet().stream()
+               .filter(entry -> entry.getKey().startsWith("lua.var."))
+               .sorted(java.util.Map.Entry.comparingByKey())
+               .limit(20)
+               .forEach(entry -> sendSuccess(ctx, Component.literal("  "
+                  + entry.getKey().substring("lua.var.".length()) + " = " + entry.getValue()), false));
+            return index;
+         }))));
    }
 }
