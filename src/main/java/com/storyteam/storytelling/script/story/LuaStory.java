@@ -9,6 +9,7 @@ import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfi
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
 import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
+import com.storyteam.storytelling.script.story.camera.NpcCameraFlightAction;
 import com.storyteam.storytelling.net.PacketLuaChoiceScreen;
 import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
 import com.storyteam.storytelling.system._core.st_cutscene.ServersideCutsceneHandler;
@@ -231,6 +232,9 @@ public final class LuaStory {
                @Override public void reset() { release(); elapsed = 0; done = false; }
                @Override public void onScriptStop() { release(); }
             });
+            case CAMERA_FLY_NPC -> builder.append(performer -> new NpcCameraFlightAction(performer,
+               characters.get(step.text), Integer.parseInt(step.arguments[0]),
+               Integer.parseInt(step.arguments[1]), Double.parseDouble(step.arguments[2])));
             case STORY_ENGINE -> builder.thenRun(() -> StoryEngineAdapter.invoke(step.operation, step.arguments));
             case WAIT_POS -> builder.append(p -> new WaitPlayerPositionAction(p, step.position.dimension, step.position.x,
                step.position.y, step.position.z, step.position.radius, step.position.ignoreY));
@@ -893,6 +897,17 @@ public final class LuaStory {
             return NIL;
          }
       });
+      globals.set("camera_fly_npc", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 4) {
+               throw new IllegalArgumentException("camera_fly_npc(key, [flight_ticks], [hold_ticks], [distance]) expects 1 to 4 arguments");
+            }
+            builder.cameraFlyNpc(nonempty(args.arg(1)), args.narg() >= 2 ? args.arg(2).checkint() : 40,
+               args.narg() >= 3 ? args.arg(3).checkint() : 40,
+               args.narg() >= 4 ? args.arg(4).checkdouble() : 1.6);
+            return NIL;
+         }
+      });
       globals.set("wait_pos", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() < 4 || args.narg() > 6) {
@@ -1022,7 +1037,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, CAMERA_SHOT, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1200,6 +1215,16 @@ public final class LuaStory {
          add(new Step(Type.CAMERA_SHOT, 0, "", null, new String[] {
             Double.toString(x), Double.toString(y), Double.toString(z),
             Double.toString(yaw), Double.toString(pitch), Integer.toString(ticks)}));
+      }
+
+      private void cameraFlyNpc(String key, int flightTicks, int holdTicks, double distance) {
+         if (!npcs.containsKey(key) || flightTicks < 2 || flightTicks > 1200
+            || holdTicks < 0 || holdTicks > 72000 || !Double.isFinite(distance)
+            || distance < 0.5 || distance > 8) {
+            throw new IllegalArgumentException("camera_fly_npc requires a declared NPC, flight 2–1200 ticks, hold 0–72000 ticks and distance 0.5–8 blocks: " + key);
+         }
+         add(new Step(Type.CAMERA_FLY_NPC, 0, key, null,
+            new String[] {Integer.toString(flightTicks), Integer.toString(holdTicks), Double.toString(distance)}));
       }
 
       private void npcAction(Type type, String key, PositionSpec position) {

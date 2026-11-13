@@ -71,5 +71,6 @@ npc_move("reg", 2.5, -60, 8.5, 0.7)
 | `give_item("minecraft:apple", 1)` | Выдаёт предмет. |
 | `spawn_particle_here("minecraft:happy_villager", 20)` | Показывает частицы перед игроком. |
 | `camera_shot(x, y, z, yaw, pitch, ticks)` | Показывает временный кадр камерой. |
+| `camera_fly_npc("reg", 40, 40, 1.6)` | Подводит камеру к NPC, держит кадр и возвращает к игроку. |
 
 Команды автора: `/script list`, `/script validate`, `/script reload`, `/script start ID`, `/script active`, `/script inspect ID`, `/script goto ID anchor`, `/script stop ID`. Полное описание аргументов и ограничений смотри в `docs/story-packs.md` репозитория. Рабочие примеры с ID `900013`–`900030` лежат рядом с проектом в `examples/story_scripts/`.
