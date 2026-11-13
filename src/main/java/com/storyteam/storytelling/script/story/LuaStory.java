@@ -1,6 +1,7 @@
 package com.storyteam.storytelling.script.story;
 
 import com.storyteam.storytelling.script.performer.builder.ScriptPerformerBuilder;
+import com.storyteam.storytelling.Storytelling;
 import com.storyteam.storytelling.script.performer.action.WaitPlayerPositionAction;
 import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfinderAction;
 import com.storyteam.storytelling.script.story.characters.Character;
@@ -184,6 +185,8 @@ public final class LuaStory {
                   else if (step.arguments[0].equals("none")) scriptNpc.clearLook();
                   else scriptNpc.lookAt(Double.parseDouble(step.arguments[0]),
                      Double.parseDouble(step.arguments[1]), Double.parseDouble(step.arguments[2]));
+                  Storytelling.LOG.info("NPC look: story={}, npc={}, target={}", id, step.text,
+                     String.join(",", step.arguments));
                }
             });
          }

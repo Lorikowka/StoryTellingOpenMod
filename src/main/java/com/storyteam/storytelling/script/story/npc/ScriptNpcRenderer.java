@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.lytharalab.gfbs.gltf.api.animation.AnimationController;
 import org.lytharalab.gfbs.gltf.api.animation.LoopMode;
@@ -60,7 +59,7 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
                instances.put(entity, state);
             }
             updateAnimation(entity, state, partialTick);
-            updateHead(entity, state, yaw);
+            updateHead(entity, state);
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(180f - yaw));
             GltfRenderer.render(state.instance, pose, buffers, packedLight, OverlayTexture.NO_OVERLAY);
@@ -166,26 +165,13 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
       }
    }
 
-   private void updateHead(ScriptNpcEntity entity, State state, float bodyYaw) {
+   private void updateHead(ScriptNpcEntity entity, State state) {
       if (state.head == null) return;
-      float wantedYaw = 0f;
-      float wantedPitch = 0f;
-      Vec3 target = entity.lookTarget();
-      if (target != null) {
-         double dx = target.x - entity.getX();
-         double dy = target.y - entity.getEyeY();
-         double dz = target.z - entity.getZ();
-         double horizontal = Math.sqrt(dx * dx + dz * dz);
-         if (horizontal > 0.01) {
-            float worldYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
-            wantedYaw = Mth.clamp(Mth.wrapDegrees(worldYaw - bodyYaw),
-               -ScriptNpcEntity.MAX_HEAD_YAW, ScriptNpcEntity.MAX_HEAD_YAW);
-         }
-         wantedPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, horizontal)), -40f, 40f);
-      }
+      float wantedYaw = entity.lookYaw();
+      float wantedPitch = entity.lookPitch();
       state.headYaw = Mth.rotLerp(0.2f, state.headYaw, wantedYaw);
       state.headPitch = Mth.lerp(0.2f, state.headPitch, wantedPitch);
-      if (Math.abs(state.headYaw) + Math.abs(state.headPitch) < 0.01f && target == null) {
+      if (Math.abs(state.headYaw) + Math.abs(state.headPitch) < 0.01f) {
          state.head.postTransform(null);
       } else {
          float[] transform = new Matrix4f()

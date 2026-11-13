@@ -28,6 +28,8 @@ public final class ScriptNpcEntity extends PathfinderMob {
    private static final EntityDataAccessor<Float> LOOK_X = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Float> LOOK_Y = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Float> LOOK_Z = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Float> LOOK_YAW = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<Float> LOOK_PITCH = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
    public static final float MAX_HEAD_YAW = 60f;
 
    public ScriptNpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
@@ -48,6 +50,8 @@ public final class ScriptNpcEntity extends PathfinderMob {
       entityData.define(LOOK_X, 0f);
       entityData.define(LOOK_Y, 0f);
       entityData.define(LOOK_Z, 0f);
+      entityData.define(LOOK_YAW, 0f);
+      entityData.define(LOOK_PITCH, 0f);
    }
 
    public String model() {
@@ -103,8 +107,13 @@ public final class ScriptNpcEntity extends PathfinderMob {
    public void clearLook() {
       entityData.set(LOOK_PLAYER, "");
       entityData.set(LOOK_POINT, false);
+      entityData.set(LOOK_YAW, 0f);
+      entityData.set(LOOK_PITCH, 0f);
       setYHeadRot(yBodyRot);
    }
+
+   public float lookYaw() { return entityData.get(LOOK_YAW); }
+   public float lookPitch() { return entityData.get(LOOK_PITCH); }
 
    public Vec3 lookTarget() {
       String playerId = entityData.get(LOOK_PLAYER);
@@ -126,6 +135,7 @@ public final class ScriptNpcEntity extends PathfinderMob {
       Vec3 target = lookTarget();
       if (target == null) return;
       double dx = target.x - getX();
+      double dy = target.y - getEyeY();
       double dz = target.z - getZ();
       if (dx * dx + dz * dz < 0.0001) return;
       float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
@@ -134,8 +144,13 @@ public final class ScriptNpcEntity extends PathfinderMob {
          float turn = Mth.clamp(difference - Math.copySign(MAX_HEAD_YAW, difference), -5f, 5f);
          setYRot(getYRot() + turn);
          yBodyRot += turn;
+         yBodyRotO = yBodyRot;
       }
-      setYHeadRot(yBodyRot + Mth.clamp(Mth.wrapDegrees(targetYaw - yBodyRot), -MAX_HEAD_YAW, MAX_HEAD_YAW));
+      float headYaw = Mth.clamp(Mth.wrapDegrees(targetYaw - getYRot()), -MAX_HEAD_YAW, MAX_HEAD_YAW);
+      float headPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))), -40f, 40f);
+      entityData.set(LOOK_YAW, headYaw);
+      entityData.set(LOOK_PITCH, headPitch);
+      setYHeadRot(getYRot() + headYaw);
    }
 
    public void hitbox(float width, float height) {
