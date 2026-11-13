@@ -179,35 +179,69 @@ public final class LuaStory {
                characters.get(step.text).repositoryEntity(),
                new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
                step.position.dimension));
-            case NPC_TRY_USE_BLOCK -> builder.append(performer -> new ScriptPerformerAction(performer) {
+            case NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
                private int waiting;
+               private boolean approaching;
                private String marker() { return "lua.block." + performer.getActionIndex(this); }
-
-               @Override public void tick() {
-                  if (script.getFlags().has(marker())) { applied = true; return; }
-                  Entity entity = characters.get(step.text).repositoryEntity();
-                  if (entity == null) {
-                     if (++waiting > 200) throw new IllegalStateException("NPC unavailable for block interaction: " + step.text);
-                     return;
-                  }
-                  boolean success;
-                  try {
-                     NpcWorldInteraction.useBlock(entity,
-                        new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
-                        step.position.dimension);
-                     success = true;
-                  } catch (IllegalStateException failure) {
-                     Storytelling.LOG.info("NPC block interaction failed: story={}, npc={}, reason={}", id, step.text, failure.getMessage());
-                     success = false;
+               private void finish(boolean success) {
+                  Entity npcEntity = characters.get(step.text).repositoryEntity();
+                  if (npcEntity instanceof ScriptNpcEntity npc) {
+                     npc.walking(false);
+                     if (approaching) npc.getNavigation().stop();
                   }
                   script.getFlags().set("lua.var." + step.arguments[0], Boolean.toString(success));
                   script.getFlags().set(marker());
                   applied = true;
                }
 
+               @Override public void tick() {
+                  if (script.getFlags().has(marker())) { applied = true; return; }
+                  Entity entity = characters.get(step.text).repositoryEntity();
+                  if (entity == null) {
+                     if (++waiting > 200) finish(false);
+                     return;
+                  }
+                  BlockPos block = new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z);
+                  if (step.type == Type.NPC_APPROACH_USE_BLOCK && entity instanceof ScriptNpcEntity npc
+                     && npc.getEyePosition().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)) > 4.5 * 4.5) {
+                     if (++waiting > 400) { finish(false); return; }
+                     if (!approaching) {
+                        if (!(npc.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
+                        BlockPos stand = java.util.Arrays.stream(new net.minecraft.core.Direction[] {
+                              net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.SOUTH,
+                              net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST})
+                           .map(block::relative).filter(pos -> level.getBlockState(pos).isAir())
+                           .min(java.util.Comparator.comparingDouble(pos -> npc.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))))
+                           .orElse(null);
+                        if (stand == null || !npc.getNavigation().moveTo(stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 0.8)) {
+                           finish(false);
+                           return;
+                        }
+                        npc.walking(true);
+                        approaching = true;
+                     } else if (npc.getNavigation().isDone()) {
+                        finish(false);
+                        return;
+                     }
+                     return;
+                  }
+                  if (approaching && entity instanceof ScriptNpcEntity npc) npc.getNavigation().stop();
+                  boolean success;
+                  try {
+                     NpcWorldInteraction.useBlock(entity,
+                        block,
+                        step.position.dimension);
+                     success = true;
+                  } catch (IllegalStateException failure) {
+                     Storytelling.LOG.info("NPC block interaction failed: story={}, npc={}, reason={}", id, step.text, failure.getMessage());
+                     success = false;
+                  }
+                  finish(success);
+               }
+
                @Override public boolean isDone() { return applied; }
-               @Override public void reset() { applied = false; waiting = 0; }
+               @Override public void reset() { applied = false; waiting = 0; approaching = false; }
             });
             case NPC_INTERACT -> builder.thenAwaitEntityClick(characters.get(step.text));
             case NPC_REMOVE -> builder.removeEntity(characters.get(step.text));
@@ -585,6 +619,24 @@ public final class LuaStory {
             return NIL;
          }
       });
+      globals.set("npc_approach_use_block", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 5 && args.narg() != 6) {
+               throw new IllegalArgumentException("npc_approach_use_block(key, x, y, z, result_name, [dimension]) expected");
+            }
+            String key = nonempty(args.arg(1));
+            int x = blockCoordinate(args.arg(2));
+            int y = blockCoordinate(args.arg(3));
+            int z = blockCoordinate(args.arg(4));
+            String result = nonempty(args.arg(5));
+            String dimension = args.narg() == 6 ? nonempty(args.arg(6)) : "minecraft:overworld";
+            if (!result.matches("[a-z][a-z0-9_]*") || ResourceLocation.tryParse(dimension) == null) {
+               throw new IllegalArgumentException("Invalid npc_approach_use_block result name or dimension");
+            }
+            builder.npcBlockResult(Type.NPC_APPROACH_USE_BLOCK, key, new PositionSpec(dimension, x, y, z, 0, false), result);
+            return NIL;
+         }
+      });
       globals.set("speaker", new TwoArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue name) { builder.add(new Step(Type.SPEAKER, id.checkint(), name.checkjstring())); return NIL; }
       });
@@ -750,7 +802,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, PLAY_SOUND, GIVE_ITEM }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, PLAY_SOUND, GIVE_ITEM }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -893,8 +945,12 @@ public final class LuaStory {
       }
 
       private void npcBlockResult(String key, PositionSpec position, String result) {
+         npcBlockResult(Type.NPC_TRY_USE_BLOCK, key, position, result);
+      }
+
+      private void npcBlockResult(Type type, String key, PositionSpec position, String result) {
          if (!npcs.containsKey(key)) throw new IllegalArgumentException("Unknown NPC for npc_try_use_block: " + key);
-         add(new Step(Type.NPC_TRY_USE_BLOCK, 0, key, null, new String[] {result}, position));
+         add(new Step(type, 0, key, null, new String[] {result}, position));
       }
 
       private void speakerNpc(int id, String key) {
