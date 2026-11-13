@@ -130,9 +130,12 @@ public final class ScriptNpcEntity extends PathfinderMob {
 
    @Override
    public void tick() {
+      Vec3 target = level().isClientSide ? null : lookTarget();
+      if (target != null) {
+         getLookControl().setLookAt(target.x, target.y, target.z, 30f, 40f);
+      }
       super.tick();
       if (level().isClientSide) return;
-      Vec3 target = lookTarget();
       if (target == null) return;
       double dx = target.x - getX();
       double dy = target.y - getEyeY();

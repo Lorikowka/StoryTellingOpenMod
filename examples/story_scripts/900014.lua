@@ -1,0 +1,10 @@
+story(900014)
+npc_model("reg", "reg.gltf", "Регир")
+npc_hitbox("reg", 0.6, 2.0)
+
+part("main")
+npc_spawn("reg", 0.5, -59, 8.5)
+npc_look("reg", "player")
+speaker_npc(1, "reg")
+speech(1, "Обойди меня по кругу. Я должен следить головой, затем развернуть корпус.")
+wait_ticks(600)
