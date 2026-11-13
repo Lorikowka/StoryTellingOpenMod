@@ -9,6 +9,7 @@ import org.zeith.hammerlib.api.io.NBTSerializable;
 /** One shared Java wrapper for all externally registered Lua stories. */
 @SaveOnClose
 public final class LuaScriptInstance extends ScriptInstance {
+   public final String definitionHash;
    @NBTSerializable
    public final ScriptPerformer mainFlow;
 
@@ -18,6 +19,7 @@ public final class LuaScriptInstance extends ScriptInstance {
       if (story == null) {
          throw new IllegalArgumentException("Unregistered Lua story " + id);
       }
+      this.definitionHash = story.fingerprint();
       ScriptPerformerBuilder builder = new ScriptPerformerBuilder(this);
       var characters = story.createNpcCharacters();
       if (story.hasPart("setup")) {

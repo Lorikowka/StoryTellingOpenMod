@@ -725,6 +725,10 @@ public class ScriptCommand {
             int id = IntegerArgumentType.getInteger(ctx, "id");
             ScriptInstance instance = env.getScript(id);
             if (instance == null) {
+               if (env.hasIncompatibleLuaSave(id)) {
+                  ctx.getSource().sendFailure(Component.literal("Сценарий " + id + " изменился после сохранения мира. Старый прогресс сохранён на диске; верните прежний Lua-файл или запустите сценарий заново."));
+                  return 0;
+               }
                ctx.getSource().sendFailure(Component.literal("Сценарий " + id + " сейчас не запущен."));
                return 0;
             }

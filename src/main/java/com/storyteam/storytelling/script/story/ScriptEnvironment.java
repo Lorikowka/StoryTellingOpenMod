@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -64,6 +66,11 @@ public class ScriptEnvironment {
    private final List<Message> chatHistory = new ArrayList<>();
    private final ScriptFlagStorage worldVariables = new ScriptFlagStorage();
    private final Map<UUID, ScriptFlagStorage> playerVariables = new HashMap<>();
+   private final Set<Integer> incompatibleLuaSaves = new HashSet<>();
+
+   public boolean hasIncompatibleLuaSave(int id) {
+      return incompatibleLuaSaves.contains(id);
+   }
 
    public void setVariable(String scope, String name, String value, ServerPlayer player) {
       if (scope.equals("world")) worldVariables.set(name, value);
@@ -408,6 +415,7 @@ public class ScriptEnvironment {
 
       instance = this.createInstance(script);
       if (instance != null) {
+         this.incompatibleLuaSaves.remove(script);
          instance.onInstanceCreated();
          instance.start();
          this.scriptInstances.put(script, instance);
@@ -424,6 +432,7 @@ public class ScriptEnvironment {
    public void save(File dir) {
       File[] existing = dir.listFiles();
       List<File> all = new ArrayList<>(existing == null ? List.of() : Arrays.asList(existing));
+      incompatibleLuaSaves.forEach(id -> all.remove(new File(dir, Integer.toString(id))));
       File variablesFile = new File(dir, "lua-variables.dat");
       all.remove(variablesFile);
       all.remove(new File(dir, "lua-variables.dat.old"));
@@ -441,7 +450,9 @@ public class ScriptEnvironment {
          all.remove(fl);
          if (fl.isDirectory() || fl.mkdirs()) {
             ScriptInstance instance = (ScriptInstance)this.scriptInstances.get(id);
-            ScriptIO.save(instance.serializeNBT(), new File(fl, "+.dat"));
+            CompoundTag saved = instance.serializeNBT();
+            if (instance instanceof LuaScriptInstance lua) saved.putString("luaDefinitionHash", lua.definitionHash);
+            ScriptIO.save(saved, new File(fl, "+.dat"));
          }
       }
 
@@ -514,6 +525,7 @@ public class ScriptEnvironment {
             }
          }
          this.scriptInstances.clear();
+         this.incompatibleLuaSaves.clear();
          IntIterator var1 = this.constructors.keySet().iterator();
 
          while (var1.hasNext()) {
@@ -524,6 +536,13 @@ public class ScriptEnvironment {
                if (read != null) {
                   if (this.luaStories.containsKey(id) && !read.getCompound("mainFlow").contains("actionIndex")) {
                      Storytelling.LOG.warn("Discarding legacy Lua script {} without saved action index to prevent replay", id);
+                     continue;
+                  }
+                  LuaStory luaStory = this.luaStories.get(id);
+                  if (luaStory != null && read.contains("luaDefinitionHash")
+                     && !read.getString("luaDefinitionHash").equals(luaStory.fingerprint())) {
+                     Storytelling.LOG.error("Lua script {} changed since this world was saved; refusing to resume at an incompatible action. Restore the previous Lua file or reset this script.", id);
+                     this.incompatibleLuaSaves.add(id);
                      continue;
                   }
                   ScriptInstance i = this.createInstance(id);

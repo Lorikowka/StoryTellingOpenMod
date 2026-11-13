@@ -18,7 +18,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.FileAlreadyExistsException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,15 +69,41 @@ public final class LuaStory {
    private final int id;
    private final Map<String, List<Step>> parts;
    private final Map<String, NpcSpec> npcs;
+   private final String fingerprint;
 
    private LuaStory(int id, Map<String, List<Step>> parts, Map<String, NpcSpec> npcs) {
       this.id = id;
       this.parts = parts;
       this.npcs = npcs;
+      this.fingerprint = calculateFingerprint();
    }
 
    public int id() {
       return id;
+   }
+
+   /** Identifies the parsed action sequence, independent of comments and whitespace in Lua. */
+   public String fingerprint() {
+      return fingerprint;
+   }
+
+   private String calculateFingerprint() {
+      StringBuilder definition = new StringBuilder().append(id);
+      npcs.keySet().stream().sorted().forEach(key -> definition.append("\nNPC\n").append(key).append(npcs.get(key)));
+      parts.keySet().stream().sorted().forEach(part -> {
+         definition.append("\nPART\n").append(part);
+         for (Step step : parts.get(part)) {
+            definition.append("\n").append(step.type).append('\u0000').append(step.speaker)
+               .append('\u0000').append(step.text).append('\u0000').append(step.operation)
+               .append('\u0000').append(Arrays.toString(step.arguments)).append('\u0000').append(step.position);
+         }
+      });
+      try {
+         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+            .digest(definition.toString().getBytes(StandardCharsets.UTF_8)));
+      } catch (NoSuchAlgorithmException impossible) {
+         throw new IllegalStateException("SHA-256 is unavailable", impossible);
+      }
    }
 
    public boolean hasPart(String name) {
