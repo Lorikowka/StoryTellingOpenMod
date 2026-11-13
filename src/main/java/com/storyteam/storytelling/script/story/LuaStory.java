@@ -189,6 +189,7 @@ public final class LuaStory {
                   if (!(entity instanceof ScriptNpcEntity scriptNpc)) {
                      throw new IllegalStateException("npc_look expected a model NPC: " + step.text);
                   }
+                  scriptNpc.lookMode(step.arguments[step.arguments.length - 1]);
                   if (step.arguments[0].equals("player")) scriptNpc.lookAt(ScriptUtils.getPlayer());
                   else if (step.arguments[0].equals("none")) scriptNpc.clearLook();
                   else scriptNpc.lookAt(Double.parseDouble(step.arguments[0]),
@@ -313,9 +314,10 @@ public final class LuaStory {
       });
       globals.set("npc_look", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
-            if (args.narg() == 2) {
-               builder.npcLook(nonempty(args.arg(1)), nonempty(args.arg(2)));
-            } else if (args.narg() == 4) {
+            if (args.narg() == 2 || args.narg() == 3) {
+               String mode = args.narg() == 3 ? nonempty(args.arg(3)) : "auto";
+               builder.npcLook(nonempty(args.arg(1)), nonempty(args.arg(2)), mode);
+            } else if (args.narg() == 4 || args.narg() == 5) {
                double x = args.arg(2).checkdouble();
                double y = args.arg(3).checkdouble();
                double z = args.arg(4).checkdouble();
@@ -323,9 +325,10 @@ public final class LuaStory {
                   || Math.abs(x) > 30000000 || Math.abs(y) > 30000000 || Math.abs(z) > 30000000) {
                   throw new IllegalArgumentException("Invalid npc_look coordinates");
                }
-               builder.npcLook(nonempty(args.arg(1)), Double.toString(x), Double.toString(y), Double.toString(z));
+               String mode = args.narg() == 5 ? nonempty(args.arg(5)) : "auto";
+               builder.npcLook(nonempty(args.arg(1)), Double.toString(x), Double.toString(y), Double.toString(z), mode);
             } else {
-               throw new IllegalArgumentException("npc_look(key, 'player'|'none') or npc_look(key, x, y, z) expected");
+               throw new IllegalArgumentException("npc_look(key, 'player'|'none', [mode]) or npc_look(key, x, y, z, [mode]) expected");
             }
             return NIL;
          }
@@ -636,8 +639,10 @@ public final class LuaStory {
 
       private void npcLook(String key, String... target) {
          NpcSpec spec = npcs.get(key);
-         if (spec == null || spec.model == null || (target.length == 1 && !Set.of("player", "none").contains(target[0]))) {
-            throw new IllegalArgumentException("npc_look requires a declared npc_model and target player, none, or coordinates: " + key);
+         if (spec == null || spec.model == null || !Set.of("auto", "head", "body").contains(target[target.length - 1])
+            || (target.length == 2 && !Set.of("player", "none").contains(target[0]))
+            || (target.length != 2 && target.length != 4)) {
+            throw new IllegalArgumentException("npc_look requires npc_model, target and mode auto, head or body: " + key);
          }
          add(new Step(Type.NPC_LOOK, 0, key, null, target));
       }

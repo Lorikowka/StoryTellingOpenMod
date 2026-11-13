@@ -176,7 +176,7 @@ public final class ScriptNpcRenderer extends EntityRenderer<ScriptNpcEntity> {
       } else {
          float[] transform = new Matrix4f()
             .rotateY((float) Math.toRadians(-state.headYaw))
-            .rotateX((float) Math.toRadians(-state.headPitch))
+            .rotateX((float) Math.toRadians(state.headPitch))
             .get(new float[16]);
          state.head.postTransform(transform);
       }

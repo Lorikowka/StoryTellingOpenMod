@@ -13,6 +13,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.level.Level;
 
 /** An ordinary pathfinding mob whose appearance is selected by the Lua story. */
@@ -30,10 +31,21 @@ public final class ScriptNpcEntity extends PathfinderMob {
    private static final EntityDataAccessor<Float> LOOK_Z = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Float> LOOK_YAW = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
    private static final EntityDataAccessor<Float> LOOK_PITCH = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.FLOAT);
+   private static final EntityDataAccessor<String> LOOK_MODE = SynchedEntityData.defineId(ScriptNpcEntity.class, EntityDataSerializers.STRING);
    public static final float MAX_HEAD_YAW = 60f;
+   private boolean turningBody;
 
    public ScriptNpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
       super(type, level);
+   }
+
+   @Override
+   protected BodyRotationControl createBodyControl() {
+      return new BodyRotationControl(this) {
+         @Override public void clientTick() {
+            if (entityData.get(LOOK_PLAYER).isEmpty() && !entityData.get(LOOK_POINT)) super.clientTick();
+         }
+      };
    }
 
    @Override
@@ -52,6 +64,7 @@ public final class ScriptNpcEntity extends PathfinderMob {
       entityData.define(LOOK_Z, 0f);
       entityData.define(LOOK_YAW, 0f);
       entityData.define(LOOK_PITCH, 0f);
+      entityData.define(LOOK_MODE, "auto");
    }
 
    public String model() {
@@ -110,6 +123,15 @@ public final class ScriptNpcEntity extends PathfinderMob {
       entityData.set(LOOK_YAW, 0f);
       entityData.set(LOOK_PITCH, 0f);
       setYHeadRot(yBodyRot);
+      turningBody = false;
+   }
+
+   public void lookMode(String mode) {
+      if (!mode.equals("auto") && !mode.equals("head") && !mode.equals("body")) {
+         throw new IllegalArgumentException("NPC look mode must be auto, head or body");
+      }
+      entityData.set(LOOK_MODE, mode);
+      turningBody = false;
    }
 
    public float lookYaw() { return entityData.get(LOOK_YAW); }
@@ -142,15 +164,19 @@ public final class ScriptNpcEntity extends PathfinderMob {
       double dz = target.z - getZ();
       if (dx * dx + dz * dz < 0.0001) return;
       float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
-      float difference = Mth.wrapDegrees(targetYaw - yBodyRot);
-      if (Math.abs(difference) > MAX_HEAD_YAW) {
-         float turn = Mth.clamp(difference - Math.copySign(MAX_HEAD_YAW, difference), -5f, 5f);
-         setYRot(getYRot() + turn);
-         yBodyRot += turn;
-         yBodyRotO = yBodyRot;
+      String mode = entityData.get(LOOK_MODE);
+      float difference = Mth.wrapDegrees(targetYaw - getYRot());
+      if (mode.equals("auto") && Math.abs(difference) > MAX_HEAD_YAW) turningBody = true;
+      if (mode.equals("body") || (mode.equals("auto") && turningBody)) {
+         float turn = Mth.clamp(difference, -5f, 5f);
+         float nextYaw = getYRot() + turn;
+         setYRot(nextYaw);
+         yBodyRot = nextYaw;
+         yBodyRotO = nextYaw;
+         if (Math.abs(Mth.wrapDegrees(targetYaw - nextYaw)) < 3f) turningBody = false;
       }
-      float headYaw = Mth.clamp(Mth.wrapDegrees(targetYaw - getYRot()), -MAX_HEAD_YAW, MAX_HEAD_YAW);
-      float headPitch = Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))), -40f, 40f);
+      float headYaw = mode.equals("body") ? 0f : Mth.clamp(Mth.wrapDegrees(targetYaw - getYRot()), -MAX_HEAD_YAW, MAX_HEAD_YAW);
+      float headPitch = mode.equals("body") ? 0f : Mth.clamp((float) Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))), -40f, 40f);
       entityData.set(LOOK_YAW, headYaw);
       entityData.set(LOOK_PITCH, headPitch);
       setYHeadRot(getYRot() + headYaw);
@@ -189,6 +215,7 @@ public final class ScriptNpcEntity extends PathfinderMob {
       tag.putFloat("StoryLookX", entityData.get(LOOK_X));
       tag.putFloat("StoryLookY", entityData.get(LOOK_Y));
       tag.putFloat("StoryLookZ", entityData.get(LOOK_Z));
+      tag.putString("StoryLookMode", entityData.get(LOOK_MODE));
    }
 
    @Override
@@ -205,5 +232,6 @@ public final class ScriptNpcEntity extends PathfinderMob {
       entityData.set(LOOK_X, tag.getFloat("StoryLookX"));
       entityData.set(LOOK_Y, tag.getFloat("StoryLookY"));
       entityData.set(LOOK_Z, tag.getFloat("StoryLookZ"));
+      if (tag.contains("StoryLookMode")) lookMode(tag.getString("StoryLookMode"));
    }
 }
