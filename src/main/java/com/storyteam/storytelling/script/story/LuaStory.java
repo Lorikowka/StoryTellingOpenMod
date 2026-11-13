@@ -9,6 +9,8 @@ import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfi
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
 import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
+import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
+import com.storyteam.storytelling.system._core.st_cutscene.ServersideCutsceneHandler;
 import com.storyteam.storytelling.script.story.EntityRepository;
 import com.storyteam.storytelling.util.ScriptUtils;
 import com.storyteam.storytelling.util.world.Location;
@@ -191,6 +193,42 @@ public final class LuaStory {
             case THINK -> builder.thenThink(step.text);
             case BLACKOUT -> builder.blackout(step.speaker);
             case FLASH -> builder.flash(step.speaker);
+            case CAMERA_SHOT -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private STCutsceneData camera;
+               private int elapsed;
+               private boolean done;
+
+               private void release() {
+                  if (camera != null && ServersideCutsceneHandler.currentData == camera
+                     && ScriptUtils.getPlayer() != null) ServersideCutsceneHandler.stopCamera();
+                  camera = null;
+               }
+
+               @Override public void tick() {
+                  if (done) return;
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (player == null) return;
+                  if (camera == null) {
+                     if (ServersideCutsceneHandler.currentData != null) {
+                        throw new IllegalStateException("Another camera scene is already active");
+                     }
+                     Location location = new Location(player.level().dimension(),
+                        Double.parseDouble(step.arguments[0]), Double.parseDouble(step.arguments[1]),
+                        Double.parseDouble(step.arguments[2]), Float.parseFloat(step.arguments[3]),
+                        Float.parseFloat(step.arguments[4]));
+                     camera = new STCutsceneData(location, false);
+                     ServersideCutsceneHandler.initOrTpCamera(camera);
+                  }
+                  if (++elapsed >= Integer.parseInt(step.arguments[5])) {
+                     release();
+                     done = true;
+                  }
+               }
+
+               @Override public boolean isDone() { return done; }
+               @Override public void reset() { release(); elapsed = 0; done = false; }
+               @Override public void onScriptStop() { release(); }
+            });
             case STORY_ENGINE -> builder.thenRun(() -> StoryEngineAdapter.invoke(step.operation, step.arguments));
             case WAIT_POS -> builder.append(p -> new WaitPlayerPositionAction(p, step.position.dimension, step.position.x,
                step.position.y, step.position.z, step.position.radius, step.position.ignoreY));
@@ -835,6 +873,14 @@ public final class LuaStory {
       globals.set("flash", new OneArgFunction() {
          @Override public LuaValue call(LuaValue ticks) { builder.add(new Step(Type.FLASH, positiveTicks(ticks), "")); return NIL; }
       });
+      globals.set("camera_shot", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 6) throw new IllegalArgumentException("camera_shot(x, y, z, yaw, pitch, ticks) expected");
+            builder.cameraShot(args.arg(1).checkdouble(), args.arg(2).checkdouble(), args.arg(3).checkdouble(),
+               args.arg(4).checkdouble(), args.arg(5).checkdouble(), args.arg(6).checkint());
+            return NIL;
+         }
+      });
       globals.set("wait_pos", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() < 4 || args.narg() > 6) {
@@ -964,7 +1010,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, CAMERA_SHOT, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1127,6 +1173,18 @@ public final class LuaStory {
             throw new IllegalArgumentException("spawn_particle_here requires particle ID and count 1–200");
          }
          add(new Step(Type.PARTICLE_HERE, 0, id, null, new String[] {"0", "0", "0", Integer.toString(count)}));
+      }
+
+      private void cameraShot(double x, double y, double z, double yaw, double pitch, int ticks) {
+         if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
+            || Math.abs(x) > 30000000 || Math.abs(y) > 30000000 || Math.abs(z) > 30000000
+            || !Double.isFinite(yaw) || !Double.isFinite(pitch) || Math.abs(yaw) > 3600
+            || pitch < -90 || pitch > 90 || ticks < 2 || ticks > 72000) {
+            throw new IllegalArgumentException("camera_shot requires finite coordinates, yaw within ±3600, pitch -90..90 and 2..72000 ticks");
+         }
+         add(new Step(Type.CAMERA_SHOT, 0, "", null, new String[] {
+            Double.toString(x), Double.toString(y), Double.toString(z),
+            Double.toString(yaw), Double.toString(pitch), Integer.toString(ticks)}));
       }
 
       private void npcAction(Type type, String key, PositionSpec position) {
