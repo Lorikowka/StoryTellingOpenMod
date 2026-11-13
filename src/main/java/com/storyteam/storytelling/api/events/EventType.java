@@ -55,6 +55,7 @@ public record EventType<T>(String eventType, Class<T> type) {
    public static final EventType<LivingKnockBackEvent> LIVING_KNOCK_BACK = new EventType<>("living_damage", LivingKnockBackEvent.class);
    public static final EventType<EntityInteractionData> PLAYER_WAKE_UP = new EventType<>("player_wake_up", EntityInteractionData.class);
    public static final EventType<String> CHAT_MESSAGE_SENT = new EventType<>("chat_message_sent", String.class);
+   public static final EventType<String> LUA_CHOICE_SELECTED = new EventType<>("lua_choice_selected", String.class);
    public static final EventType<Integer> TRIGGER = new EventType<>("trigger", Integer.class);
    public static final EventType<ItemEntity> ITEM_IN_FIRE = new EventType<>("item_in_fire", ItemEntity.class);
    public static final EventType<ServerPlayer> F8_PRESS = new EventType<>("f8_press", ServerPlayer.class);

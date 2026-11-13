@@ -9,6 +9,7 @@ import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfi
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
 import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
+import com.storyteam.storytelling.net.PacketLuaChoiceScreen;
 import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
 import com.storyteam.storytelling.system._core.st_cutscene.ServersideCutsceneHandler;
 import com.storyteam.storytelling.script.story.EntityRepository;
@@ -65,6 +66,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.zeith.hammerlib.net.Network;
 
 /** Loads a Lua story into the existing Java performer without exposing Minecraft internals to Lua. */
 public final class LuaStory {
@@ -414,6 +416,11 @@ public final class LuaStory {
                private boolean displayed;
                private boolean chosen;
                private String marker() { return "lua.choice." + performer.getActionIndex(this); }
+               private void closeScreen() {
+                  if (!displayed) return;
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (player != null) Network.sendTo(player, PacketLuaChoiceScreen.close(id, performer.getActionIndex(this)));
+               }
                private int stride() { return step.type == Type.CHOICE_IF ? 4 : 1; }
                private boolean visible(int offset) {
                   if (step.type != Type.CHOICE_IF || step.arguments[offset + 1].isEmpty()) return true;
@@ -431,18 +438,21 @@ public final class LuaStory {
                   ServerPlayer player = ScriptUtils.getPlayer();
                   if (player == null) return;
                   player.sendSystemMessage(Component.literal(step.arguments[0]));
+                  String[] labels = new String[(step.arguments.length - 1) / stride()];
                   for (int i = 1; i < step.arguments.length; i += stride()) {
                      if (!visible(i)) continue;
                      int option = (i - 1) / stride() + 1;
+                     labels[option - 1] = step.arguments[i];
                      player.sendSystemMessage(Component.literal(option + ". " + step.arguments[i])
                         .withStyle(style -> style.withColor(ChatFormatting.AQUA)
                            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, Integer.toString(option)))));
                   }
+                  Network.sendTo(player, new PacketLuaChoiceScreen(id, performer.getActionIndex(this), step.arguments[0], labels));
                   displayed = true;
                }
 
                @Override public <T> void handleEvent(EventType<T> type, T event) {
-                  if (chosen || !displayed || type != EventType.CHAT_MESSAGE_SENT) return;
+                  if (chosen || !displayed || (type != EventType.CHAT_MESSAGE_SENT && type != EventType.LUA_CHOICE_SELECTED)) return;
                   String answer = String.valueOf(event).trim();
                   int index;
                   try { index = Integer.parseInt(answer); }
@@ -455,7 +465,9 @@ public final class LuaStory {
                }
 
                @Override public boolean isDone() { return chosen; }
-               @Override public void reset() { displayed = false; chosen = false; }
+               @Override public void stop() { closeScreen(); }
+               @Override public void onScriptStop() { closeScreen(); }
+               @Override public void reset() { closeScreen(); displayed = false; chosen = false; }
             });
             case PLAY_SOUND -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
@@ -1129,12 +1141,15 @@ public final class LuaStory {
 
       private void choice(String name, String[] values) {
          if (!name.matches("[a-z][a-z0-9_]*")) throw new IllegalArgumentException("Invalid choice variable: " + name);
+         for (String value : values) if (value.length() > 256) throw new IllegalArgumentException("Choice text must be at most 256 characters");
          add(new Step(Type.CHOICE, 0, name, null, values));
       }
 
       private void choiceIf(String name, String[] values) {
          if (!name.matches("[a-z][a-z0-9_]*")) throw new IllegalArgumentException("Invalid choice variable: " + name);
+         if (values[0].length() > 256) throw new IllegalArgumentException("Choice prompt must be at most 256 characters");
          for (int i = 1; i < values.length; i += 4) {
+            if (values[i].length() > 256) throw new IllegalArgumentException("Choice text must be at most 256 characters");
             if (!values[i + 1].isEmpty() && (!values[i + 1].matches("[a-z][a-z0-9_]*")
                || !Set.of("script", "world", "player").contains(values[i + 3]))) {
                throw new IllegalArgumentException("Invalid choice_if condition or scope for option " + ((i - 1) / 4 + 1));
