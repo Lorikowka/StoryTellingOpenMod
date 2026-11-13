@@ -442,8 +442,9 @@ public final class LuaStory {
                @Override public boolean isDone() { return applied; }
                @Override public void reset() { applied = false; }
             });
-            case PARTICLE -> builder.append(performer -> new ScriptPerformerAction(performer) {
+            case PARTICLE, PARTICLE_HERE -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
+               private boolean warned;
                private String marker() { return "lua.action." + performer.getActionIndex(this); }
                @Override public void tick() {
                   if (script.getFlags().has(marker())) { applied = true; return; }
@@ -453,14 +454,25 @@ public final class LuaStory {
                   if (!(type instanceof SimpleParticleType simple)) {
                      throw new IllegalArgumentException("Particle must be a registered simple particle: " + step.text);
                   }
-                  player.serverLevel().sendParticles(simple, Double.parseDouble(step.arguments[0]),
-                     Double.parseDouble(step.arguments[1]), Double.parseDouble(step.arguments[2]),
-                     Integer.parseInt(step.arguments[3]), 0.3, 0.3, 0.3, 0.02);
+                  net.minecraft.world.phys.Vec3 point = step.type == Type.PARTICLE_HERE
+                     ? player.getEyePosition().add(player.getLookAngle().scale(2.0))
+                     : new net.minecraft.world.phys.Vec3(Double.parseDouble(step.arguments[0]),
+                        Double.parseDouble(step.arguments[1]), Double.parseDouble(step.arguments[2]));
+                  int count = Integer.parseInt(step.arguments[3]);
+                  if (!player.serverLevel().sendParticles(player, simple, true, point.x, point.y, point.z,
+                     count, 0.3, 0.3, 0.3, 0.02)) {
+                     if (!warned) {
+                        Storytelling.LOG.warn("Lua particle waiting for player to come within 512 blocks: story={}, point={}, player={}",
+                           id, point, player.position());
+                        warned = true;
+                     }
+                     return;
+                  }
                   script.getFlags().set(marker());
                   applied = true;
                }
                @Override public boolean isDone() { return applied; }
-               @Override public void reset() { applied = false; }
+               @Override public void reset() { applied = false; warned = false; }
             });
          }
       }
@@ -621,6 +633,13 @@ public final class LuaStory {
             if (args.narg() != 5) throw new IllegalArgumentException("spawn_particle(id, x, y, z, count) expected");
             builder.particle(nonempty(args.arg(1)), args.arg(2).checkdouble(), args.arg(3).checkdouble(),
                args.arg(4).checkdouble(), args.arg(5).checkint());
+            return NIL;
+         }
+      });
+      globals.set("spawn_particle_here", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 2) throw new IllegalArgumentException("spawn_particle_here(id, count) expected");
+            builder.particleHere(nonempty(args.arg(1)), args.arg(2).checkint());
             return NIL;
          }
       });
@@ -933,7 +952,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1089,6 +1108,13 @@ public final class LuaStory {
          }
          add(new Step(Type.PARTICLE, 0, id, null,
             new String[] {Double.toString(x), Double.toString(y), Double.toString(z), Integer.toString(count)}));
+      }
+
+      private void particleHere(String id, int count) {
+         if (ResourceLocation.tryParse(id) == null || count < 1 || count > 200) {
+            throw new IllegalArgumentException("spawn_particle_here requires particle ID and count 1–200");
+         }
+         add(new Step(Type.PARTICLE_HERE, 0, id, null, new String[] {"0", "0", "0", Integer.toString(count)}));
       }
 
       private void npcAction(Type type, String key, PositionSpec position) {
