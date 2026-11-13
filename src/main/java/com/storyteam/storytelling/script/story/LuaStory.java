@@ -245,10 +245,12 @@ public final class LuaStory {
                         if (!(npc.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
                         List<BlockPos> stands = new ArrayList<>();
                         for (int dy = -2; dy <= 1; dy++) {
-                           for (int dx = -2; dx <= 2; dx++) {
-                              for (int dz = -2; dz <= 2; dz++) {
-                                 if (Math.abs(dx) + Math.abs(dz) < 1 || Math.abs(dx) + Math.abs(dz) > 3) continue;
+                           for (int dx = -4; dx <= 4; dx++) {
+                              for (int dz = -4; dz <= 4; dz++) {
+                                 if (Math.abs(dx) + Math.abs(dz) < 1 || Math.abs(dx) + Math.abs(dz) > 5) continue;
                                  BlockPos pos = block.offset(dx, dy, dz);
+                                 if (new net.minecraft.world.phys.Vec3(pos.getX() + 0.5, pos.getY() + npc.getEyeHeight(), pos.getZ() + 0.5)
+                                    .distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(block)) > 4.5 * 4.5) continue;
                                  if (attemptedStands.contains(pos) || !level.hasChunkAt(pos)
                                     || !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
                                     || !level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
@@ -267,7 +269,8 @@ public final class LuaStory {
                            }
                         }
                         if (selected == null) {
-                           Storytelling.LOG.info("NPC could not find a reachable stand near block: story={}, npc={}, block={}", id, step.text, block);
+                           Storytelling.LOG.info("NPC could not find a reachable stand near block: story={}, npc={}, block={}, pos={}, candidates={}",
+                              id, step.text, block, npc.position(), stands.size());
                            finish(false);
                            return;
                         }
