@@ -463,6 +463,10 @@ public class ScriptEnvironment {
       this.loadDir = dir;
    }
 
+   public boolean hasPendingLoad() {
+      return this.loadDir != null;
+   }
+
    private static void deleteCompletely(File dir) {
       if (dir.isFile()) {
          dir.delete();
@@ -548,6 +552,7 @@ public class ScriptEnvironment {
                   ScriptInstance i = this.createInstance(id);
                   i.onInstanceCreated();
                   i.deserializeNBT(read);
+                  if (i instanceof LuaScriptInstance lua) lua.restoreNpcEntities();
                   this.scriptInstances.put(id, i);
                }
             }

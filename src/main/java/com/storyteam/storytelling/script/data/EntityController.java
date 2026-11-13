@@ -273,6 +273,9 @@ public class EntityController<T extends Entity> implements IAutoNBTSerializable 
    }
 
    public CompoundTag serializeNBT() {
+      if (this.reportedEntity != null && this.reportedEntity.isAlive()) {
+         this.lastRegisteredPos = new Location(this.reportedEntity);
+      }
       CompoundTag nbt = IAutoNBTSerializable.super.serializeNBT();
       nbt.putString("EntityType", Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(this.type)).toString());
       return nbt;
