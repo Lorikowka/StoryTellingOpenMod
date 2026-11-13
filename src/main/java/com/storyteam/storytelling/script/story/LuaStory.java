@@ -279,7 +279,10 @@ public final class LuaStory {
 
                @Override public void tick() {
                   if (!applied) {
-                     script.getFlags().set("lua.var." + step.text, step.arguments[0]);
+                     String scope = step.arguments[1];
+                     if (scope.equals("player") && ScriptUtils.getPlayer() == null) return;
+                     if (scope.equals("script")) script.getFlags().set("lua.var." + step.text, step.arguments[0]);
+                     else script.env.setVariable(scope, step.text, step.arguments[0], ScriptUtils.getPlayer());
                      applied = true;
                   }
                }
@@ -289,7 +292,10 @@ public final class LuaStory {
             });
             case VAR_IF -> builder.append(performer -> new ScriptPerformerAction(performer) {
                @Override public void tick() {
-                  String current = script.getFlags().get("lua.var." + step.text);
+                  String scope = step.arguments[3];
+                  if (scope.equals("player") && ScriptUtils.getPlayer() == null) return;
+                  String current = scope.equals("script") ? script.getFlags().get("lua.var." + step.text)
+                     : script.env.getVariable(scope, step.text, ScriptUtils.getPlayer());
                   String destination = step.arguments[0].equals(current) ? step.arguments[1] : step.arguments[2];
                   performer.gotoSavepoint(destination, true);
                }
@@ -452,18 +458,20 @@ public final class LuaStory {
       globals.set("anchor", new OneArgFunction() {
          @Override public LuaValue call(LuaValue name) { builder.anchor(nonempty(name)); return NIL; }
       });
-      globals.set("var_set", new TwoArgFunction() {
-         @Override public LuaValue call(LuaValue name, LuaValue value) {
-            builder.variableSet(nonempty(name), value);
+      globals.set("var_set", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 2 && args.narg() != 3) throw new IllegalArgumentException("var_set(name, value, [scope]) expected");
+            builder.variableSet(nonempty(args.arg(1)), args.arg(2), args.narg() == 3 ? nonempty(args.arg(3)) : "script");
             return NIL;
          }
       });
       globals.set("var_if", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
-            if (args.narg() != 4) {
-               throw new IllegalArgumentException("var_if(name, value, yes_anchor, no_anchor) expects 4 arguments");
+            if (args.narg() != 4 && args.narg() != 5) {
+               throw new IllegalArgumentException("var_if(name, value, yes_anchor, no_anchor, [scope]) expects 4 or 5 arguments");
             }
-            builder.variableIf(nonempty(args.arg(1)), args.arg(2), nonempty(args.arg(3)), nonempty(args.arg(4)));
+            builder.variableIf(nonempty(args.arg(1)), args.arg(2), nonempty(args.arg(3)), nonempty(args.arg(4)),
+               args.narg() == 5 ? nonempty(args.arg(5)) : "script");
             return NIL;
          }
       });
@@ -904,18 +912,20 @@ public final class LuaStory {
          add(new Step(Type.ANCHOR, 0, name));
       }
 
-      private void variableSet(String name, LuaValue value) {
-         if (!name.matches("[a-z][a-z0-9_]*") || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
+      private void variableSet(String name, LuaValue value, String scope) {
+         if (!name.matches("[a-z][a-z0-9_]*") || !Set.of("script", "world", "player").contains(scope)
+            || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
             throw new IllegalArgumentException("var_set requires a simple name and string, number or boolean value");
          }
-         add(new Step(Type.VAR_SET, 0, name, null, new String[] {value.tojstring()}));
+         add(new Step(Type.VAR_SET, 0, name, null, new String[] {value.tojstring(), scope}));
       }
 
-      private void variableIf(String name, LuaValue value, String yes, String no) {
-         if (!name.matches("[a-z][a-z0-9_]*") || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
+      private void variableIf(String name, LuaValue value, String yes, String no, String scope) {
+         if (!name.matches("[a-z][a-z0-9_]*") || !Set.of("script", "world", "player").contains(scope)
+            || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
             throw new IllegalArgumentException("var_if requires a simple name and string, number or boolean value");
          }
-         add(new Step(Type.VAR_IF, 0, name, null, new String[] {value.tojstring(), yes, no}));
+         add(new Step(Type.VAR_IF, 0, name, null, new String[] {value.tojstring(), yes, no, scope}));
       }
 
       private void gotoAnchor(String name) {

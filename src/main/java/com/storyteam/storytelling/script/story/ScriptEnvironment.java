@@ -9,6 +9,7 @@ import com.storyteam.storytelling.events.listeners.ScriptIO;
 import com.storyteam.storytelling.init.CommandsST;
 import com.storyteam.storytelling.logging.LoggingController;
 import com.storyteam.storytelling.script.ScriptInstance;
+import com.storyteam.storytelling.script.data.ScriptFlagStorage;
 import com.storyteam.storytelling.script.performer.Performer;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.action.PerformerAction;
@@ -31,6 +32,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import net.minecraft.ChatFormatting;
@@ -58,6 +62,24 @@ public class ScriptEnvironment {
    public final Int2ObjectArrayMap<Constructor<? extends ScriptInstance>> constructors = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<LuaStory> luaStories = new Int2ObjectArrayMap();
    private final List<Message> chatHistory = new ArrayList<>();
+   private final ScriptFlagStorage worldVariables = new ScriptFlagStorage();
+   private final Map<UUID, ScriptFlagStorage> playerVariables = new HashMap<>();
+
+   public void setVariable(String scope, String name, String value, ServerPlayer player) {
+      if (scope.equals("world")) worldVariables.set(name, value);
+      else if (scope.equals("player") && player != null) {
+         playerVariables.computeIfAbsent(player.getUUID(), ignored -> new ScriptFlagStorage()).set(name, value);
+      } else throw new IllegalArgumentException("Invalid variable scope or missing player: " + scope);
+   }
+
+   public String getVariable(String scope, String name, ServerPlayer player) {
+      if (scope.equals("world")) return worldVariables.get(name);
+      if (scope.equals("player") && player != null) {
+         ScriptFlagStorage values = playerVariables.get(player.getUUID());
+         return values == null ? null : values.get(name);
+      }
+      return null;
+   }
    public boolean hasInit;
    File loadDir;
 
@@ -402,6 +424,15 @@ public class ScriptEnvironment {
    public void save(File dir) {
       File[] existing = dir.listFiles();
       List<File> all = new ArrayList<>(existing == null ? List.of() : Arrays.asList(existing));
+      File variablesFile = new File(dir, "lua-variables.dat");
+      all.remove(variablesFile);
+      all.remove(new File(dir, "lua-variables.dat.old"));
+      CompoundTag variables = new CompoundTag();
+      variables.put("world", worldVariables.serializeNBT());
+      CompoundTag players = new CompoundTag();
+      playerVariables.forEach((uuid, values) -> players.put(uuid.toString(), values.serializeNBT()));
+      variables.put("players", players);
+      ScriptIO.save(variables, variablesFile);
       IntIterator var3 = this.scriptInstances.keySet().iterator();
 
       while (var3.hasNext()) {
@@ -466,6 +497,22 @@ public class ScriptEnvironment {
 
    private void processLoadHook() {
       if (this.loadDir != null) {
+         worldVariables.getFlags().clear();
+         playerVariables.clear();
+         CompoundTag variables = ScriptIO.read(new File(this.loadDir, "lua-variables.dat"));
+         if (variables != null) {
+            worldVariables.deserializeNBT(variables.getCompound("world"));
+            CompoundTag players = variables.getCompound("players");
+            for (String key : players.getAllKeys()) {
+               try {
+                  ScriptFlagStorage values = new ScriptFlagStorage();
+                  values.deserializeNBT(players.getCompound(key));
+                  playerVariables.put(UUID.fromString(key), values);
+               } catch (IllegalArgumentException ignored) {
+                  Storytelling.LOG.warn("Ignoring invalid player variable owner {}", key);
+               }
+            }
+         }
          this.scriptInstances.clear();
          IntIterator var1 = this.constructors.keySet().iterator();
 
