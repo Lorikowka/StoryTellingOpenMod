@@ -1,0 +1,10 @@
+story(900021)
+
+part("main")
+speaker(1, "Система")
+speech(1, "Проверка звука и выдачи предмета.")
+wait_f8()
+play_sound("minecraft:entity.experience_orb.pickup", 1.0, 1.0)
+give_item("minecraft:paper", 1)
+speech(1, "Звук проигран, бумага выдана один раз.")
+wait_f8()
