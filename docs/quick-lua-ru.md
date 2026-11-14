@@ -74,5 +74,12 @@ npc_move("reg", 2.5, -60, 8.5, 0.7)
 | `spawn_particle_here("minecraft:happy_villager", 20)` | Показывает частицы перед игроком. |
 | `camera_shot(x, y, z, yaw, pitch, ticks)` | Показывает временный кадр камерой. |
 | `camera_fly_npc("reg", 40, 40, 1.6)` | Подводит камеру к NPC, держит кадр и возвращает к игроку. |
+| `quest_create("intro", "Встреча", "Найдите проводника")` | Объявляет квест в мире. |
+| `quest_task("intro", "talk", "Поговорить")` | Добавляет ручную задачу. |
+| `quest_start("intro")` | Активирует квест. |
+| `quest_task_complete("intro", "talk")` | Отмечает задачу выполненной. |
+| `quest_complete("intro")` | Завершает квест. |
 
-Команды автора: `/script list`, `/script validate`, `/script reload`, `/script start ID`, `/script active`, `/script inspect ID`, `/script goto ID anchor`, `/script stop ID`. Полное описание аргументов и ограничений смотри в `docs/story-packs.md` репозитория. Рабочие примеры с ID `900013`–`900030` лежат рядом с проектом в `examples/story_scripts/`.
+Журнал открывается командой `/quest`. Состояние квестов общее для мира и сохраняется при выходе. Пример — `900033.lua`.
+
+Команды автора: `/script list`, `/script validate`, `/script reload`, `/script start ID`, `/script active`, `/script inspect ID`, `/script goto ID anchor`, `/script stop ID`. Полное описание аргументов и ограничений смотри в `docs/story-packs.md` репозитория. Рабочие примеры лежат в `examples/story_scripts/`.

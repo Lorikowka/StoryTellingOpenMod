@@ -9,6 +9,7 @@ import com.storyteam.storytelling.content.commands.ICommand;
 import com.storyteam.storytelling.content.commands.STCommand;
 import com.storyteam.storytelling.content.commands.STPathCommand;
 import com.storyteam.storytelling.content.commands.ScriptCommand;
+import com.storyteam.storytelling.content.commands.QuestCommand;
 import com.storyteam.storytelling.content.commands.TPSECommand;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,7 @@ public class CommandsST {
    static {
       COMMANDS.add(FixCommand::register);
       COMMANDS.add(ScriptCommand::register);
+      COMMANDS.add(QuestCommand::register);
       COMMANDS.add(STCommand::register);
       COMMANDS.add(TPSECommand::register);
       COMMANDS.add(STPathCommand::register);

@@ -63,6 +63,7 @@ public class ScriptEnvironment {
    public final Int2ObjectArrayMap<ScriptInstance> scriptInstances = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<Constructor<? extends ScriptInstance>> constructors = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<LuaStory> luaStories = new Int2ObjectArrayMap();
+   public final QuestJournal questJournal = new QuestJournal();
    private final List<Message> chatHistory = new ArrayList<>();
    private final ScriptFlagStorage worldVariables = new ScriptFlagStorage();
    private final Map<UUID, ScriptFlagStorage> playerVariables = new HashMap<>();
@@ -468,6 +469,7 @@ public class ScriptEnvironment {
       CompoundTag players = new CompoundTag();
       playerVariables.forEach((uuid, values) -> players.put(uuid.toString(), values.serializeNBT()));
       variables.put("players", players);
+      variables.put("quests", questJournal.save());
       ScriptIO.save(variables, variablesFile);
       IntIterator var3 = this.scriptInstances.keySet().iterator();
 
@@ -541,9 +543,11 @@ public class ScriptEnvironment {
       if (this.loadDir != null) {
          worldVariables.getFlags().clear();
          playerVariables.clear();
+         questJournal.load(new CompoundTag());
          CompoundTag variables = ScriptIO.read(new File(this.loadDir, "lua-variables.dat"));
          if (variables != null) {
             worldVariables.deserializeNBT(variables.getCompound("world"));
+            questJournal.load(variables.getCompound("quests"));
             CompoundTag players = variables.getCompound("players");
             for (String key : players.getAllKeys()) {
                try {

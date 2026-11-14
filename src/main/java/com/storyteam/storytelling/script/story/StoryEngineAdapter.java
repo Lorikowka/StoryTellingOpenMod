@@ -1,13 +1,12 @@
 package com.storyteam.storytelling.script.story;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import com.storyteam.storytelling.api.itf.IStoryServer;
+import com.storyteam.storytelling.util.ScriptUtils;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
-/** Narrow optional bridge to the public Story Engine API; no compile-time mod dependency. */
+/** Historical Lua quest operation names, now backed by Storytelling's own journal. */
 public final class StoryEngineAdapter {
-   private static final String API_CLASS = "com.storyengine.api.StoryApi";
-
    private StoryEngineAdapter() {
    }
 
@@ -35,21 +34,13 @@ public final class StoryEngineAdapter {
       if (arguments.length != operation.argumentCount) {
          throw new IllegalArgumentException("Wrong number of arguments for " + operation.method);
       }
-      try {
-         Class<?> api = Class.forName(API_CLASS);
-         Class<?>[] signature = new Class<?>[arguments.length];
-         java.util.Arrays.fill(signature, String.class);
-         Method method = api.getMethod(operation.method, signature);
-         if (!Modifier.isStatic(method.getModifiers())) {
-            throw new IllegalStateException("Story Engine API method is not static: " + operation.method);
-         }
-         method.invoke(null, (Object[]) arguments);
-      } catch (ClassNotFoundException e) {
-         throw new IllegalStateException("This Lua story requires a compatible Story Engine mod: " + API_CLASS, e);
-      } catch (NoSuchMethodException | IllegalAccessException e) {
-         throw new IllegalStateException("Incompatible Story Engine API method: " + operation.method, e);
-      } catch (InvocationTargetException e) {
-         throw new IllegalStateException("Story Engine API call failed: " + operation.method, e.getCause());
+      if (operation == Operation.NOTIFY) {
+         ServerPlayer player = ScriptUtils.getPlayer();
+         if (player != null) player.sendSystemMessage(Component.literal(arguments[0] + ": " + arguments[1]));
+      } else {
+         IStoryServer server = IStoryServer.get();
+         if (server == null) throw new IllegalStateException("Story server is unavailable");
+         server.getScriptEnv().questJournal.apply(operation, arguments);
       }
    }
 }

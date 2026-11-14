@@ -1,0 +1,11 @@
+story(900033)
+
+part("main")
+quest_create("first_step", "Первый шаг", "Проверьте встроенный журнал заданий")
+quest_task("first_step", "talk", "Поговорить с Региром")
+quest_start("first_step")
+speech(0, "Откройте /quest: там появилось первое задание.")
+wait_f8()
+quest_task_complete("first_step", "talk")
+quest_complete("first_step")
+quest_notify("Задание", "Первый шаг завершён")
