@@ -27,16 +27,12 @@ public interface ItemsST {
    @RegistryName("world_map")
    @WithScreen(WorldMainTab.class)
    Item WORLD_MAP = new ItemWithGui(props(), Component.empty());
-   @RegistryName("key")
-   Item KEY_ITEM = new Item(props());
    @RegistryName("versiform")
    Item VERSIFORM_RESOURCE = new Item(props().stacksTo(200));
    @RegistryName("ether")
    Item ETHER_RESOURCE = new Item(props().stacksTo(200));
    @RegistryName("rice")
    Item RICE_RESOURCE = new Item(props().stacksTo(200));
-   @RegistryName("eidos_item")
-   Item EIDOS_RESOURCE = new Item(props().stacksTo(1));
 
    static Properties props() {
       return new Properties();
