@@ -35,6 +35,7 @@ import java.util.Set;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.compiler.LuaC;
 import org.luaj.vm2.LoadState;
@@ -709,10 +710,58 @@ public final class LuaStory {
             return NIL;
          }
       });
-      globals.set("npc", new ThreeArgFunction() {
-         @Override public LuaValue call(LuaValue key, LuaValue type, LuaValue name) {
-            builder.npc(nonempty(key), nonempty(type), nonempty(name));
-            return NIL;
+      globals.set("npc", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() == 3) {
+               builder.npc(nonempty(args.arg(1)), nonempty(args.arg(2)), nonempty(args.arg(3)));
+               return NIL;
+            }
+            if (args.narg() != 1 || !args.arg(1).istable()) {
+               throw new IllegalArgumentException("npc{key=..., model=..., name=...} or npc(key, type, name) expected");
+            }
+            LuaTable spec = args.arg(1).checktable();
+            String key = nonempty(spec.get("key"));
+            String name = nonempty(spec.get("name"));
+            LuaValue model = spec.get("model");
+            LuaValue type = spec.get("type");
+            if (model.isnil() == type.isnil()) {
+               throw new IllegalArgumentException("NPC object requires exactly one of model or type: " + key);
+            }
+            if (!model.isnil()) {
+               builder.npcModel(key, nonempty(model), name);
+               LuaValue width = spec.get("width");
+               LuaValue height = spec.get("height");
+               if (!width.isnil() || !height.isnil()) {
+                  builder.npcHitbox(key, width.isnil() ? 0.6f : (float) width.checkdouble(),
+                     height.isnil() ? 1.8f : (float) height.checkdouble());
+               }
+            } else {
+               if (!spec.get("width").isnil() || !spec.get("height").isnil()) {
+                  throw new IllegalArgumentException("Custom hitbox requires a glTF model: " + key);
+               }
+               builder.npc(key, nonempty(type), name);
+            }
+            LuaTable object = new LuaTable();
+            object.set("key", LuaValue.valueOf(key));
+            object.set("name", LuaValue.valueOf(name));
+            bindNpcMethod(globals, object, key, "spawn", "npc_spawn");
+            bindNpcMethod(globals, object, key, "move", "npc_move");
+            bindNpcMethod(globals, object, key, "look", "npc_look");
+            bindNpcMethod(globals, object, key, "animate", "npc_animation");
+            bindNpcMethod(globals, object, key, "use_block", "npc_approach_use_block");
+            bindNpcMethod(globals, object, key, "try_use_block", "npc_try_use_block");
+            bindNpcMethod(globals, object, key, "wait_interact", "npc_wait_interact");
+            bindNpcMethod(globals, object, key, "remove", "npc_remove");
+            bindNpcMethod(globals, object, key, "camera", "camera_fly_npc");
+            object.set("speaker", new VarArgFunction() {
+               @Override public Varargs invoke(Varargs call) {
+                  if (call.narg() != 2 || call.arg(1) != object) {
+                     throw new IllegalArgumentException("npc:speaker(id) expected");
+                  }
+                  return globals.get("speaker_npc").call(call.arg(2), LuaValue.valueOf(key));
+               }
+            });
+            return object;
          }
       });
       globals.set("npc_model", new ThreeArgFunction() {
@@ -981,6 +1030,21 @@ public final class LuaStory {
       } catch (LuaError | IllegalArgumentException e) {
          throw new IllegalArgumentException("Invalid Lua story " + label + ": " + e.getMessage(), e);
       }
+   }
+
+   private static void bindNpcMethod(Globals globals, LuaTable object, String key,
+                                     String method, String legacyFunction) {
+      object.set(method, new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.arg(1) != object) {
+               throw new IllegalArgumentException("Use npc:" + method + "(...) with a colon");
+            }
+            LuaValue[] forwarded = new LuaValue[args.narg()];
+            forwarded[0] = LuaValue.valueOf(key);
+            for (int i = 2; i <= args.narg(); i++) forwarded[i - 1] = args.arg(i);
+            return globals.get(legacyFunction).invoke(LuaValue.varargsOf(forwarded));
+         }
+      });
    }
 
    private static int positiveTicks(LuaValue value) {
