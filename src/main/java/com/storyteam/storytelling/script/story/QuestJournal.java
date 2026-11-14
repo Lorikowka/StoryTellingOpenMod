@@ -11,6 +11,8 @@ import net.minecraft.nbt.Tag;
 /** Server-owned, world-wide quest state. Quest definitions and progress survive world reloads. */
 public final class QuestJournal {
    public enum Status { AVAILABLE, ACTIVE, COMPLETED, FAILED }
+   public record TaskEntry(String title, boolean done) { }
+   public record Entry(String id, String title, String description, Status status, List<TaskEntry> tasks) { }
 
    private final Map<String, Quest> quests = new LinkedHashMap<>();
 
@@ -55,6 +57,17 @@ public final class QuestJournal {
          lines.add("");
       }
       return lines;
+   }
+
+   public List<Entry> snapshot() {
+      List<Entry> entries = new ArrayList<>();
+      for (Quest quest : quests.values()) {
+         if (quest.status == Status.AVAILABLE) continue;
+         List<TaskEntry> tasks = quest.tasks.values().stream()
+            .map(task -> new TaskEntry(task.title, task.done)).toList();
+         entries.add(new Entry(quest.id, quest.title, quest.description, quest.status, tasks));
+      }
+      return List.copyOf(entries);
    }
 
    public CompoundTag save() {

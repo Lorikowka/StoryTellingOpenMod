@@ -11,7 +11,7 @@ public final class QuestCommand {
    public static void register(ICommand.ICommandRegistry registry) {
       ScriptEnvironment env = registry.getStoryServer().getScriptEnv();
       registry.register(Commands.literal("quest").executes(ctx -> {
-         Network.sendTo(ctx.getSource().getPlayerOrException(), new PacketQuestJournal(env.questJournal.displayLines()));
+         Network.sendTo(ctx.getSource().getPlayerOrException(), new PacketQuestJournal(env.questJournal.snapshot()));
          return 1;
       }));
    }

@@ -120,6 +120,11 @@ public final class LuaStorySmokeTest {
       QuestJournal restoredQuests = new QuestJournal();
       restoredQuests.load(quests.save());
       if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
+      var journalEntries = restoredQuests.snapshot();
+      if (journalEntries.size() != 1 || journalEntries.get(0).status() != QuestJournal.Status.ACTIVE
+         || !journalEntries.get(0).tasks().get(0).done()) {
+         throw new AssertionError("Quest journal snapshot lost status or task progress");
+      }
       LuaBlockProject blocks = LuaBlockProject.create(900035);
       blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Привет, \"мир\"!"));
       blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.WAIT_F8, ""));
