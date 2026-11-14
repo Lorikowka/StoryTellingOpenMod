@@ -364,6 +364,33 @@ public class ScriptEnvironment {
       }
    }
 
+   /** Replace one definition only after parsing and validating the complete file. */
+   public int reloadLuaStory(String fileName) throws IOException, NoSuchMethodException {
+      if (fileName == null || !fileName.matches("[1-9][0-9]{0,8}\\.lua")) {
+         throw new IllegalArgumentException("Укажите имя вида 900030.lua без папок");
+      }
+      Path directory = LuaStory.storyDirectory().toAbsolutePath().normalize();
+      Path file = directory.resolve(fileName).normalize();
+      if (!file.getParent().equals(directory) || !Files.isRegularFile(file)
+         || !file.toRealPath().getParent().equals(directory.toRealPath())) {
+         throw new IllegalArgumentException("Lua-файл не найден внутри ST/scripts: " + fileName);
+      }
+      int id = Integer.parseInt(fileName.substring(0, fileName.length() - 4));
+      LuaStory story = LuaStory.load(file);
+      if (story.id() != id) {
+         throw new IllegalArgumentException("ID story(" + story.id() + ") не совпадает с именем " + fileName);
+      }
+      if (constructors.containsKey(id) && !luaStories.containsKey(id)) {
+         throw new IllegalArgumentException("ID " + id + " уже занят встроенным Java-сценарием");
+      }
+      if (this.server != null) story.refreshNpcEntities(this.server.getEntityRepository());
+      var constructor = LuaScriptInstance.class.getConstructor(ScriptEnvironment.class, int.class);
+      luaStories.put(id, story);
+      constructors.put(id, constructor);
+      Storytelling.LOG.info("Reloaded Lua story {} from {}", id, file);
+      return id;
+   }
+
    public void unloadScripts() {
       Storytelling.LOG.info("Unloading scripts...");
       ObjectIterator var1 = this.scriptInstances.values().iterator();

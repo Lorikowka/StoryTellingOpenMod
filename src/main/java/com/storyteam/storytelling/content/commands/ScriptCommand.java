@@ -694,7 +694,18 @@ public class ScriptCommand {
          sendSuccess(ctx, Component.literal("Сценарии перезагружены: " + env.constructors.size()
             + " (Lua: " + env.luaStories.size() + "). Уже запущенные сценарии продолжат прежнюю версию."), true);
          return env.luaStories.size();
-      })));
+      }).then(Commands.argument("file", StringArgumentType.word()).executes(ctx -> {
+         String file = StringArgumentType.getString(ctx, "file");
+         try {
+            int id = env.reloadLuaStory(file);
+            sendSuccess(ctx, Component.literal("Перезагружен " + file + " (ID " + id
+               + "). Остальные сценарии не затронуты; запущенный экземпляр продолжит прежнюю версию."), true);
+            return 1;
+         } catch (Exception error) {
+            ctx.getSource().sendFailure(Component.literal("Не удалось перезагрузить " + file + ": " + error.getMessage()));
+            return 0;
+         }
+      }))));
       dispatcher.register(Commands.literal("script").then(Commands.literal("validate").executes(ctx -> {
          Set<Integer> javaIds = new HashSet<>();
          for (int id : env.constructors.keySet()) {
