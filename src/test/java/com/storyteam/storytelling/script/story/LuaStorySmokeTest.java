@@ -23,6 +23,7 @@ public final class LuaStorySmokeTest {
          flash(5)
          wait_pos(-34.5, 56, -9.5, 1.0, "minecraft:overworld", true)
          teleport_player(0.5, 64, 0.5, "minecraft:overworld", 90, 0)
+         wait_item("minecraft:apple", 2)
          quest_create("routine_work", "Работа", "Описание")
          quest_task("routine_work", "exit", "Выйти")
          quest_start("routine_work")

@@ -71,6 +71,7 @@ npc_move("reg", 2.5, -60, 8.5, 0.7)
 | `npc_animation("reg", "wave", "once")` | Проигрывает клип из glTF. |
 | `play_sound("minecraft:block.note_block.pling")` | Воспроизводит звук у игрока. |
 | `give_item("minecraft:apple", 1)` | Выдаёт предмет. |
+| `wait_item("minecraft:apple", 2)` | Ждёт, пока у игрока в инвентаре будет два яблока; предметы не забирает. |
 | `spawn_particle_here("minecraft:happy_villager", 20)` | Показывает частицы перед игроком. |
 | `camera_shot(x, y, z, yaw, pitch, ticks)` | Показывает временный кадр камерой. |
 | `camera_fly_npc("reg", 40, 40, 1.6)` | Подводит камеру к NPC, держит кадр и возвращает к игроку. |

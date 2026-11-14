@@ -507,6 +507,23 @@ public final class LuaStory {
                @Override public boolean isDone() { return applied; }
                @Override public void reset() { applied = false; }
             });
+            case WAIT_ITEM -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean found;
+               @Override public void tick() {
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (player == null) return;
+                  Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(step.text));
+                  if (item == null) throw new IllegalArgumentException("Unknown item: " + step.text);
+                  int count = 0;
+                  for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+                     ItemStack stack = player.getInventory().getItem(slot);
+                     if (stack.is(item)) count += stack.getCount();
+                  }
+                  found = count >= Integer.parseInt(step.arguments[0]);
+               }
+               @Override public boolean isDone() { return found; }
+               @Override public void reset() { found = false; }
+            });
             case PARTICLE, PARTICLE_HERE -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
                private boolean warned;
@@ -652,6 +669,13 @@ public final class LuaStory {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() < 1 || args.narg() > 2) throw new IllegalArgumentException("give_item(id, [count]) expected");
             builder.giveItem(nonempty(args.arg(1)), args.narg() == 2 ? args.arg(2).checkint() : 1);
+            return NIL;
+         }
+      });
+      globals.set("wait_item", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 2) throw new IllegalArgumentException("wait_item(id, [count]) expected");
+            builder.waitItem(nonempty(args.arg(1)), args.narg() == 2 ? args.arg(2).checkint() : 1);
             return NIL;
          }
       });
@@ -1061,7 +1085,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1210,6 +1234,12 @@ public final class LuaStory {
             throw new IllegalArgumentException("give_item requires an item ID and count 1–64");
          }
          add(new Step(Type.GIVE_ITEM, 0, id, null, new String[] {Integer.toString(count)}));
+      }
+
+      private void waitItem(String id, int count) {
+         if (ResourceLocation.tryParse(id) == null || count < 1 || count > 2304)
+            throw new IllegalArgumentException("wait_item requires an item ID and count 1–2304");
+         add(new Step(Type.WAIT_ITEM, 0, id, null, new String[] {Integer.toString(count)}));
       }
 
       private void particle(String id, double x, double y, double z, int count) {
