@@ -315,9 +315,8 @@ tasks.register('verifyLuaStories', JavaExec) {
     dependsOn tasks.named('testClasses')
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.storyteam.storytelling.script.story.LuaStorySmokeTest'
-    args file('src/main/resources/data/storytelling/story_scripts/s7.lua').absolutePath,
-         file('dist/story-pack-example/900001.lua').absolutePath,
-         file('run/ST/scripts/900008.lua').absolutePath
+    args file('dist/story-pack-example/900001.lua').absolutePath,
+         file('examples/story_scripts/900032.lua').absolutePath
 }
 tasks.register('extractGltfTestDependencies', Copy) {
     from zipTree(file('libs/gfbs_gltf-1.5.1-all.jar'))

@@ -485,7 +485,14 @@ public class ScriptEnvironment {
          }
       }
 
-      all.forEach(ScriptEnvironment::deleteCompletely);
+      // Remove completed saves only for scripts still known to this build. Removed legacy
+      // chapters may have old world data; keep it on disk so an author can recover it.
+      for (File candidate : all) {
+         try {
+            int id = Integer.parseInt(candidate.getName());
+            if (constructors.containsKey(id)) deleteCompletely(candidate);
+         } catch (NumberFormatException ignored) { }
+      }
    }
 
    public void load(File dir) {

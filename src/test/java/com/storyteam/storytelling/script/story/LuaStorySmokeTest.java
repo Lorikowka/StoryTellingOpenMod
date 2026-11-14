@@ -8,11 +8,7 @@ import net.minecraft.network.chat.Component;
 
 public final class LuaStorySmokeTest {
    public static void main(String[] args) throws Exception {
-      LuaStory s7 = LuaStory.parse(Files.readString(Path.of(args[0]), StandardCharsets.UTF_8), "s7.lua");
-      if (s7.id() != 7 || !s7.hasPart("setup") || !s7.hasPart("main")) {
-         throw new AssertionError("S7 Lua story did not load");
-      }
-      LuaStory fresh = LuaStory.parse(Files.readString(Path.of(args[1]), StandardCharsets.UTF_8), "900001.lua");
+      LuaStory fresh = LuaStory.parse(Files.readString(Path.of(args[0]), StandardCharsets.UTF_8), "900001.lua");
       if (fresh.id() != 900001 || !fresh.hasPart("main")) {
          throw new AssertionError("New Lua story did not load");
       }
@@ -115,18 +111,23 @@ public final class LuaStorySmokeTest {
             throw expected;
          }
       }
-      StoryEngineAdapter.invoke(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
-      if (!"test_quest".equals(com.storyengine.api.StoryApi.lastQuestId)) {
-         throw new AssertionError("Optional Story Engine adapter did not invoke the public API");
-      }
+      QuestJournal quests = new QuestJournal();
+      quests.apply(StoryEngineAdapter.Operation.ENSURE_QUEST, "test_quest", "Задание", "Описание");
+      quests.apply(StoryEngineAdapter.Operation.ADD_TASK, "test_quest", "task", "Цель");
+      quests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      quests.apply(StoryEngineAdapter.Operation.COMPLETE_TASK, "test_quest", "task");
+      QuestJournal restoredQuests = new QuestJournal();
+      restoredQuests.load(quests.save());
+      if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
       Path storyDirectory = Files.createTempDirectory("storytelling-lua-stories-");
       try {
          LuaStory.initializeStoryDirectory(storyDirectory);
-         Path registeredGltfStory = storyDirectory.resolve("900008.lua");
-         Files.copy(Path.of(args[2]), registeredGltfStory);
-         if (!Files.isRegularFile(storyDirectory.resolve("s7.lua")) || !Files.isRegularFile(storyDirectory.resolve("900001.lua"))) {
-            throw new AssertionError("Default Lua stories were not installed");
+         try (var files = Files.list(storyDirectory)) {
+            if (files.findAny().isPresent()) throw new AssertionError("The author directory is not empty");
          }
+         Files.copy(Path.of(args[0]), storyDirectory.resolve("900001.lua"));
+         Path registeredGltfStory = storyDirectory.resolve("900032.lua");
+         Files.copy(Path.of(args[1]), registeredGltfStory);
          String editedExample = Files.readString(storyDirectory.resolve("900001.lua")) + "\n-- edited by user\n";
          Files.writeString(storyDirectory.resolve("900001.lua"), editedExample);
          LuaStory.initializeStoryDirectory(storyDirectory);
@@ -146,20 +147,20 @@ public final class LuaStorySmokeTest {
          if (!environment.luaStories.containsKey(900001) || !environment.constructors.containsKey(900001)) {
             throw new AssertionError("New Lua story was not registered");
          }
-         if (!environment.luaStories.containsKey(900008) || !environment.constructors.containsKey(900008)) {
-            throw new AssertionError("The 900008 glTF story file was not registered");
+         if (!environment.luaStories.containsKey(900032) || !environment.constructors.containsKey(900032)) {
+            throw new AssertionError("The 900032 glTF story file was not registered");
          }
          if (environment.createInstance(900001).getMainPerformer() == null) {
             throw new AssertionError("New Lua story has no main performer");
          }
          LuaStoryValidator.Report clean = LuaStoryValidator.validate(storyDirectory, java.util.Set.of());
-         if (clean.checked() != 3 || !clean.valid()) {
+         if (clean.checked() != 2 || !clean.valid()) {
             throw new AssertionError("Valid Lua files failed validation: " + clean.issues());
          }
          Files.writeString(storyDirectory.resolve("900090.lua"), "story(900090)\npart(\"main\")\nspeech(1, \"unfinished\n");
          Files.writeString(storyDirectory.resolve("900091.lua"), "story(900092)\npart(\"main\")\nwait_f8()\n");
          LuaStoryValidator.Report invalid = LuaStoryValidator.validate(storyDirectory, java.util.Set.of(900001));
-         if (invalid.checked() != 5
+         if (invalid.checked() != 4
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900090.lua"))
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900091.lua") && issue.message().contains("filename"))
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900001.lua") && issue.message().contains("Java script"))) {
@@ -172,6 +173,6 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: S7, 900001, and 900008");
+      System.out.println("Lua stories parsed and registered: 900001 and 900032");
    }
 }

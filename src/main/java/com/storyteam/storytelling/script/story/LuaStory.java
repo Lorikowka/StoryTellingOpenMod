@@ -17,11 +17,9 @@ import com.storyteam.storytelling.script.story.EntityRepository;
 import com.storyteam.storytelling.util.ScriptUtils;
 import com.storyteam.storytelling.util.world.Location;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.FileAlreadyExistsException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -545,51 +543,13 @@ public final class LuaStory {
       }
    }
 
-   public static LuaStory loadBundled(String name) {
-      if (name == null || !name.matches("[a-z0-9_]+")) {
-         throw new IllegalArgumentException("Invalid Lua story name: " + name);
-      }
-      Path override = storyDirectory().resolve(name + ".lua");
-      if (Files.isRegularFile(override)) {
-         return load(override);
-      }
-      String resource = "/data/storytelling/story_scripts/" + name + ".lua";
-      try (InputStream stream = LuaStory.class.getResourceAsStream(resource)) {
-         if (stream == null) {
-            throw new IOException("Missing bundled story " + resource);
-         }
-         return parse(new String(stream.readAllBytes(), StandardCharsets.UTF_8), resource);
-      } catch (IOException e) {
-         throw new IllegalStateException("Cannot load Lua story " + name, e);
-      }
-   }
-
    public static Path storyDirectory() {
       return StoryWorkspace.scripts();
    }
 
-   /** Creates the authoring directory and installs editable examples once. */
+   /** Creates an empty authoring directory. Existing user scenarios are left untouched. */
    public static void initializeStoryDirectory(Path directory) throws IOException {
       Files.createDirectories(directory);
-      installExample(directory, "s7.lua");
-      installExample(directory, "900001.lua");
-   }
-
-   private static void installExample(Path directory, String name) throws IOException {
-      Path target = directory.resolve(name);
-      if (Files.exists(target)) {
-         return;
-      }
-      try (InputStream source = LuaStory.class.getResourceAsStream("/data/storytelling/story_scripts/" + name)) {
-         if (source == null) {
-            throw new IOException("Missing bundled Lua example: " + name);
-         }
-         try {
-            Files.copy(source, target);
-         } catch (FileAlreadyExistsException ignored) {
-            // Another loader created the file after the existence check.
-         }
-      }
    }
 
    public static LuaStory load(Path file) {
