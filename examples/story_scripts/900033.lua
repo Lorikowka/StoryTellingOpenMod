@@ -1,6 +1,7 @@
 story(900033)
 
 part("main")
+speaker(0, "Задание")
 quest_create("first_step", "Первый шаг", "Проверьте встроенный журнал заданий")
 quest_task("first_step", "talk", "Поговорить с Региром")
 quest_start("first_step")
