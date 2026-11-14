@@ -120,6 +120,13 @@ public final class LuaStorySmokeTest {
       QuestJournal restoredQuests = new QuestJournal();
       restoredQuests.load(quests.save());
       if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
+      LuaBlockProject blocks = LuaBlockProject.create(900035);
+      blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Привет, \"мир\"!"));
+      blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.WAIT_F8, ""));
+      blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.WAIT_TICKS, "20"));
+      String generated = blocks.generate();
+      if (LuaStory.parse(generated, "900035.lua").id() != 900035 || !generated.contains("\\\"мир\\\""))
+         throw new AssertionError("The block editor did not generate valid escaped Lua");
       Path storyDirectory = Files.createTempDirectory("storytelling-lua-stories-");
       try {
          LuaStory.initializeStoryDirectory(storyDirectory);
@@ -166,6 +173,13 @@ public final class LuaStorySmokeTest {
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900091.lua") && issue.message().contains("filename"))
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900001.lua") && issue.message().contains("Java script"))) {
             throw new AssertionError("Validator missed syntax, filename or ID errors: " + invalid.issues());
+         }
+         Path authorFile = storyDirectory.resolve("draft.txt");
+         StoryFileWriter.write(authorFile, "first", true);
+         StoryFileWriter.write(authorFile, "second", true);
+         if (!"second".equals(Files.readString(authorFile))
+            || !"first".equals(Files.readString(storyDirectory.resolve("draft.txt.bak")))) {
+            throw new AssertionError("Story file backup or replacement failed");
          }
       } finally {
          try (var paths = Files.walk(storyDirectory)) {

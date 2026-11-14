@@ -28,12 +28,16 @@ public final class LuaBlockProject {
    public int id() { return id; }
    public List<Block> blocks() { return blocks; }
 
-   public static LuaBlockProject open(int id) throws IOException {
+   public static LuaBlockProject create(int id) {
       if (id <= 0) throw new IllegalArgumentException("Story ID must be positive");
+      return new LuaBlockProject(id);
+   }
+
+   public static LuaBlockProject open(int id) throws IOException {
+      LuaBlockProject project = create(id);
       Path directory = StoryWorkspace.root().resolve("projects");
       Files.createDirectories(directory);
       Path file = directory.toRealPath().resolve(id + ".json");
-      LuaBlockProject project = new LuaBlockProject(id);
       if (!Files.exists(file)) return project;
       if (Files.isSymbolicLink(file)) throw new IOException("Project symlink is not allowed");
       JsonObject root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject();
