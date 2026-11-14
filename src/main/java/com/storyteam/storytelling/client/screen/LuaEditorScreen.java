@@ -2,14 +2,12 @@ package com.storyteam.storytelling.client.screen;
 
 import com.storyteam.storytelling.api.itf.IStoryServer;
 import com.storyteam.storytelling.script.story.LuaStory;
+import com.storyteam.storytelling.script.story.StoryFileWriter;
 import com.storyteam.storytelling.script.story.StoryWorkspace;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -151,18 +149,10 @@ public final class LuaEditorScreen extends Screen {
          LuaStory story = LuaStory.parse(editor.getValue(), name);
          if (!name.equals(story.id() + ".lua")) throw new IllegalArgumentException("Имя файла не совпадает с story(" + story.id() + ")");
       } catch (RuntimeException error) { status = "Ошибка: " + error.getMessage(); return; }
-      Path temp = null;
       try {
          Path root = StoryWorkspace.scripts().toRealPath();
          Path target = root.resolve(name);
-         if (Files.exists(target, LinkOption.NOFOLLOW_LINKS) && Files.isSymbolicLink(target))
-            throw new IOException("Ссылки вместо Lua-файла запрещены");
-         temp = Files.createTempFile(root, ".storyedit-", ".tmp");
-         Files.writeString(temp, editor.getValue(), StandardCharsets.UTF_8);
-         if (Files.exists(target)) Files.copy(target, root.resolve(name + ".bak"), StandardCopyOption.REPLACE_EXISTING);
-         try { Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
-         catch (AtomicMoveNotSupportedException ignored) { Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING); }
-         temp = null;
+         StoryFileWriter.write(target, editor.getValue(), true);
          selected = name;
          dirty = false;
          status = "Сохранён " + name + "; обновляю сценарий...";
@@ -175,7 +165,6 @@ public final class LuaEditorScreen extends Screen {
             Minecraft.getInstance().execute(() -> status = message);
          });
       } catch (IOException error) { status = "Ошибка сохранения: " + error.getMessage(); }
-      finally { if (temp != null) try { Files.deleteIfExists(temp); } catch (IOException ignored) { } }
    }
 
    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
