@@ -5,6 +5,7 @@ import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 public final class LuaStorySmokeTest {
@@ -24,6 +25,10 @@ public final class LuaStorySmokeTest {
       LuaStory hiddenStory = LuaStory.parse(Files.readString(Path.of(args[4]), StandardCharsets.UTF_8), "900038.lua");
       if (hiddenStory.id() != 900038 || !hiddenStory.hasPart("main")) {
          throw new AssertionError("Hidden-subtask journal test did not load");
+      }
+      LuaStory itemStory = LuaStory.parse(Files.readString(Path.of(args[5]), StandardCharsets.UTF_8), "900041.lua");
+      if (itemStory.id() != 900041 || !itemStory.hasPart("main")) {
+         throw new AssertionError("Item receipt test story did not load");
       }
       LuaStory expanded = LuaStory.parse("""
          story(900004)
@@ -196,6 +201,14 @@ public final class LuaStorySmokeTest {
          || hiddenReloaded.snapshot().get(0).tasks().size() != 4) {
          throw new AssertionError("Revealed hidden subtask did not finish quest");
       }
+      CompoundTag playerData = new CompoundTag();
+      LuaItemReceipts.record(playerData, "first-run", 7);
+      CompoundTag restoredPlayerData = playerData.copy();
+      if (!LuaItemReceipts.has(restoredPlayerData, "first-run", 7)
+         || LuaItemReceipts.has(restoredPlayerData, "second-run", 7)
+         || LuaItemReceipts.has(restoredPlayerData, "first-run", 8)) {
+         throw new AssertionError("Item receipt did not distinguish runs and actions across NBT reload");
+      }
       Path selectionDirectory = Files.createTempDirectory("storytelling-journal-selection-");
       try {
          Path selectionFile = selectionDirectory.resolve("selection.properties");
@@ -268,8 +281,19 @@ public final class LuaStorySmokeTest {
          if (!environment.luaStories.containsKey(900032) || !environment.constructors.containsKey(900032)) {
             throw new AssertionError("The 900032 glTF story file was not registered");
          }
-         if (environment.createInstance(900001).getMainPerformer() == null) {
+         LuaScriptInstance firstRun = (LuaScriptInstance) environment.createInstance(900001);
+         if (firstRun.getMainPerformer() == null) {
             throw new AssertionError("New Lua story has no main performer");
+         }
+         CompoundTag savedRun = firstRun.serializeNBT();
+         if (!firstRun.runToken.equals(LuaScriptInstance.readRunToken(savedRun, "missing"))) {
+            throw new AssertionError("Lua run token did not survive script serialization");
+         }
+         if (!"legacy".equals(LuaScriptInstance.readRunToken(new CompoundTag(), "legacy")))
+            throw new AssertionError("Old Lua saves did not receive a fresh receipt token");
+         LuaScriptInstance nextRun = (LuaScriptInstance) environment.createInstance(900001);
+         if (firstRun.runToken.equals(nextRun.runToken)) {
+            throw new AssertionError("Fresh Lua run reused an old item receipt token");
          }
          LuaStoryValidator.Report clean = LuaStoryValidator.validate(storyDirectory, java.util.Set.of());
          if (clean.checked() != 2 || !clean.valid()) {
@@ -298,6 +322,6 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037 and 900038");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038 and 900041");
    }
 }

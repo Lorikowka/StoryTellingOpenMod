@@ -496,11 +496,20 @@ public final class LuaStory {
                   if (script.getFlags().has(marker())) { applied = true; return; }
                   ServerPlayer player = ScriptUtils.getPlayer();
                   if (player == null) return;
+                  LuaScriptInstance lua = (LuaScriptInstance) script;
+                  int actionIndex = performer.getActionIndex(this);
+                  if (LuaItemReceipts.has(player.getPersistentData(), lua.runToken, actionIndex)) {
+                     script.getFlags().set(marker());
+                     applied = true;
+                     return;
+                  }
                   Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(step.text));
                   if (item == null) throw new IllegalArgumentException("Unknown item: " + step.text);
                   ItemStack stack = new ItemStack(item, Integer.parseInt(step.arguments[0]));
                   player.getInventory().add(stack);
                   if (!stack.isEmpty()) player.drop(stack, false);
+                  LuaItemReceipts.record(player.getPersistentData(), lua.runToken, actionIndex);
+                  player.server.getPlayerList().saveAll();
                   script.getFlags().set(marker());
                   applied = true;
                }

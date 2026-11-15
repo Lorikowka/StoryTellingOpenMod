@@ -10,12 +10,15 @@ import com.storyteam.storytelling.script.performer.builder.ScriptPerformerBuilde
 import com.storyteam.storytelling.util.world.Location;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import net.minecraft.nbt.CompoundTag;
 import org.zeith.hammerlib.api.io.NBTSerializable;
 
 /** One shared Java wrapper for all externally registered Lua stories. */
 @SaveOnClose
 public final class LuaScriptInstance extends ScriptInstance {
    public final String definitionHash;
+   public String runToken = UUID.randomUUID().toString();
    @NBTSerializable
    public final ScriptPerformer mainFlow;
 
@@ -33,6 +36,22 @@ public final class LuaScriptInstance extends ScriptInstance {
       }
       story.appendTo(builder, "main", characters);
       this.mainFlow = builder.build(this::registerMainPerformer);
+   }
+
+   @Override public CompoundTag serializeNBT() {
+      CompoundTag tag = super.serializeNBT();
+      tag.putString("luaRunToken", runToken);
+      return tag;
+   }
+
+   @Override public void deserializeNBT(CompoundTag tag) {
+      runToken = readRunToken(tag, runToken);
+      super.deserializeNBT(tag);
+   }
+
+   static String readRunToken(CompoundTag tag, String fallback) {
+      String token = tag.getString("luaRunToken");
+      return token.isBlank() ? fallback : token;
    }
 
    /** Reattach NPCs that were spawned before the saved action index. */
