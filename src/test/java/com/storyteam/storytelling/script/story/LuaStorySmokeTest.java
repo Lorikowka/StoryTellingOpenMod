@@ -25,6 +25,7 @@ public final class LuaStorySmokeTest {
          teleport_player(0.5, 64, 0.5, "minecraft:overworld", 90, 0)
          wait_item("minecraft:apple", 2)
          quest_create("routine_work", "Работа", "Описание")
+         quest_source("routine_work", "Проводник")
          quest_task("routine_work", "exit", "Выйти")
          quest_start("routine_work")
          quest_task_complete("routine_work", "exit")
@@ -114,6 +115,7 @@ public final class LuaStorySmokeTest {
       }
       QuestJournal quests = new QuestJournal();
       quests.apply(StoryEngineAdapter.Operation.ENSURE_QUEST, "test_quest", "Задание", "Описание");
+      quests.apply(StoryEngineAdapter.Operation.SET_QUEST_SOURCE, "test_quest", "Регир");
       quests.apply(StoryEngineAdapter.Operation.ADD_TASK, "test_quest", "task", "Цель");
       quests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
       quests.apply(StoryEngineAdapter.Operation.COMPLETE_TASK, "test_quest", "task");
@@ -122,7 +124,8 @@ public final class LuaStorySmokeTest {
       if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
       var journalEntries = restoredQuests.snapshot();
       if (journalEntries.size() != 1 || journalEntries.get(0).status() != QuestJournal.Status.ACTIVE
-         || !journalEntries.get(0).tasks().get(0).done()) {
+         || !journalEntries.get(0).tasks().get(0).done()
+         || !journalEntries.get(0).source().equals("Регир")) {
          throw new AssertionError("Quest journal snapshot lost status or task progress");
       }
       LuaBlockProject blocks = LuaBlockProject.create(900035);

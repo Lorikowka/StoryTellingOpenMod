@@ -1005,6 +1005,9 @@ public final class LuaStory {
       globals.set("quest_create", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue title, LuaValue description) { external(builder, StoryEngineAdapter.Operation.ENSURE_QUEST, id, title, description); return NIL; }
       });
+      globals.set("quest_source", new TwoArgFunction() {
+         @Override public LuaValue call(LuaValue id, LuaValue source) { external(builder, StoryEngineAdapter.Operation.SET_QUEST_SOURCE, id, source); return NIL; }
+      });
       globals.set("quest_task", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue task, LuaValue title) { external(builder, StoryEngineAdapter.Operation.ADD_TASK, id, task, title); return NIL; }
       });

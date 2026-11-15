@@ -28,6 +28,7 @@ public class PacketQuestJournal implements IPacket {
          QuestJournal.Entry entry = entries.get(i);
          writeText(buf, entry.id(), 128);
          writeText(buf, entry.title(), 256);
+         writeText(buf, entry.source(), 256);
          writeText(buf, entry.description(), 1024);
          buf.writeEnum(entry.status());
          int taskCount = Math.min(entry.tasks().size(), MAX_TASKS);
@@ -46,6 +47,7 @@ public class PacketQuestJournal implements IPacket {
       for (int i = 0; i < count; i++) {
          String id = buf.readUtf(128);
          String title = buf.readUtf(256);
+         String source = buf.readUtf(256);
          String description = buf.readUtf(1024);
          QuestJournal.Status status = buf.readEnum(QuestJournal.Status.class);
          int taskCount = readCount(buf, MAX_TASKS, "quest tasks");
@@ -53,7 +55,7 @@ public class PacketQuestJournal implements IPacket {
          for (int j = 0; j < taskCount; j++) {
             tasks.add(new QuestJournal.TaskEntry(buf.readUtf(256), buf.readBoolean()));
          }
-         received.add(new QuestJournal.Entry(id, title, description, status, List.copyOf(tasks)));
+         received.add(new QuestJournal.Entry(id, title, source, description, status, List.copyOf(tasks)));
       }
       entries = List.copyOf(received);
    }

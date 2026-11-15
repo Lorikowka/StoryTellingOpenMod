@@ -19,7 +19,8 @@ public final class StoryEngineAdapter {
       COMPLETE_TASK("completeTaskAll", 2),
       COMPLETE_QUEST("completeQuestAll", 1),
       FAIL_QUEST("failQuestAll", 1),
-      NOTIFY("notify", 2);
+      NOTIFY("notify", 2),
+      SET_QUEST_SOURCE("setQuestSource", 2);
 
       private final String method;
       private final int argumentCount;

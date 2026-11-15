@@ -148,13 +148,14 @@ end
 
 ```lua
 quest_create("routine_work", "Работа", "Описание")
+quest_source("routine_work", "Проводник")
 quest_task("routine_work", "exit", "Выйти из комнаты")
 quest_start("routine_work")
 quest_task_complete("routine_work", "exit")
 quest_complete("routine_work")
 ```
 
-Дополнительно доступны `quest_edit(id, description)`, `quest_reset(id)`, `quest_fail(id)` и `quest_notify(title, message)`. Вызовы выполняются тогда, когда до них доходит сценарий. `/quest` открывает журнал активных, выполненных и проваленных заданий. Состояние общее для мира; повторный `quest_create` обновляет название и описание без сброса прогресса. `quest_reset` явно сбрасывает прогресс.
+Дополнительно доступны `quest_source(id, name)`, `quest_edit(id, description)`, `quest_reset(id)`, `quest_fail(id)` и `quest_notify(title, message)`. Вызовы выполняются тогда, когда до них доходит сценарий. `/quest` открывает журнал активных, выполненных и проваленных заданий. Состояние общее для мира; повторный `quest_create` обновляет название и описание без сброса прогресса. `quest_reset` явно сбрасывает прогресс.
 
 ## Если сценарий не запускается
 

@@ -12,7 +12,7 @@ import net.minecraft.nbt.Tag;
 public final class QuestJournal {
    public enum Status { AVAILABLE, ACTIVE, COMPLETED, FAILED }
    public record TaskEntry(String title, boolean done) { }
-   public record Entry(String id, String title, String description, Status status, List<TaskEntry> tasks) { }
+   public record Entry(String id, String title, String source, String description, Status status, List<TaskEntry> tasks) { }
 
    private final Map<String, Quest> quests = new LinkedHashMap<>();
 
@@ -26,6 +26,7 @@ public final class QuestJournal {
       }
       if (quest == null) throw new IllegalStateException("Unknown quest: " + args[0] + "; call quest_create first");
       switch (operation) {
+         case SET_QUEST_SOURCE -> quest.source = args[1];
          case EDIT_QUEST -> quest.description = args[1];
          case ADD_TASK -> quest.tasks.computeIfAbsent(args[1], id -> new Task(id, args[2])).title = args[2];
          case START_QUEST -> { if (quest.status == Status.AVAILABLE) quest.status = Status.ACTIVE; }
@@ -65,7 +66,7 @@ public final class QuestJournal {
          if (quest.status == Status.AVAILABLE) continue;
          List<TaskEntry> tasks = quest.tasks.values().stream()
             .map(task -> new TaskEntry(task.title, task.done)).toList();
-         entries.add(new Entry(quest.id, quest.title, quest.description, quest.status, tasks));
+         entries.add(new Entry(quest.id, quest.title, quest.source, quest.description, quest.status, tasks));
       }
       return List.copyOf(entries);
    }
@@ -77,6 +78,7 @@ public final class QuestJournal {
          CompoundTag entry = new CompoundTag();
          entry.putString("id", quest.id);
          entry.putString("title", quest.title);
+         entry.putString("source", quest.source);
          entry.putString("description", quest.description);
          entry.putString("status", quest.status.name());
          ListTag tasks = new ListTag();
@@ -102,6 +104,7 @@ public final class QuestJournal {
          String id = entry.getString("id");
          if (id.isBlank()) continue;
          Quest quest = new Quest(id, entry.getString("title"), entry.getString("description"));
+         quest.source = entry.getString("source");
          try { quest.status = Status.valueOf(entry.getString("status")); }
          catch (IllegalArgumentException ignored) { quest.status = Status.AVAILABLE; }
          ListTag tasks = entry.getList("tasks", Tag.TAG_COMPOUND);
@@ -120,6 +123,7 @@ public final class QuestJournal {
    private static final class Quest {
       private final String id;
       private String title;
+      private String source = "";
       private String description;
       private Status status = Status.AVAILABLE;
       private final Map<String, Task> tasks = new LinkedHashMap<>();
