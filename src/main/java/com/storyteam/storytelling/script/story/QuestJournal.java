@@ -29,7 +29,11 @@ public final class QuestJournal {
          case SET_QUEST_SOURCE -> quest.source = args[1];
          case EDIT_QUEST -> quest.description = args[1];
          case ADD_TASK -> quest.tasks.computeIfAbsent(args[1], id -> new Task(id, args[2])).title = args[2];
-         case START_QUEST -> { if (quest.status == Status.AVAILABLE) quest.status = Status.ACTIVE; }
+         case START_QUEST -> {
+            // A new script run is a new attempt, even if this quest was completed before.
+            quest.status = Status.ACTIVE;
+            quest.tasks.values().forEach(task -> task.done = false);
+         }
          case RESET_QUEST -> { quest.status = Status.AVAILABLE; quest.tasks.values().forEach(task -> task.done = false); }
          case COMPLETE_TASK -> {
             Task task = quest.tasks.get(args[1]);

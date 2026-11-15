@@ -1,6 +1,7 @@
 package com.storyteam.storytelling.script.story;
 
 import com.storyteam.storytelling.client.content.overlays.Message;
+import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -128,6 +129,27 @@ public final class LuaStorySmokeTest {
          || !journalEntries.get(0).source().equals("Регир")) {
          throw new AssertionError("Quest journal snapshot lost status or task progress");
       }
+      restoredQuests.apply(StoryEngineAdapter.Operation.COMPLETE_QUEST, "test_quest");
+      restoredQuests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      var replay = restoredQuests.snapshot().get(0);
+      if (replay.status() != QuestJournal.Status.ACTIVE || replay.tasks().get(0).done()) {
+         throw new AssertionError("Restarting a quest did not clear completed progress");
+      }
+      restoredQuests.apply(StoryEngineAdapter.Operation.FAIL_QUEST, "test_quest");
+      restoredQuests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      if (restoredQuests.snapshot().get(0).status() != QuestJournal.Status.ACTIVE) {
+         throw new AssertionError("Restarting a failed quest did not reactivate it");
+      }
+      Path selectionDirectory = Files.createTempDirectory("storytelling-journal-selection-");
+      try {
+         Path selectionFile = selectionDirectory.resolve("selection.properties");
+         var selection = new QuestJournalSelection.Value(QuestJournal.Status.COMPLETED, "test_quest", 2, 14);
+         QuestJournalSelection.write(selectionFile, selection);
+         if (!selection.equals(QuestJournalSelection.read(selectionFile))) {
+            throw new AssertionError("Quest journal selection did not survive a file round trip");
+         }
+         Files.delete(selectionFile);
+      } finally { Files.delete(selectionDirectory); }
       LuaBlockProject blocks = LuaBlockProject.create(900035);
       blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Привет, \"мир\"!"));
       blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.WAIT_F8, ""));

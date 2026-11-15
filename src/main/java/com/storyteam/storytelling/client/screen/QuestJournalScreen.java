@@ -45,8 +45,29 @@ public final class QuestJournalScreen extends Screen {
    public QuestJournalScreen(List<QuestJournal.Entry> entries) {
       super(Component.literal("Журнал заданий"));
       this.entries = List.copyOf(entries);
-      if (count(tab) == 0 && count(QuestJournal.Status.COMPLETED) > 0) tab = QuestJournal.Status.COMPLETED;
+      QuestJournalSelection.Value last = QuestJournalSelection.load();
+      QuestJournal.Entry remembered = entries.stream().filter(entry -> entry.id().equals(last.questId()))
+         .findFirst().orElse(null);
+      if (remembered != null) {
+         tab = remembered.status();
+         List<QuestJournal.Entry> shown = visible();
+         for (int i = 0; i < shown.size(); i++) {
+            if (shown.get(i).id().equals(last.questId())) { selected = i; break; }
+         }
+         listScroll = Math.min(last.listScroll(), Math.max(0, shown.size() - VISIBLE_ROWS));
+         if (selected < listScroll) listScroll = selected;
+         if (selected >= listScroll + VISIBLE_ROWS) listScroll = selected - VISIBLE_ROWS + 1;
+         detailScroll = last.detailScroll();
+      } else if (count(last.tab()) > 0) tab = last.tab();
+      else if (count(tab) == 0 && count(QuestJournal.Status.COMPLETED) > 0) tab = QuestJournal.Status.COMPLETED;
       else if (count(tab) == 0 && count(QuestJournal.Status.FAILED) > 0) tab = QuestJournal.Status.FAILED;
+   }
+
+   @Override public void removed() {
+      List<QuestJournal.Entry> shown = visible();
+      String id = shown.isEmpty() ? "" : shown.get(Math.min(selected, shown.size() - 1)).id();
+      QuestJournalSelection.save(new QuestJournalSelection.Value(tab, id, listScroll, detailScroll));
+      super.removed();
    }
 
    private int count(QuestJournal.Status status) {

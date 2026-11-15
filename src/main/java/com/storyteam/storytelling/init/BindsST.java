@@ -1,11 +1,14 @@
 package com.storyteam.storytelling.init;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.InputConstants.Type;
 import com.storyteam.storytelling.client.content.overlays.MessageOverlay;
 import com.storyteam.storytelling.client.screen.ChatLogScreen;
+import com.storyteam.storytelling.client.screen.QuestJournalScreen;
 import com.storyteam.storytelling.net.PacketF10Press;
 import com.storyteam.storytelling.net.PacketF8Press;
 import com.storyteam.storytelling.net.PacketF9Press;
+import com.storyteam.storytelling.net.PacketQuestJournalRequest;
 import com.storyteam.storytelling.net.StopTDCutscenePacket;
 import com.storyteam.storytelling.system.sounds.SoundUtils;
 import com.storyteam.storytelling.system.tribute.client.screen.TributeScreen;
@@ -22,6 +25,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import org.zeith.hammerlib.net.Network;
+import org.lwjgl.glfw.GLFW;
 
 @EventBusSubscriber(
    modid = "storytelling",
@@ -35,6 +39,9 @@ public class BindsST {
    public static final KeyMapping STOP_TD_CUTSCENE = new KeyMapping("storytelling.key_bindings.stop_td_cutscene", 78, "storytelling.key_bindings.category.name");
    public static final KeyMapping OPEN_LEVELING = new KeyMapping("storytelling.key_bindings.open_leveling", 80, "storytelling.key_bindings.category.name");
    public static final KeyMapping OPEN_CHATLOG = new KeyMapping("storytelling.key_bindings.open_chatlog", 89, "storytelling.key_bindings.category.name");
+   public static final KeyMapping OPEN_QUEST_JOURNAL = new KeyMapping(
+      "storytelling.key_bindings.open_quests", GLFW.GLFW_KEY_J, "storytelling.key_bindings.category.name"
+   );
    public static final KeyMapping OPEN_SPELL_SELECTION = new KeyMapping(
       "storytelling.key_bindings.open_spell_selection", 90, "storytelling.key_bindings.category.name"
    );
@@ -55,6 +62,12 @@ public class BindsST {
    @SubscribeEvent
    public static void onKeyPress(Key event) {
       Minecraft mc = Minecraft.getInstance();
+      if (event.getAction() == GLFW.GLFW_PRESS && mc.player != null
+         && OPEN_QUEST_JOURNAL.isActiveAndMatches(InputConstants.getKey(event.getKey(), event.getScanCode()))) {
+         if (mc.screen instanceof QuestJournalScreen) mc.setScreen(null);
+         else if (mc.screen == null) Network.sendToServer(new PacketQuestJournalRequest());
+         return;
+      }
       if (mc.screen == null) {
          if (STOP_TD_CUTSCENE.isDown()) {
             Network.sendToServer(new StopTDCutscenePacket());
@@ -119,6 +132,7 @@ public class BindsST {
 
    static {
       OPEN_SPELL_SELECTION.setKeyConflictContext(KeyConflictContext.UNIVERSAL);
+      OPEN_QUEST_JOURNAL.setKeyConflictContext(KeyConflictContext.UNIVERSAL);
    }
 
    @EventBusSubscriber(
