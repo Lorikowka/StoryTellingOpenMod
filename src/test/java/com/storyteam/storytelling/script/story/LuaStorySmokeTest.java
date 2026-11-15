@@ -36,6 +36,9 @@ public final class LuaStorySmokeTest {
       LuaStory leverStory = LuaStory.parse(Files.readString(Path.of(args[7]), StandardCharsets.UTF_8), "900043.lua");
       if (leverStory.id() != 900043 || !leverStory.hasPart("main"))
          throw new AssertionError("Idempotent lever story did not load");
+      LuaStory chapter = LuaStory.parse(Files.readString(Path.of(args[8]), StandardCharsets.UTF_8), "900050.lua");
+      if (chapter.id() != 900050 || !chapter.hasPart("main"))
+         throw new AssertionError("Integration chapter did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -338,6 +341,6 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042 and 900043");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
    }
 }
