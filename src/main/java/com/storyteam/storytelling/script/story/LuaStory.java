@@ -589,13 +589,17 @@ public final class LuaStory {
 
    public static LuaStory load(Path file) {
       try {
-         return parse(Files.readString(file, StandardCharsets.UTF_8), file.toString());
+         return parse(Files.readString(file, StandardCharsets.UTF_8), file.toString(), file.getParent());
       } catch (IOException e) {
          throw new IllegalStateException("Cannot read Lua story " + file, e);
       }
    }
 
    public static LuaStory parse(String source, String label) {
+      return parse(source, label, null);
+   }
+
+   private static LuaStory parse(String source, String label, Path moduleRoot) {
       Builder builder = new Builder(label);
       Globals globals = new Globals();
       globals.load(new BaseLib());
@@ -605,7 +609,7 @@ public final class LuaStory {
       globals.load(new MathLib());
       LoadState.install(globals);
       LuaC.install(globals);
-      globals.set("require", LuaValue.NIL);
+      globals.set("require", moduleRoot == null ? LuaValue.NIL : new LuaStoryModules(moduleRoot, globals));
       globals.set("package", LuaValue.NIL);
       globals.set("dofile", LuaValue.NIL);
       globals.set("loadfile", LuaValue.NIL);
@@ -1415,3 +1419,4 @@ public final class LuaStory {
       }
    }
 }
+

@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 
 public final class LuaStorySmokeTest {
    public static void main(String[] args) throws Exception {
+      checkSafeModules();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -347,4 +348,50 @@ public final class LuaStorySmokeTest {
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
    }
+
+   private static void checkSafeModules() throws Exception {
+      Path root = Files.createTempDirectory("story-lua-modules-");
+      try {
+         Files.createDirectories(root.resolve("characters"));
+         Files.createDirectories(root.resolve("cycle"));
+         Files.writeString(root.resolve("characters/hero.lua"), """
+            loads = (loads or 0) + 1
+            return { name = "Проводник", loads = loads }
+            """, StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900099.lua"), """
+            local a = require("characters.hero")
+            local b = require("characters.hero")
+            if a ~= b or b.loads ~= 1 then error("module cache failed") end
+            story(900099)
+            part("main")
+            speaker(0, a.name)
+            speech(0, "Проверка модуля")
+            """, StandardCharsets.UTF_8);
+         if (LuaStory.load(root.resolve("900099.lua")).id() != 900099)
+            throw new AssertionError("Lua character module did not load");
+
+         Files.writeString(root.resolve("cycle/a.lua"), "return require(\"cycle.b\")", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("cycle/b.lua"), "return require(\"cycle.a\")", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900100.lua"), "story(900100)\nrequire(\"cycle.a\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900100.lua"));
+            throw new AssertionError("Cyclic Lua module import was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Cyclic Lua module import")) throw expected;
+         }
+
+         Files.writeString(root.resolve("900101.lua"), "story(900101)\nrequire(\"../outside\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900101.lua"));
+            throw new AssertionError("Path traversal in Lua module import was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Invalid Lua module name")) throw expected;
+         }
+      } finally {
+         try (var files = Files.walk(root)) {
+            for (Path file : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(file);
+         }
+      }
+   }
 }
+
