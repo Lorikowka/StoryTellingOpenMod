@@ -30,6 +30,9 @@ public final class LuaStorySmokeTest {
       if (itemStory.id() != 900041 || !itemStory.hasPart("main")) {
          throw new AssertionError("Item receipt test story did not load");
       }
+      LuaStory hudStory = LuaStory.parse(Files.readString(Path.of(args[6]), StandardCharsets.UTF_8), "900042.lua");
+      if (hudStory.id() != 900042 || !hudStory.hasPart("main"))
+         throw new AssertionError("HUD hint story did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -136,7 +139,17 @@ public final class LuaStorySmokeTest {
       quests.apply(StoryEngineAdapter.Operation.SET_QUEST_SOURCE, "test_quest", "Регир");
       quests.apply(StoryEngineAdapter.Operation.ADD_TASK, "test_quest", "task", "Цель");
       quests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      var started = quests.snapshot();
+      if (!"Задание «Задание» начато!".equals(StoryEngineAdapter.questNotification(
+         StoryEngineAdapter.Operation.START_QUEST, "test_quest", java.util.List.of(), started)))
+         throw new AssertionError("Quest start notification was not generated");
       quests.apply(StoryEngineAdapter.Operation.COMPLETE_TASK, "test_quest", "task");
+      var finished = quests.snapshot();
+      if (!"Задание «Задание» завершено!".equals(StoryEngineAdapter.questNotification(
+         StoryEngineAdapter.Operation.COMPLETE_TASK, "test_quest", started, finished))
+         || StoryEngineAdapter.questNotification(StoryEngineAdapter.Operation.COMPLETE_TASK,
+            "test_quest", finished, finished) != null)
+         throw new AssertionError("Quest change notification repeated or had the wrong status");
       QuestJournal restoredQuests = new QuestJournal();
       restoredQuests.load(quests.save());
       if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
@@ -322,6 +335,6 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038 and 900041");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041 and 900042");
    }
 }

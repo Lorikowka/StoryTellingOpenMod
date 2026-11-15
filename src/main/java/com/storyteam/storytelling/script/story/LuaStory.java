@@ -11,6 +11,7 @@ import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
 import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
 import com.storyteam.storytelling.script.story.camera.NpcCameraFlightAction;
 import com.storyteam.storytelling.net.PacketLuaChoiceScreen;
+import com.storyteam.storytelling.net.PacketStoryHud;
 import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
 import com.storyteam.storytelling.system._core.st_cutscene.ServersideCutsceneHandler;
 import com.storyteam.storytelling.script.story.EntityRepository;
@@ -187,6 +188,10 @@ public final class LuaStory {
             }
             case SPEECH -> builder.thenSpeechMessage(step.speaker, step.text);
             case WARNING -> builder.sendWebWarning(step.text);
+            case HINT -> builder.thenRun(() -> {
+               ServerPlayer player = ScriptUtils.getPlayer();
+               if (player != null) Network.sendTo(player, new PacketStoryHud(true, step.text, step.speaker));
+            });
             case ANCHOR -> builder.saveState(step.text);
             case WAIT_F8 -> builder.thenWaitForF8();
             case WAIT_TICKS -> builder.thenDelay(step.speaker);
@@ -910,6 +915,17 @@ public final class LuaStory {
       globals.set("warning", new OneArgFunction() {
          @Override public LuaValue call(LuaValue text) { builder.add(new Step(Type.WARNING, 0, text.checkjstring())); return NIL; }
       });
+      globals.set("hint", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 2) throw new IllegalArgumentException("hint requires text and optional duration in ticks");
+            String text = nonempty(args.arg(1));
+            if (text.length() > 512) throw new IllegalArgumentException("hint text must be at most 512 characters");
+            int ticks = args.narg() == 2 ? args.arg(2).checkint() : 100;
+            if (ticks < 20 || ticks > 600) throw new IllegalArgumentException("hint duration must be 20–600 ticks");
+            builder.add(new Step(Type.HINT, ticks, text));
+            return NIL;
+         }
+      });
       globals.set("wait_f8", new ZeroArgFunction() {
          @Override public LuaValue call() { builder.add(new Step(Type.WAIT_F8, 0, "")); return NIL; }
       });
@@ -1113,7 +1129,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
