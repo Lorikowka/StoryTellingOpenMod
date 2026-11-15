@@ -24,7 +24,10 @@ import net.minecraft.server.MinecraftServer;
 /** Local-world Lua editor. Writes are backed up and replaced atomically when supported. */
 public final class LuaEditorScreen extends Screen {
    private static final int MAX_SOURCE = 262_144;
-   private static final int EDIT_X = 148;
+   private int sidebarWidth;
+   private int editX;
+   private int editY;
+   private int listRows;
    private EditBox fileName;
    private EditorBox editor;
    private String draft = "";
@@ -41,26 +44,29 @@ public final class LuaEditorScreen extends Screen {
          onClose();
          return;
       }
-      int editX = EDIT_X;
-      int editWidth = Math.max(120, width - editX - 12);
+      sidebarWidth = Math.max(104, Math.min(176, width / 4));
+      editX = sidebarWidth + 34;
+      editY = 58;
+      listRows = Math.max(2, (height - 112) / 23);
+      int editWidth = Math.max(80, width - editX - 10);
       fileName = addRenderableWidget(new EditBox(font, editX, 31, Math.min(180, editWidth), 20, Component.literal("Файл")));
       fileName.setMaxLength(32);
       fileName.setValue(selected);
-      editor = addRenderableWidget(new EditorBox(font, editX, 58, editWidth, Math.max(70, height - 106),
+      editor = addRenderableWidget(new EditorBox(font, editX, editY, editWidth, Math.max(60, height - editY - 49),
          Component.literal("Lua"), Component.literal("Код Lua")));
       editor.setCharacterLimit(MAX_SOURCE);
       editor.setValue(draft);
       rebuildLineMarkers();
       editor.setValueListener(value -> { draft = value; dirty = true; rebuildLineMarkers(); });
       addRenderableWidget(Button.builder(Component.literal("Проверить"), button -> validateDraft())
-         .bounds(Math.max(editX, width - 212), height - 42, 96, 20).build());
+         .bounds(Math.max(editX, width - 212), height - 43, 96, 20).build());
       addRenderableWidget(Button.builder(Component.literal("Сохранить"), button -> saveDraft())
-         .bounds(Math.max(editX + 100, width - 110), height - 42, 98, 20).build());
+         .bounds(Math.max(editX + 100, width - 110), height - 43, 98, 20).build());
       addRenderableWidget(Button.builder(Component.literal("Новый"), button -> {
          if (dirty) { status = "Сначала сохраните текущие изменения"; return; }
          selected = ""; draft = "story(900000)\n\npart(\"main\")\n";
          fileName.setValue(""); editor.setValue(draft); dirty = true;
-      }).bounds(8, 31, 100, 20).build());
+      }).bounds(8, 31, sidebarWidth - 16, 20).build());
       refreshList();
    }
 
@@ -73,18 +79,18 @@ public final class LuaEditorScreen extends Screen {
                .filter(path -> path.getFileName().toString().matches("[0-9]+\\.lua"))
                .sorted(Comparator.comparing(path -> path.getFileName().toString())).toList();
          }
-         int pages = Math.max(1, (files.size() + 7) / 8);
+         int pages = Math.max(1, (files.size() + listRows - 1) / listRows);
          page = Math.max(0, Math.min(page, pages - 1));
-         for (int i = page * 8; i < Math.min(files.size(), (page + 1) * 8); i++) {
+         for (int i = page * listRows; i < Math.min(files.size(), (page + 1) * listRows); i++) {
             String name = files.get(i).getFileName().toString();
-            int y = 60 + (i - page * 8) * 23;
+            int y = 67 + (i - page * listRows) * 23;
             addRenderableWidget(Button.builder(Component.literal(name), button -> openFile(name))
-               .bounds(8, y, 100, 20).build());
+               .bounds(8, y, sidebarWidth - 16, 20).build());
          }
          addRenderableWidget(Button.builder(Component.literal("<"), button -> { page--; recreateWidgets(); })
-            .bounds(8, height - 42, 44, 20).build());
+            .bounds(8, height - 43, 44, 20).build());
          addRenderableWidget(Button.builder(Component.literal(">"), button -> { page++; recreateWidgets(); })
-            .bounds(64, height - 42, 44, 20).build());
+            .bounds(sidebarWidth - 52, height - 43, 44, 20).build());
       } catch (IOException error) {
          status = "Не удалось прочитать папку: " + error.getMessage();
       }
@@ -169,16 +175,28 @@ public final class LuaEditorScreen extends Screen {
 
    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
       renderBackground(graphics);
-      graphics.drawCenteredString(font, title, width / 2, 12, 0x42C7FF);
+      graphics.fill(0, 0, width, 25, 0xEE111827);
+      graphics.fill(0, 25, sidebarWidth, height - 21, 0xDD17222E);
+      graphics.fill(sidebarWidth, 25, width, height - 21, 0xDD0D141C);
+      graphics.fill(0, height - 21, width, height, 0xEE102939);
+      graphics.drawString(font, "ST  /  LUA", 9, 9, 0x42C7FF, false);
+      graphics.drawString(font, "СЦЕНАРИИ", 9, 56, 0x9BB5C5, false);
+      graphics.drawString(font, (dirty ? "● " : "") + (selected.isBlank() ? "Новый файл" : selected),
+         editX, 18, dirty ? 0xFFCC66 : 0xDDEEFF, false);
+      graphics.drawString(font, "ФАЙЛ", editX - 32, 37, 0x9BB5C5, false);
+      graphics.drawString(font, "Lua", editX, editY - 10, 0x62C8EA, false);
       if (editor != null) {
-         graphics.enableScissor(118, 60, EDIT_X - 4, height - 48);
+         graphics.fill(sidebarWidth + 1, editY, editX - 2, height - 49, 0xAA17222E);
+         graphics.enableScissor(sidebarWidth + 2, editY, editX - 3, height - 49);
          for (LineMarker marker : lineMarkers) {
-            int y = 62 + marker.visualRow() * 9 - (int) editor.scroll();
-            if (y >= 58 && y < height - 48) graphics.drawString(font, Integer.toString(marker.number()), 120, y, 0x888888, false);
+            int y = editY + 4 + marker.visualRow() * 9 - (int) editor.scroll();
+            if (y >= editY && y < height - 49) graphics.drawString(font, Integer.toString(marker.number()),
+               editX - 8 - font.width(Integer.toString(marker.number())), y, 0x718899, false);
          }
          graphics.disableScissor();
       }
-      graphics.drawString(font, status, EDIT_X, height - 17, dirty ? 0xFFCC66 : 0xAAAAAA, false);
+      graphics.drawString(font, font.plainSubstrByWidth(status, width - 16), 8, height - 15,
+         dirty ? 0xFFCC66 : 0xB7D3E4, false);
       super.render(graphics, mouseX, mouseY, partialTick);
    }
 
