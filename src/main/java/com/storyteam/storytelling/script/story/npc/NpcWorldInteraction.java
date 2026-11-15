@@ -6,6 +6,8 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +25,21 @@ public final class NpcWorldInteraction {
    private static final double REACH_SQUARED = 4.5 * 4.5;
 
    private NpcWorldInteraction() { }
+
+   /** Reaches a desired lever state through normal interaction, so replay does not toggle it back. */
+   public static void setLever(Entity npc, BlockPos block, String dimension, boolean powered) {
+      if (npc == null || !(npc.level() instanceof ServerLevel level))
+         throw new IllegalStateException("NPC must be spawned on the server before npc_set_lever");
+      if (!level.dimension().location().toString().equals(dimension) || !level.hasChunkAt(block))
+         throw new IllegalStateException("Lever is not loaded in NPC dimension: " + block.toShortString());
+      var state = level.getBlockState(block);
+      if (!(state.getBlock() instanceof LeverBlock))
+         throw new IllegalStateException("npc_set_lever requires a lever at " + block.toShortString());
+      if (state.getValue(BlockStateProperties.POWERED) == powered) return;
+      useBlock(npc, block, dimension);
+      if (level.getBlockState(block).getValue(BlockStateProperties.POWERED) != powered)
+         throw new IllegalStateException("Lever did not reach requested state at " + block.toShortString());
+   }
 
    public static void useBlock(Entity npc, BlockPos block, String dimension) {
       if (npc == null || !(npc.level() instanceof ServerLevel level)) {
