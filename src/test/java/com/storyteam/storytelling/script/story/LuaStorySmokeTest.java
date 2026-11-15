@@ -13,6 +13,10 @@ public final class LuaStorySmokeTest {
       if (fresh.id() != 900001 || !fresh.hasPart("main")) {
          throw new AssertionError("New Lua story did not load");
       }
+      LuaStory journalTest = LuaStory.parse(Files.readString(Path.of(args[2]), StandardCharsets.UTF_8), "900036.lua");
+      if (journalTest.id() != 900036 || !journalTest.hasPart("main")) {
+         throw new AssertionError("Multiple-quest journal test did not load");
+      }
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -218,6 +222,6 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001 and 900032");
+      System.out.println("Lua stories parsed and registered: 900001, 900032 and 900036");
    }
 }
