@@ -15,6 +15,7 @@ public final class StoryEngineAdapter {
       EDIT_QUEST("editQuestDescription", 2),
       ADD_TASK("addManualTask", 3),
       ADD_SUBTASK("addManualSubtask", 4),
+      ADD_HIDDEN_SUBTASK("addHiddenSubtask", 4),
       START_QUEST("startQuestAll", 1),
       RESET_QUEST("resetQuestAll", 1),
       COMPLETE_TASK("completeTaskAll", 2),

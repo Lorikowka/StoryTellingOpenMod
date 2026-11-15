@@ -21,6 +21,10 @@ public final class LuaStorySmokeTest {
       if (subtaskStory.id() != 900037 || !subtaskStory.hasPart("main")) {
          throw new AssertionError("Subtask journal test did not load");
       }
+      LuaStory hiddenStory = LuaStory.parse(Files.readString(Path.of(args[4]), StandardCharsets.UTF_8), "900038.lua");
+      if (hiddenStory.id() != 900038 || !hiddenStory.hasPart("main")) {
+         throw new AssertionError("Hidden-subtask journal test did not load");
+      }
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -132,7 +136,7 @@ public final class LuaStorySmokeTest {
       restoredQuests.load(quests.save());
       if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
       var journalEntries = restoredQuests.snapshot();
-      if (journalEntries.size() != 1 || journalEntries.get(0).status() != QuestJournal.Status.ACTIVE
+      if (journalEntries.size() != 1 || journalEntries.get(0).status() != QuestJournal.Status.COMPLETED
          || !journalEntries.get(0).tasks().get(0).done()
          || !journalEntries.get(0).source().equals("Регир")) {
          throw new AssertionError("Quest journal snapshot lost status or task progress");
@@ -163,12 +167,34 @@ public final class LuaStorySmokeTest {
          throw new AssertionError("Subtask hierarchy or partial progress did not survive NBT");
       }
       restoredNested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "time");
-      if (!restoredNested.snapshot().get(0).tasks().get(0).done()) {
-         throw new AssertionError("Completing all subtasks did not complete their parent");
+      if (!restoredNested.snapshot().get(0).tasks().get(0).done()
+         || restoredNested.snapshot().get(0).status() != QuestJournal.Status.COMPLETED) {
+         throw new AssertionError("Completing all subtasks did not complete their parent and quest");
       }
       restoredNested.apply(StoryEngineAdapter.Operation.START_QUEST, "nested");
       if (restoredNested.snapshot().get(0).tasks().stream().anyMatch(QuestJournal.TaskEntry::done)) {
          throw new AssertionError("Restarting a quest did not reset subtasks");
+      }
+      restoredNested.apply(StoryEngineAdapter.Operation.ADD_HIDDEN_SUBTASK,
+         "nested", "prepare", "secret", "Найти проход");
+      if (restoredNested.snapshot().get(0).tasks().size() != 3) {
+         throw new AssertionError("Unfinished hidden subtask was exposed in journal");
+      }
+      restoredNested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "place");
+      restoredNested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "time");
+      if (restoredNested.snapshot().get(0).status() != QuestJournal.Status.ACTIVE) {
+         throw new AssertionError("Hidden subtask did not keep quest active");
+      }
+      QuestJournal hiddenReloaded = new QuestJournal();
+      hiddenReloaded.load(restoredNested.save());
+      if (hiddenReloaded.snapshot().get(0).tasks().size() != 3
+         || hiddenReloaded.snapshot().get(0).status() != QuestJournal.Status.ACTIVE) {
+         throw new AssertionError("Hidden subtask was not preserved across world reload");
+      }
+      hiddenReloaded.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "secret");
+      if (hiddenReloaded.snapshot().get(0).status() != QuestJournal.Status.COMPLETED
+         || hiddenReloaded.snapshot().get(0).tasks().size() != 4) {
+         throw new AssertionError("Revealed hidden subtask did not finish quest");
       }
       Path selectionDirectory = Files.createTempDirectory("storytelling-journal-selection-");
       try {
@@ -248,6 +274,6 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036 and 900037");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037 and 900038");
    }
 }

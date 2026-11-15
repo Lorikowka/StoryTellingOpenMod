@@ -1019,8 +1019,11 @@ public final class LuaStory {
       });
       globals.set("quest_subtask", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
-            if (args.narg() != 4) throw new IllegalArgumentException("quest_subtask requires quest, parent, ID and title");
-            external(builder, StoryEngineAdapter.Operation.ADD_SUBTASK, args.arg(1), args.arg(2), args.arg(3), args.arg(4));
+            if (args.narg() != 4 && args.narg() != 5)
+               throw new IllegalArgumentException("quest_subtask requires quest, parent, ID, title and optional hidden flag");
+            boolean hidden = args.narg() == 5 && args.arg(5).checkboolean();
+            external(builder, hidden ? StoryEngineAdapter.Operation.ADD_HIDDEN_SUBTASK : StoryEngineAdapter.Operation.ADD_SUBTASK,
+               args.arg(1), args.arg(2), args.arg(3), args.arg(4));
             return NIL;
          }
       });

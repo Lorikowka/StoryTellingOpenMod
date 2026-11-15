@@ -33,13 +33,14 @@ public final class QuestJournal {
             if (!task.parentId.isEmpty()) throw new IllegalArgumentException("Task ID already belongs to a subtask: " + args[1]);
             task.title = args[2];
          }
-         case ADD_SUBTASK -> {
+         case ADD_SUBTASK, ADD_HIDDEN_SUBTASK -> {
             Task parent = topLevelTask(quest, args[1]);
             if (args[2].isBlank() || args[2].equals(parent.id)) throw new IllegalArgumentException("Invalid subtask ID: " + args[2]);
             boolean newChild = !quest.tasks.containsKey(args[2]);
             Task child = quest.tasks.computeIfAbsent(args[2], id -> new Task(id, args[3], parent.id));
             if (!child.parentId.equals(parent.id)) throw new IllegalArgumentException("Subtask ID already used: " + args[2]);
             child.title = args[3];
+            child.hidden = operation == StoryEngineAdapter.Operation.ADD_HIDDEN_SUBTASK;
             if (newChild && quest.status == Status.ACTIVE) parent.done = false;
          }
          case START_QUEST -> {
@@ -56,6 +57,7 @@ public final class QuestJournal {
                if (task.parentId.isEmpty()) quest.tasks.values().stream().filter(child -> child.parentId.equals(task.id))
                   .forEach(child -> child.done = true);
                else completeParentIfReady(quest, task.parentId);
+               completeQuestIfReady(quest);
             }
          }
          case COMPLETE_SUBTASK -> {
@@ -66,6 +68,7 @@ public final class QuestJournal {
             if (quest.status == Status.ACTIVE) {
                child.done = true;
                completeParentIfReady(quest, parent.id);
+               completeQuestIfReady(quest);
             }
          }
          case COMPLETE_QUEST -> quest.status = Status.COMPLETED;
@@ -84,6 +87,11 @@ public final class QuestJournal {
       Task parent = topLevelTask(quest, parentId);
       List<Task> children = quest.tasks.values().stream().filter(task -> task.parentId.equals(parentId)).toList();
       if (!children.isEmpty() && children.stream().allMatch(task -> task.done)) parent.done = true;
+   }
+
+   private static void completeQuestIfReady(Quest quest) {
+      if (quest.status == Status.ACTIVE && !quest.tasks.isEmpty()
+         && quest.tasks.values().stream().allMatch(task -> task.done)) quest.status = Status.COMPLETED;
    }
 
    private static List<Task> orderedTasks(Quest quest) {
@@ -108,8 +116,11 @@ public final class QuestJournal {
          };
          lines.add(marker + " §f" + quest.title);
          if (!quest.description.isBlank()) lines.add("  §7" + quest.description);
-         for (Task task : orderedTasks(quest)) lines.add((task.parentId.isEmpty() ? "  " : "    ")
+         for (Task task : orderedTasks(quest)) {
+            if (task.hidden && !task.done) continue;
+            lines.add((task.parentId.isEmpty() ? "  " : "    ")
             + (task.done ? "§a✓" : "§7○") + " §f" + task.title);
+         }
          lines.add("");
       }
       return lines;
@@ -119,7 +130,7 @@ public final class QuestJournal {
       List<Entry> entries = new ArrayList<>();
       for (Quest quest : quests.values()) {
          if (quest.status == Status.AVAILABLE) continue;
-         List<TaskEntry> tasks = orderedTasks(quest).stream()
+         List<TaskEntry> tasks = orderedTasks(quest).stream().filter(task -> !task.hidden || task.done)
             .map(task -> new TaskEntry(task.title, task.done, !task.parentId.isEmpty())).toList();
          entries.add(new Entry(quest.id, quest.title, quest.source, quest.description, quest.status, tasks));
       }
@@ -143,6 +154,7 @@ public final class QuestJournal {
             item.putString("title", task.title);
             item.putString("parent", task.parentId);
             item.putBoolean("done", task.done);
+            item.putBoolean("hidden", task.hidden);
             tasks.add(item);
          }
          entry.put("tasks", tasks);
@@ -170,6 +182,7 @@ public final class QuestJournal {
             if (taskId.isBlank()) continue;
             Task task = new Task(taskId, item.getString("title"), item.getString("parent"));
             task.done = item.getBoolean("done");
+            task.hidden = item.getBoolean("hidden");
             quest.tasks.put(taskId, task);
          }
          quests.put(id, quest);
@@ -193,6 +206,7 @@ public final class QuestJournal {
       private String title;
       private final String parentId;
       private boolean done;
+      private boolean hidden;
       private Task(String id, String title, String parentId) {
          this.id = id; this.title = title; this.parentId = parentId;
       }
