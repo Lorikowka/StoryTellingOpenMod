@@ -213,6 +213,30 @@ public final class LuaStorySmokeTest {
       String generated = blocks.generate();
       if (LuaStory.parse(generated, "900035.lua").id() != 900035 || !generated.contains("\\\"мир\\\""))
          throw new AssertionError("The block editor did not generate valid escaped Lua");
+      LuaBlockProject branching = LuaBlockProject.create(900040);
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.CHOICE, "route",
+         java.util.List.of("Как поступим?", "Пойти", "Остаться")));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.BRANCH, "route",
+         java.util.List.of("1", "go", "stay")));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.ANCHOR, "stay"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Остаёмся"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.GOTO, "final"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.ANCHOR, "go"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SET_FLAG, "went",
+         java.util.List.of("true")));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Идём"));
+      String branchSource = branching.generate();
+      if (LuaStory.parse(branchSource, "900040.lua").id() != 900040
+         || !branchSource.contains("var_if(\"route\", \"1\", \"go\", \"stay\")")) {
+         throw new AssertionError("Block choices and forward branches did not generate valid Lua");
+      }
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.GOTO, "stay"));
+      try {
+         branching.generate();
+         throw new AssertionError("Block editor accepted a backward branch");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("ниже")) throw expected;
+      }
       Path storyDirectory = Files.createTempDirectory("storytelling-lua-stories-");
       try {
          LuaStory.initializeStoryDirectory(storyDirectory);

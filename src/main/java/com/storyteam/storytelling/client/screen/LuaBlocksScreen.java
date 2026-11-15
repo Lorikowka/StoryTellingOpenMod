@@ -5,6 +5,8 @@ import com.storyteam.storytelling.script.story.LuaBlockProject;
 import com.storyteam.storytelling.script.story.LuaBlockProject.Block;
 import com.storyteam.storytelling.script.story.LuaBlockProject.Kind;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -13,15 +15,16 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 
-/** A linear block workspace. Blocks are selected and reordered directly on the canvas. */
+/** A visual story workspace. Blocks are selected and reordered directly on the canvas. */
 public final class LuaBlocksScreen extends Screen {
    private static final int CARD_HEIGHT = 34;
    private LuaBlockProject project;
    private EditBox idBox;
-   private EditBox valueBox;
+   private final List<EditBox> propertyBoxes = new ArrayList<>();
    private int selected = -1;
    private int dragging = -1;
    private int page;
+   private int palettePage;
    private int paletteWidth;
    private int canvasX;
    private int canvasWidth;
@@ -48,36 +51,40 @@ public final class LuaBlocksScreen extends Screen {
       idBox = addRenderableWidget(new EditBox(font, 9, 31, paletteWidth - 18, 20, Component.literal("ID")));
       idBox.setMaxLength(9);
       idBox.setValue(Integer.toString(project.id()));
+      int openWidth = Math.min(94, Math.max(34, canvasWidth / 2 - 4));
       addRenderableWidget(Button.builder(Component.literal("Открыть ID"), button -> openId())
-         .bounds(canvasX, 31, Math.min(94, canvasWidth), 20).build());
+         .bounds(canvasX, 31, openWidth, 20).build());
+      addRenderableWidget(Button.builder(Component.literal("Удалить"), button -> remove())
+         .bounds(canvasX + openWidth + 4, 31, Math.max(34, canvasWidth - openWidth - 4), 20).build());
+      addRenderableWidget(Button.builder(Component.literal("Сохранить Lua"), button -> save())
+         .bounds(inspectorX + 8, 31, inspectorWidth - 16, 20).build());
 
-      int paletteY = 82;
+      addRenderableWidget(Button.builder(Component.literal("Сцена"), button -> { palettePage = 0; refresh(); })
+         .bounds(9, 61, (paletteWidth - 20) / 2, 20).build());
+      addRenderableWidget(Button.builder(Component.literal("Логика"), button -> { palettePage = 1; refresh(); })
+         .bounds(11 + (paletteWidth - 20) / 2, 61, (paletteWidth - 20) / 2, 20).build());
+      int paletteY = 86;
       for (Kind kind : Kind.values()) {
+         if ((kind.ordinal() < 5 ? 0 : 1) != palettePage) continue;
          addRenderableWidget(Button.builder(Component.literal("+ " + label(kind)), button -> addBlock(kind))
             .bounds(9, paletteY, paletteWidth - 18, 20).build());
          paletteY += 24;
       }
 
-      valueBox = addRenderableWidget(new EditBox(font, inspectorX + 8, 89, inspectorWidth - 16, 20,
-         Component.literal("Значение блока")));
-      valueBox.setMaxLength(1024);
-      valueBox.active = selected >= 0 && selected < project.blocks().size();
-      if (valueBox.active) valueBox.setValue(project.blocks().get(selected).value());
-      valueBox.setResponder(value -> {
-         if (selected >= 0 && selected < project.blocks().size()) {
-            Block current = project.blocks().get(selected);
-            project.blocks().set(selected, new Block(current.kind(), value));
+      propertyBoxes.clear();
+      if (selected >= 0 && selected < project.blocks().size()) {
+         Block block = project.blocks().get(selected);
+         String[] labels = fieldLabels(block.kind());
+         for (int i = 0; i < labels.length; i++) {
+            int field = i;
+            EditBox box = addRenderableWidget(new EditBox(font, inspectorX + 8, 89 + i * 28,
+               inspectorWidth - 16, 20, Component.literal(labels[i])));
+            box.setMaxLength(i == 0 && block.kind() == Kind.SPEECH ? 1024 : 256);
+            box.setValue(block.field(i));
+            box.setResponder(value -> updateField(field, value));
+            propertyBoxes.add(box);
          }
-      });
-      int controlWidth = (inspectorWidth - 20) / 2;
-      addRenderableWidget(Button.builder(Component.literal("Выше"), button -> move(-1))
-         .bounds(inspectorX + 8, 119, controlWidth, 20).build());
-      addRenderableWidget(Button.builder(Component.literal("Ниже"), button -> move(1))
-         .bounds(inspectorX + 12 + controlWidth, 119, controlWidth, 20).build());
-      addRenderableWidget(Button.builder(Component.literal("Удалить блок"), button -> remove())
-         .bounds(inspectorX + 8, 144, inspectorWidth - 16, 20).build());
-      addRenderableWidget(Button.builder(Component.literal("Сохранить Lua"), button -> save())
-         .bounds(inspectorX + 8, height - 47, inspectorWidth - 16, 20).build());
+      }
 
       addRenderableWidget(Button.builder(Component.literal("<"), button -> { page = Math.max(0, page - 1); refresh(); })
          .bounds(canvasX, height - 47, 28, 20).build());
@@ -94,6 +101,10 @@ public final class LuaBlocksScreen extends Screen {
          case WAIT_TICKS -> "Пауза";
          case ANCHOR -> "Якорь";
          case BLACKOUT -> "Затемнение";
+         case SET_FLAG -> "Задать флаг";
+         case CHOICE -> "Выбор 1/2";
+         case BRANCH -> "Условие";
+         case GOTO -> "Переход";
       };
    }
 
@@ -103,7 +114,34 @@ public final class LuaBlocksScreen extends Screen {
          case WAIT_F8, WAIT_TICKS -> 0xFFF2BA61;
          case ANCHOR -> 0xFF91CE8D;
          case BLACKOUT -> 0xFFC1A0DA;
+         case SET_FLAG -> 0xFF70CCA8;
+         case CHOICE -> 0xFFDFC073;
+         case BRANCH, GOTO -> 0xFFB997E0;
       };
+   }
+
+   private static String[] fieldLabels(Kind kind) {
+      return switch (kind) {
+         case SPEECH -> new String[] {"Текст реплики"};
+         case WAIT_F8 -> new String[0];
+         case WAIT_TICKS, BLACKOUT -> new String[] {"Тики"};
+         case ANCHOR, GOTO -> new String[] {"Имя якоря"};
+         case SET_FLAG -> new String[] {"Имя флага", "Значение"};
+         case CHOICE -> new String[] {"Переменная", "Вопрос", "Ответ 1", "Ответ 2"};
+         case BRANCH -> new String[] {"Переменная", "Равно", "Если да", "Если нет"};
+      };
+   }
+
+   private void updateField(int field, String value) {
+      if (selected < 0 || selected >= project.blocks().size()) return;
+      Block block = project.blocks().get(selected);
+      List<String> arguments = new ArrayList<>(block.arguments());
+      while (arguments.size() < fieldLabels(block.kind()).length - 1) arguments.add("");
+      if (field == 0) project.blocks().set(selected, new Block(block.kind(), value, arguments));
+      else {
+         arguments.set(field - 1, value);
+         project.blocks().set(selected, new Block(block.kind(), block.value(), arguments));
+      }
    }
 
    private void openId() {
@@ -119,9 +157,8 @@ public final class LuaBlocksScreen extends Screen {
 
    private void select(int index) {
       selected = index;
-      valueBox.active = true;
-      valueBox.setValue(project.blocks().get(index).value());
       status = "Блок " + (index + 1) + ": " + label(project.blocks().get(index).kind());
+      refresh();
    }
 
    private void addBlock(Kind kind) {
@@ -130,19 +167,19 @@ public final class LuaBlocksScreen extends Screen {
          case WAIT_F8 -> "";
          case WAIT_TICKS, BLACKOUT -> "20";
          case ANCHOR -> "scene_start";
+         case SET_FLAG -> "flag";
+         case CHOICE -> "route";
+         case BRANCH -> "route";
+         case GOTO -> "final";
       };
-      project.blocks().add(new Block(kind, value));
+      List<String> arguments = switch (kind) {
+         case SET_FLAG -> List.of("true");
+         case CHOICE -> List.of("Как поступим?", "Первый ответ", "Второй ответ");
+         case BRANCH -> List.of("1", "yes", "no");
+         default -> List.of();
+      };
+      project.blocks().add(new Block(kind, value, arguments));
       selected = project.blocks().size() - 1;
-      page = selected / visibleRows;
-      refresh();
-   }
-
-   private void move(int delta) {
-      if (selected < 0 || selected + delta < 0 || selected + delta >= project.blocks().size()) return;
-      Block other = project.blocks().get(selected + delta);
-      project.blocks().set(selected + delta, project.blocks().get(selected));
-      project.blocks().set(selected, other);
-      selected += delta;
       page = selected / visibleRows;
       refresh();
    }
@@ -217,10 +254,14 @@ public final class LuaBlocksScreen extends Screen {
       graphics.fill(0, height - 21, width, height, 0xEE102939);
       graphics.drawString(font, "ST  /  БЛОКИ", 9, 9, 0x42C7FF, false);
       graphics.drawString(font, "Сценарий " + project.id(), canvasX, 9, 0xDDEEFF, false);
-      graphics.drawString(font, "БИБЛИОТЕКА", 9, 65, 0x9BB5C5, false);
-      graphics.drawString(font, "ПОСЛЕДОВАТЕЛЬНОСТЬ", canvasX, 61, 0x9BB5C5, false);
+      graphics.drawString(font, font.plainSubstrByWidth("ПОСЛЕДОВАТЕЛЬНОСТЬ", canvasWidth),
+         canvasX, 61, 0x9BB5C5, false);
       graphics.drawString(font, "СВОЙСТВА", inspectorX + 8, 62, 0x9BB5C5, false);
-      graphics.drawString(font, "Значение", inspectorX + 8, 77, 0xB7D3E4, false);
+      if (selected >= 0 && selected < project.blocks().size()) {
+         String[] labels = fieldLabels(project.blocks().get(selected).kind());
+         for (int i = 0; i < labels.length; i++) graphics.drawString(font, labels[i],
+            inspectorX + 8, 77 + i * 28, 0xB7D3E4, false);
+      } else graphics.drawString(font, "Выберите блок на поле", inspectorX + 8, 84, 0x8299AA, false);
       int start = page * visibleRows;
       if (project.blocks().isEmpty()) {
          graphics.drawString(font, "Добавьте первый блок слева", canvasX + 8, 92, 0x718899, false);
@@ -235,7 +276,7 @@ public final class LuaBlocksScreen extends Screen {
          String heading = (index + 1) + ". " + label(block.kind());
          graphics.drawString(font, font.plainSubstrByWidth(heading, canvasWidth - 13),
             canvasX + 8, y + 4, accent(block.kind()), false);
-         String detail = block.value().isBlank() ? "Продолжить по F8" : block.value();
+         String detail = block.kind() == Kind.WAIT_F8 ? "Продолжить по F8" : block.value();
          graphics.drawString(font, font.plainSubstrByWidth(detail, canvasWidth - 13),
             canvasX + 8, y + 16, 0xC0CBD1, false);
          if (index + 1 < project.blocks().size() && row + 1 < visibleRows)
@@ -243,8 +284,6 @@ public final class LuaBlocksScreen extends Screen {
       }
       graphics.drawCenteredString(font, "Страница " + (page + 1) + "/" + (maxPage() + 1),
          canvasX + canvasWidth / 2, height - 41, 0xA5B8C5);
-      if (selected < 0) graphics.drawString(font, "Выберите блок на поле", inspectorX + 8, 177, 0x8299AA, false);
-      else graphics.drawString(font, "Перетащите блок для смены порядка", inspectorX + 8, 177, 0x8299AA, false);
       graphics.drawString(font, font.plainSubstrByWidth(status, width - 16), 8, height - 15,
          0xB7D3E4, false);
       super.render(graphics, mouseX, mouseY, partialTick);
