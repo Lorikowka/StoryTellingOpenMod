@@ -2,6 +2,7 @@ package com.storyteam.storytelling.script.story;
 
 import com.storyteam.storytelling.client.content.overlays.Message;
 import com.storyteam.storytelling.client.screen.QuestJournalSelection;
+import com.storyteam.storytelling.init.ScriptCategory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +11,9 @@ import net.minecraft.network.chat.Component;
 
 public final class LuaStorySmokeTest {
    public static void main(String[] args) throws Exception {
+      if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
+         || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
+         throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
       LuaStory fresh = LuaStory.parse(Files.readString(Path.of(args[0]), StandardCharsets.UTF_8), "900001.lua");
       if (fresh.id() != 900001 || !fresh.hasPart("main")) {
          throw new AssertionError("New Lua story did not load");
