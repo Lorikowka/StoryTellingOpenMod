@@ -999,6 +999,12 @@ public final class LuaStory {
       globals.set("quest_task_complete", new TwoArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue task) { external(builder, StoryEngineAdapter.Operation.COMPLETE_TASK, id, task); return NIL; }
       });
+      globals.set("quest_subtask_complete", new ThreeArgFunction() {
+         @Override public LuaValue call(LuaValue id, LuaValue parent, LuaValue child) {
+            external(builder, StoryEngineAdapter.Operation.COMPLETE_SUBTASK, id, parent, child);
+            return NIL;
+         }
+      });
       globals.set("quest_notify", new TwoArgFunction() {
          @Override public LuaValue call(LuaValue title, LuaValue message) { external(builder, StoryEngineAdapter.Operation.NOTIFY, title, message); return NIL; }
       });
@@ -1010,6 +1016,13 @@ public final class LuaStory {
       });
       globals.set("quest_task", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue task, LuaValue title) { external(builder, StoryEngineAdapter.Operation.ADD_TASK, id, task, title); return NIL; }
+      });
+      globals.set("quest_subtask", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 4) throw new IllegalArgumentException("quest_subtask requires quest, parent, ID and title");
+            external(builder, StoryEngineAdapter.Operation.ADD_SUBTASK, args.arg(1), args.arg(2), args.arg(3), args.arg(4));
+            return NIL;
+         }
       });
       try {
          globals.load(source, label).call();

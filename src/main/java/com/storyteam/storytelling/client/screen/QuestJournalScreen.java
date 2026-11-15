@@ -155,15 +155,17 @@ public final class QuestJournalScreen extends Screen {
          drawText(graphics, heading.get(i), PANEL_X + PANEL_WIDTH / 2,
             45 + i * 16, 1.45F, 0xFFFFFF, true);
       }
-      int focus = 0;
+      int focus = -1;
       if (entry.status() == QuestJournal.Status.ACTIVE) {
          for (int i = 0; i < entry.tasks().size(); i++) {
-            if (!entry.tasks().get(i).done()) { focus = i; break; }
+            if (!entry.tasks().get(i).done() && focus < 0) focus = i;
+            if (!entry.tasks().get(i).done() && entry.tasks().get(i).child()) { focus = i; break; }
          }
       }
+      if (focus < 0) focus = 0;
       int contentHeight = 8;
       for (QuestJournal.TaskEntry task : entry.tasks()) {
-         contentHeight += Math.max(23, wrappedHeight(task.title(), 290, BODY_SCALE) + 5);
+         contentHeight += Math.max(23, wrappedHeight(task.title(), task.child() ? 270 : 290, BODY_SCALE) + 5);
       }
       contentHeight += 9 + wrappedHeight(entry.description(), 300, BODY_SCALE);
       detailMaxScroll = Math.max(0, contentHeight - (CONTENT_BOTTOM - CONTENT_TOP));
@@ -173,15 +175,16 @@ public final class QuestJournalScreen extends Screen {
       for (int i = 0; i < entry.tasks().size(); i++) {
          QuestJournal.TaskEntry task = entry.tasks().get(i);
          if (i == focus && y + 18 >= CONTENT_TOP && y < CONTENT_BOTTOM) {
-            sprite(graphics, TASK_LINE, PANEL_X + 21, y, 305, 18,
+            sprite(graphics, TASK_LINE, PANEL_X + 21 + (task.child() ? 16 : 0), y,
+               task.child() ? 289 : 305, 18,
                0, 0, 225, 16, 225, 16);
          }
          if (y >= CONTENT_TOP && y < CONTENT_BOTTOM - 14) {
-            drawText(graphics, "›", PANEL_X + 24, y + 2, 1.4F,
-               i == focus ? 0xE7F5FF : 0x86A1AD, false);
+            drawText(graphics, task.done() ? "✓" : "›", PANEL_X + 24 + (task.child() ? 16 : 0),
+               y + 2, 1.4F, task.done() ? 0x86CE9A : i == focus ? 0xE7F5FF : 0x86A1AD, false);
          }
-         int end = drawWrapped(graphics, task.title(), PANEL_X + 38, y + 2,
-            290, BODY_SCALE, i == focus ? 0xF4F8FC : 0xB6C6CF);
+         int end = drawWrapped(graphics, task.title(), PANEL_X + 38 + (task.child() ? 16 : 0), y + 2,
+            task.child() ? 270 : 290, BODY_SCALE, i == focus ? 0xF4F8FC : 0xB6C6CF);
          y = Math.max(y + 23, end + 3);
       }
       y += 9;

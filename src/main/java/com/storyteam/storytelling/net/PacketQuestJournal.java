@@ -37,6 +37,7 @@ public class PacketQuestJournal implements IPacket {
             QuestJournal.TaskEntry task = entry.tasks().get(j);
             writeText(buf, task.title(), 256);
             buf.writeBoolean(task.done());
+            buf.writeBoolean(task.child());
          }
       }
    }
@@ -53,7 +54,7 @@ public class PacketQuestJournal implements IPacket {
          int taskCount = readCount(buf, MAX_TASKS, "quest tasks");
          List<QuestJournal.TaskEntry> tasks = new ArrayList<>(taskCount);
          for (int j = 0; j < taskCount; j++) {
-            tasks.add(new QuestJournal.TaskEntry(buf.readUtf(256), buf.readBoolean()));
+            tasks.add(new QuestJournal.TaskEntry(buf.readUtf(256), buf.readBoolean(), buf.readBoolean()));
          }
          received.add(new QuestJournal.Entry(id, title, source, description, status, List.copyOf(tasks)));
       }
