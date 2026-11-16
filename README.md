@@ -15,9 +15,9 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 .\gradlew.bat build
 ```
 
-При первом запуске Gradle и Forge загружают компоненты. Версия исходников этой ветки и рабочего MDK — `20.1.34-update-lua-alpha.67`. Для игры нужны Storytelling, HammerLib, HammerAnimations и GFBS: glTF; версии обязательных зависимостей указаны в `src/main/resources/META-INF/mods.toml`. Портрет NPC из группы `Head` создаётся из glTF-модели и кэшируется.
+При первом запуске Gradle и Forge загружают компоненты. Версия исходников этой ветки и рабочего MDK — `20.1.34-update-lua-alpha.68`. Для игры нужны Storytelling, HammerLib, HammerAnimations и GFBS: glTF; версии обязательных зависимостей указаны в `src/main/resources/META-INF/mods.toml`. Портрет NPC из группы `Head` создаётся из glTF-модели и кэшируется.
 
-Базовое состояние и проведённые изменения: [отчёт alpha.66](docs/progress-report-alpha66.md). Дальнейшие шаги и изменения alpha.67: [актуальный план развития](docs/engine-expansion-plan.md).
+Базовое состояние и проведённые изменения: [отчёт alpha.66](docs/progress-report-alpha66.md). Дальнейшие шаги и изменения alpha.68: [актуальный план развития](docs/engine-expansion-plan.md).
 
 Lua-сценарии находятся в папке игры `ST/scripts`, а GLB-модели NPC — в `ST/assets/models`. Подробности: [docs/story-packs.md](docs/story-packs.md).
 

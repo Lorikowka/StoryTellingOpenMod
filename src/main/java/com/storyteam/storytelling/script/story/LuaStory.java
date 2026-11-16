@@ -117,15 +117,26 @@ public final class LuaStory {
 
    public Map<String, Character<?>> createNpcCharacters() {
       Map<String, Character<?>> characters = new LinkedHashMap<>();
+      Map<String, EntityType<?>> types = new LinkedHashMap<>();
+      // Validate every declaration before replacing any globally registered character.
       npcs.forEach((key, npc) -> {
          ResourceLocation typeId = ResourceLocation.tryParse(npc.type);
-         EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(typeId);
+         EntityType<?> type = typeId == null ? null : ForgeRegistries.ENTITY_TYPES.getValue(typeId);
          if (type == null) {
             throw new IllegalArgumentException("Unknown NPC entity type " + npc.type + " in Lua story " + id);
          }
          String referenceId = "lua_" + id + "_" + key;
          Character<?> character = Character.getById(referenceId);
-         if (character == null) {
+         if (character != null && character.getType() != type) {
+            throw new IllegalStateException("NPC " + referenceId + " changed entity type while a world is loaded");
+         }
+         types.put(key, type);
+      });
+      npcs.forEach((key, npc) -> {
+         EntityType<?> type = types.get(key);
+         String referenceId = "lua_" + id + "_" + key;
+         Character<?> character = Character.getById(referenceId);
+         if (character == null || !npc.name.equals(character.getName())) {
             if (npc.model != null) {
                @SuppressWarnings("unchecked") EntityType<ScriptNpcEntity> npcType = (EntityType<ScriptNpcEntity>) type;
                character = Character.builder(referenceId, npcType).name(npc.name)
@@ -136,8 +147,6 @@ public final class LuaStory {
             } else {
                character = Character.builder(referenceId, type).name(npc.name).build();
             }
-         } else if (character.getType() != type || !npc.name.equals(character.getName())) {
-            throw new IllegalStateException("NPC " + referenceId + " changed type or name while a world is loaded");
          }
          if (npc.model != null) {
             character.onCreatedFresh.clear();
@@ -156,11 +165,14 @@ public final class LuaStory {
    public void refreshNpcEntities(EntityRepository repository) {
       Map<String, Character<?>> characters = createNpcCharacters();
       npcs.forEach((key, npc) -> {
-         if (npc.model == null) return;
          Entity entity = repository.getEntity(characters.get(key));
+         if (entity == null) return;
+         entity.setCustomName(Component.literal(npc.name));
          if (entity instanceof ScriptNpcEntity scriptNpc) {
-            scriptNpc.model(npc.model);
-            scriptNpc.hitbox(npc.width, npc.height);
+            if (npc.model != null) {
+               scriptNpc.model(npc.model);
+               scriptNpc.hitbox(npc.width, npc.height);
+            }
          }
       });
    }
