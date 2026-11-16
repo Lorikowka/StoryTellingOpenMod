@@ -1,6 +1,7 @@
 package com.storyteam.storytelling.script.story;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +16,7 @@ import org.luaj.vm2.lib.OneArgFunction;
 /** Loads author modules from one story directory without exposing LuaJ's package loader. */
 final class LuaStoryModules extends OneArgFunction {
    private static final int MAX_MODULES = 64;
+   private static final int MAX_NAME_LENGTH = 128;
    private static final long MAX_BYTES = 256 * 1024;
    private static final String MODULE_NAME = "[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*";
 
@@ -35,7 +37,7 @@ final class LuaStoryModules extends OneArgFunction {
    @Override
    public LuaValue call(LuaValue argument) {
       String name = argument.checkjstring();
-      if (!name.matches(MODULE_NAME)) {
+      if (name.length() > MAX_NAME_LENGTH || !name.matches(MODULE_NAME)) {
          throw new IllegalArgumentException("Invalid Lua module name: " + name);
       }
       LuaValue cached = loaded.get(name);
@@ -57,7 +59,14 @@ final class LuaStoryModules extends OneArgFunction {
          }
          loading.add(name);
          try {
-            LuaValue result = globals.load(Files.readString(file, StandardCharsets.UTF_8), file.toString()).call();
+            byte[] source;
+            try (InputStream input = Files.newInputStream(file)) {
+               source = input.readNBytes((int) MAX_BYTES + 1);
+            }
+            if (source.length > MAX_BYTES) {
+               throw new IllegalArgumentException("Lua module exceeds " + MAX_BYTES + " bytes: " + name);
+            }
+            LuaValue result = globals.load(new String(source, StandardCharsets.UTF_8), file.toString()).call();
             if (result.isnil()) result = LuaValue.TRUE;
             loaded.put(name, result);
             return result;

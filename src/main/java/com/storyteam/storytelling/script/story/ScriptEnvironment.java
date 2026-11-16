@@ -341,7 +341,7 @@ public class ScriptEnvironment {
          try (Stream<Path> files = Files.list(storyDirectory)) {
             for (Path file : files.filter(p -> p.getFileName().toString().matches("[0-9]+\\.lua")).sorted().toList()) {
                try {
-                  LuaStory story = LuaStory.load(file);
+                  LuaStory story = LuaStory.load(LuaStoryPaths.checkedStoryFile(storyDirectory, file));
                   String expectedName = story.id() + ".lua";
                   if (!file.getFileName().toString().equals(expectedName)) {
                      throw new IllegalArgumentException("Lua story filename must be " + expectedName);
@@ -371,11 +371,7 @@ public class ScriptEnvironment {
          throw new IllegalArgumentException("Укажите имя вида 900030.lua без папок");
       }
       Path directory = LuaStory.storyDirectory().toAbsolutePath().normalize();
-      Path file = directory.resolve(fileName).normalize();
-      if (!file.getParent().equals(directory) || !Files.isRegularFile(file)
-         || !file.toRealPath().getParent().equals(directory.toRealPath())) {
-         throw new IllegalArgumentException("Lua-файл не найден внутри ST/scripts: " + fileName);
-      }
+      Path file = LuaStoryPaths.checkedStoryFile(directory, directory.resolve(fileName));
       int id = Integer.parseInt(fileName.substring(0, fileName.length() - 4));
       LuaStory story = LuaStory.load(file);
       if (story.id() != id) {
@@ -601,3 +597,4 @@ public class ScriptEnvironment {
       }
    }
 }
+

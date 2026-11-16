@@ -24,7 +24,7 @@ public final class LuaStoryValidator {
             .filter(path -> path.getFileName().toString().endsWith(".lua")).sorted().toList()) {
             checked++;
             try {
-               LuaStory story = LuaStory.load(file);
+               LuaStory story = LuaStory.load(LuaStoryPaths.checkedStoryFile(directory, file));
                String name = file.getFileName().toString();
                if (name.matches("[0-9]+\\.lua")) {
                   String expected = story.id() + ".lua";
@@ -39,7 +39,7 @@ public final class LuaStoryValidator {
                if (earlier != null) {
                   issues.add(new Issue(name, "ID " + story.id() + " is also declared in " + earlier.getFileName()));
                }
-            } catch (RuntimeException error) {
+            } catch (IOException | RuntimeException error) {
                String message = error.getMessage();
                String prefix = "Invalid Lua story " + file + ": ";
                if (message != null && message.startsWith(prefix)) message = message.substring(prefix.length());
@@ -55,3 +55,4 @@ public final class LuaStoryValidator {
       public boolean valid() { return issues.isEmpty(); }
    }
 }
+

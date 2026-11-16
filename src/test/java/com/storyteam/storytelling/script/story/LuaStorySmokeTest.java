@@ -387,6 +387,71 @@ public final class LuaStorySmokeTest {
          } catch (IllegalArgumentException expected) {
             if (!expected.getMessage().contains("Invalid Lua module name")) throw expected;
          }
+         Files.writeString(root.resolve("900101.lua"), "story(900101)\nrequire(\"" + "a".repeat(129)
+            + "\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900101.lua"));
+            throw new AssertionError("Oversized Lua module name was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Invalid Lua module name")) throw expected;
+         }
+
+         Files.writeString(root.resolve("characters/false_value.lua"), "return false", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("characters/no_value.lua"), "noValueLoads = (noValueLoads or 0) + 1", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900102.lua"), """
+            story(900102)
+            if require("characters.false_value") ~= false then error("false module lost") end
+            if require("characters.false_value") ~= false then error("false cache lost") end
+            if require("characters.no_value") ~= true then error("nil module must return true") end
+            if require("characters.no_value") ~= true or noValueLoads ~= 1 then error("nil cache lost") end
+            part("main")
+            wait_f8()
+            """, StandardCharsets.UTF_8);
+         if (LuaStory.load(root.resolve("900102.lua")).id() != 900102)
+            throw new AssertionError("Lua module false/nil result was not cached");
+
+         Files.writeString(root.resolve("characters/exact.lua"), "--" + "x".repeat(256 * 1024 - 2), StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900103.lua"), "story(900103)\nrequire(\"characters.exact\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         if (LuaStory.load(root.resolve("900103.lua")).id() != 900103)
+            throw new AssertionError("Lua module at byte limit was rejected");
+         Files.writeString(root.resolve("characters/large.lua"), "--" + "x".repeat(256 * 1024), StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900103.lua"), "story(900103)\nrequire(\"characters.large\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900103.lua"));
+            throw new AssertionError("Oversized Lua module was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Lua module exceeds")) throw expected;
+         }
+
+         Files.createDirectories(root.resolve("many"));
+         StringBuilder sixtyFour = new StringBuilder("story(900104)\n");
+         for (int i = 0; i < 64; i++) {
+            Files.writeString(root.resolve("many/m" + i + ".lua"), "return true", StandardCharsets.UTF_8);
+            sixtyFour.append("require(\"many.m").append(i).append("\")\n");
+         }
+         Files.writeString(root.resolve("900104.lua"), sixtyFour + "part(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         if (LuaStory.load(root.resolve("900104.lua")).id() != 900104)
+            throw new AssertionError("The 64th Lua module was rejected");
+         Files.writeString(root.resolve("many/m64.lua"), "return true", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900105.lua"), sixtyFour + "require(\"many.m64\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900105.lua"));
+            throw new AssertionError("The 65th Lua module was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Too many Lua modules")) throw expected;
+         }
+
+         Path outside = Files.createTempFile("story-outside-", ".lua");
+         try {
+            try {
+               LuaStoryPaths.checkedStoryFile(root, outside);
+               throw new AssertionError("Lua story outside ST/scripts was accepted");
+            } catch (IllegalArgumentException expected) {
+               if (!expected.getMessage().contains("directly inside")) throw expected;
+            }
+         } finally {
+            Files.deleteIfExists(outside);
+         }
       } finally {
          try (var files = Files.walk(root)) {
             for (Path file : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(file);
