@@ -1,21 +1,49 @@
 package com.storyteam.storytelling.script.story;
 
 import com.storyteam.storytelling.client.content.overlays.Message;
+import com.storyteam.storytelling.client.screen.QuestJournalSelection;
+import com.storyteam.storytelling.init.ScriptCategory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 public final class LuaStorySmokeTest {
    public static void main(String[] args) throws Exception {
-      LuaStory s7 = LuaStory.parse(Files.readString(Path.of(args[0]), StandardCharsets.UTF_8), "s7.lua");
-      if (s7.id() != 7 || !s7.hasPart("setup") || !s7.hasPart("main")) {
-         throw new AssertionError("S7 Lua story did not load");
-      }
-      LuaStory fresh = LuaStory.parse(Files.readString(Path.of(args[1]), StandardCharsets.UTF_8), "900001.lua");
+      checkSafeModules();
+      if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
+         || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
+         throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
+      LuaStory fresh = LuaStory.parse(Files.readString(Path.of(args[0]), StandardCharsets.UTF_8), "900001.lua");
       if (fresh.id() != 900001 || !fresh.hasPart("main")) {
          throw new AssertionError("New Lua story did not load");
       }
+      LuaStory journalTest = LuaStory.parse(Files.readString(Path.of(args[2]), StandardCharsets.UTF_8), "900036.lua");
+      if (journalTest.id() != 900036 || !journalTest.hasPart("main")) {
+         throw new AssertionError("Multiple-quest journal test did not load");
+      }
+      LuaStory subtaskStory = LuaStory.parse(Files.readString(Path.of(args[3]), StandardCharsets.UTF_8), "900037.lua");
+      if (subtaskStory.id() != 900037 || !subtaskStory.hasPart("main")) {
+         throw new AssertionError("Subtask journal test did not load");
+      }
+      LuaStory hiddenStory = LuaStory.parse(Files.readString(Path.of(args[4]), StandardCharsets.UTF_8), "900038.lua");
+      if (hiddenStory.id() != 900038 || !hiddenStory.hasPart("main")) {
+         throw new AssertionError("Hidden-subtask journal test did not load");
+      }
+      LuaStory itemStory = LuaStory.parse(Files.readString(Path.of(args[5]), StandardCharsets.UTF_8), "900041.lua");
+      if (itemStory.id() != 900041 || !itemStory.hasPart("main")) {
+         throw new AssertionError("Item receipt test story did not load");
+      }
+      LuaStory hudStory = LuaStory.parse(Files.readString(Path.of(args[6]), StandardCharsets.UTF_8), "900042.lua");
+      if (hudStory.id() != 900042 || !hudStory.hasPart("main"))
+         throw new AssertionError("HUD hint story did not load");
+      LuaStory leverStory = LuaStory.parse(Files.readString(Path.of(args[7]), StandardCharsets.UTF_8), "900043.lua");
+      if (leverStory.id() != 900043 || !leverStory.hasPart("main"))
+         throw new AssertionError("Idempotent lever story did not load");
+      LuaStory chapter = LuaStory.parse(Files.readString(Path.of(args[8]), StandardCharsets.UTF_8), "900050.lua");
+      if (chapter.id() != 900050 || !chapter.hasPart("main"))
+         throw new AssertionError("Integration chapter did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -27,7 +55,9 @@ public final class LuaStorySmokeTest {
          flash(5)
          wait_pos(-34.5, 56, -9.5, 1.0, "minecraft:overworld", true)
          teleport_player(0.5, 64, 0.5, "minecraft:overworld", 90, 0)
+         wait_item("minecraft:apple", 2)
          quest_create("routine_work", "Работа", "Описание")
+         quest_source("routine_work", "Проводник")
          quest_task("routine_work", "exit", "Выйти")
          quest_start("routine_work")
          quest_task_complete("routine_work", "exit")
@@ -115,18 +145,144 @@ public final class LuaStorySmokeTest {
             throw expected;
          }
       }
-      StoryEngineAdapter.invoke(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
-      if (!"test_quest".equals(com.storyengine.api.StoryApi.lastQuestId)) {
-         throw new AssertionError("Optional Story Engine adapter did not invoke the public API");
+      QuestJournal quests = new QuestJournal();
+      quests.apply(StoryEngineAdapter.Operation.ENSURE_QUEST, "test_quest", "Задание", "Описание");
+      quests.apply(StoryEngineAdapter.Operation.SET_QUEST_SOURCE, "test_quest", "Регир");
+      quests.apply(StoryEngineAdapter.Operation.ADD_TASK, "test_quest", "task", "Цель");
+      quests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      var started = quests.snapshot();
+      if (!"Задание «Задание» начато!".equals(StoryEngineAdapter.questNotification(
+         StoryEngineAdapter.Operation.START_QUEST, "test_quest", java.util.List.of(), started)))
+         throw new AssertionError("Quest start notification was not generated");
+      quests.apply(StoryEngineAdapter.Operation.COMPLETE_TASK, "test_quest", "task");
+      var finished = quests.snapshot();
+      if (!"Задание «Задание» завершено!".equals(StoryEngineAdapter.questNotification(
+         StoryEngineAdapter.Operation.COMPLETE_TASK, "test_quest", started, finished))
+         || StoryEngineAdapter.questNotification(StoryEngineAdapter.Operation.COMPLETE_TASK,
+            "test_quest", finished, finished) != null)
+         throw new AssertionError("Quest change notification repeated or had the wrong status");
+      QuestJournal restoredQuests = new QuestJournal();
+      restoredQuests.load(quests.save());
+      if (restoredQuests.displayLines().size() < 3) throw new AssertionError("Quest journal did not survive NBT round trip");
+      var journalEntries = restoredQuests.snapshot();
+      if (journalEntries.size() != 1 || journalEntries.get(0).status() != QuestJournal.Status.COMPLETED
+         || !journalEntries.get(0).tasks().get(0).done()
+         || !journalEntries.get(0).source().equals("Регир")) {
+         throw new AssertionError("Quest journal snapshot lost status or task progress");
+      }
+      restoredQuests.apply(StoryEngineAdapter.Operation.COMPLETE_QUEST, "test_quest");
+      restoredQuests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      var replay = restoredQuests.snapshot().get(0);
+      if (replay.status() != QuestJournal.Status.ACTIVE || replay.tasks().get(0).done()) {
+         throw new AssertionError("Restarting a quest did not clear completed progress");
+      }
+      restoredQuests.apply(StoryEngineAdapter.Operation.FAIL_QUEST, "test_quest");
+      restoredQuests.apply(StoryEngineAdapter.Operation.START_QUEST, "test_quest");
+      if (restoredQuests.snapshot().get(0).status() != QuestJournal.Status.ACTIVE) {
+         throw new AssertionError("Restarting a failed quest did not reactivate it");
+      }
+      QuestJournal nested = new QuestJournal();
+      nested.apply(StoryEngineAdapter.Operation.ENSURE_QUEST, "nested", "Встреча", "Описание");
+      nested.apply(StoryEngineAdapter.Operation.ADD_TASK, "nested", "prepare", "Подготовиться");
+      nested.apply(StoryEngineAdapter.Operation.ADD_SUBTASK, "nested", "prepare", "place", "Выбрать место");
+      nested.apply(StoryEngineAdapter.Operation.ADD_SUBTASK, "nested", "prepare", "time", "Назначить время");
+      nested.apply(StoryEngineAdapter.Operation.START_QUEST, "nested");
+      nested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "place");
+      QuestJournal restoredNested = new QuestJournal();
+      restoredNested.load(nested.save());
+      var partial = restoredNested.snapshot().get(0).tasks();
+      if (partial.size() != 3 || partial.get(0).done() || !partial.get(1).child()
+         || !partial.get(1).done() || partial.get(2).done()) {
+         throw new AssertionError("Subtask hierarchy or partial progress did not survive NBT");
+      }
+      restoredNested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "time");
+      if (!restoredNested.snapshot().get(0).tasks().get(0).done()
+         || restoredNested.snapshot().get(0).status() != QuestJournal.Status.COMPLETED) {
+         throw new AssertionError("Completing all subtasks did not complete their parent and quest");
+      }
+      restoredNested.apply(StoryEngineAdapter.Operation.START_QUEST, "nested");
+      if (restoredNested.snapshot().get(0).tasks().stream().anyMatch(QuestJournal.TaskEntry::done)) {
+         throw new AssertionError("Restarting a quest did not reset subtasks");
+      }
+      restoredNested.apply(StoryEngineAdapter.Operation.ADD_HIDDEN_SUBTASK,
+         "nested", "prepare", "secret", "Найти проход");
+      if (restoredNested.snapshot().get(0).tasks().size() != 3) {
+         throw new AssertionError("Unfinished hidden subtask was exposed in journal");
+      }
+      restoredNested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "place");
+      restoredNested.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "time");
+      if (restoredNested.snapshot().get(0).status() != QuestJournal.Status.ACTIVE) {
+         throw new AssertionError("Hidden subtask did not keep quest active");
+      }
+      QuestJournal hiddenReloaded = new QuestJournal();
+      hiddenReloaded.load(restoredNested.save());
+      if (hiddenReloaded.snapshot().get(0).tasks().size() != 3
+         || hiddenReloaded.snapshot().get(0).status() != QuestJournal.Status.ACTIVE) {
+         throw new AssertionError("Hidden subtask was not preserved across world reload");
+      }
+      hiddenReloaded.apply(StoryEngineAdapter.Operation.COMPLETE_SUBTASK, "nested", "prepare", "secret");
+      if (hiddenReloaded.snapshot().get(0).status() != QuestJournal.Status.COMPLETED
+         || hiddenReloaded.snapshot().get(0).tasks().size() != 4) {
+         throw new AssertionError("Revealed hidden subtask did not finish quest");
+      }
+      CompoundTag playerData = new CompoundTag();
+      LuaItemReceipts.record(playerData, "first-run", 7);
+      CompoundTag restoredPlayerData = playerData.copy();
+      if (!LuaItemReceipts.has(restoredPlayerData, "first-run", 7)
+         || LuaItemReceipts.has(restoredPlayerData, "second-run", 7)
+         || LuaItemReceipts.has(restoredPlayerData, "first-run", 8)) {
+         throw new AssertionError("Item receipt did not distinguish runs and actions across NBT reload");
+      }
+      Path selectionDirectory = Files.createTempDirectory("storytelling-journal-selection-");
+      try {
+         Path selectionFile = selectionDirectory.resolve("selection.properties");
+         var selection = new QuestJournalSelection.Value(QuestJournal.Status.COMPLETED, "test_quest", 2, 14);
+         QuestJournalSelection.write(selectionFile, selection);
+         if (!selection.equals(QuestJournalSelection.read(selectionFile))) {
+            throw new AssertionError("Quest journal selection did not survive a file round trip");
+         }
+         Files.delete(selectionFile);
+      } finally { Files.delete(selectionDirectory); }
+      LuaBlockProject blocks = LuaBlockProject.create(900035);
+      blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Привет, \"мир\"!"));
+      blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.WAIT_F8, ""));
+      blocks.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.WAIT_TICKS, "20"));
+      String generated = blocks.generate();
+      if (LuaStory.parse(generated, "900035.lua").id() != 900035 || !generated.contains("\\\"мир\\\""))
+         throw new AssertionError("The block editor did not generate valid escaped Lua");
+      LuaBlockProject branching = LuaBlockProject.create(900040);
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.CHOICE, "route",
+         java.util.List.of("Как поступим?", "Пойти", "Остаться")));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.BRANCH, "route",
+         java.util.List.of("1", "go", "stay")));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.ANCHOR, "stay"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Остаёмся"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.GOTO, "final"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.ANCHOR, "go"));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SET_FLAG, "went",
+         java.util.List.of("true")));
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.SPEECH, "Идём"));
+      String branchSource = branching.generate();
+      if (LuaStory.parse(branchSource, "900040.lua").id() != 900040
+         || !branchSource.contains("var_if(\"route\", \"1\", \"go\", \"stay\")")) {
+         throw new AssertionError("Block choices and forward branches did not generate valid Lua");
+      }
+      branching.blocks().add(new LuaBlockProject.Block(LuaBlockProject.Kind.GOTO, "stay"));
+      try {
+         branching.generate();
+         throw new AssertionError("Block editor accepted a backward branch");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("ниже")) throw expected;
       }
       Path storyDirectory = Files.createTempDirectory("storytelling-lua-stories-");
       try {
          LuaStory.initializeStoryDirectory(storyDirectory);
-         Path registeredGltfStory = storyDirectory.resolve("900008.lua");
-         Files.copy(Path.of(args[2]), registeredGltfStory);
-         if (!Files.isRegularFile(storyDirectory.resolve("s7.lua")) || !Files.isRegularFile(storyDirectory.resolve("900001.lua"))) {
-            throw new AssertionError("Default Lua stories were not installed");
+         try (var files = Files.list(storyDirectory)) {
+            if (files.findAny().isPresent()) throw new AssertionError("The author directory is not empty");
          }
+         Files.copy(Path.of(args[0]), storyDirectory.resolve("900001.lua"));
+         Path registeredGltfStory = storyDirectory.resolve("900032.lua");
+         Files.copy(Path.of(args[1]), registeredGltfStory);
          String editedExample = Files.readString(storyDirectory.resolve("900001.lua")) + "\n-- edited by user\n";
          Files.writeString(storyDirectory.resolve("900001.lua"), editedExample);
          LuaStory.initializeStoryDirectory(storyDirectory);
@@ -146,24 +302,42 @@ public final class LuaStorySmokeTest {
          if (!environment.luaStories.containsKey(900001) || !environment.constructors.containsKey(900001)) {
             throw new AssertionError("New Lua story was not registered");
          }
-         if (!environment.luaStories.containsKey(900008) || !environment.constructors.containsKey(900008)) {
-            throw new AssertionError("The 900008 glTF story file was not registered");
+         if (!environment.luaStories.containsKey(900032) || !environment.constructors.containsKey(900032)) {
+            throw new AssertionError("The 900032 glTF story file was not registered");
          }
-         if (environment.createInstance(900001).getMainPerformer() == null) {
+         LuaScriptInstance firstRun = (LuaScriptInstance) environment.createInstance(900001);
+         if (firstRun.getMainPerformer() == null) {
             throw new AssertionError("New Lua story has no main performer");
          }
+         CompoundTag savedRun = firstRun.serializeNBT();
+         if (!firstRun.runToken.equals(LuaScriptInstance.readRunToken(savedRun, "missing"))) {
+            throw new AssertionError("Lua run token did not survive script serialization");
+         }
+         if (!"legacy".equals(LuaScriptInstance.readRunToken(new CompoundTag(), "legacy")))
+            throw new AssertionError("Old Lua saves did not receive a fresh receipt token");
+         LuaScriptInstance nextRun = (LuaScriptInstance) environment.createInstance(900001);
+         if (firstRun.runToken.equals(nextRun.runToken)) {
+            throw new AssertionError("Fresh Lua run reused an old item receipt token");
+         }
          LuaStoryValidator.Report clean = LuaStoryValidator.validate(storyDirectory, java.util.Set.of());
-         if (clean.checked() != 3 || !clean.valid()) {
+         if (clean.checked() != 2 || !clean.valid()) {
             throw new AssertionError("Valid Lua files failed validation: " + clean.issues());
          }
          Files.writeString(storyDirectory.resolve("900090.lua"), "story(900090)\npart(\"main\")\nspeech(1, \"unfinished\n");
          Files.writeString(storyDirectory.resolve("900091.lua"), "story(900092)\npart(\"main\")\nwait_f8()\n");
          LuaStoryValidator.Report invalid = LuaStoryValidator.validate(storyDirectory, java.util.Set.of(900001));
-         if (invalid.checked() != 5
+         if (invalid.checked() != 4
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900090.lua"))
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900091.lua") && issue.message().contains("filename"))
             || invalid.issues().stream().noneMatch(issue -> issue.file().equals("900001.lua") && issue.message().contains("Java script"))) {
             throw new AssertionError("Validator missed syntax, filename or ID errors: " + invalid.issues());
+         }
+         Path authorFile = storyDirectory.resolve("draft.txt");
+         StoryFileWriter.write(authorFile, "first", true);
+         StoryFileWriter.write(authorFile, "second", true);
+         if (!"second".equals(Files.readString(authorFile))
+            || !"first".equals(Files.readString(storyDirectory.resolve("draft.txt.bak")))) {
+            throw new AssertionError("Story file backup or replacement failed");
          }
       } finally {
          try (var paths = Files.walk(storyDirectory)) {
@@ -172,6 +346,52 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: S7, 900001, and 900008");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+   }
+
+   private static void checkSafeModules() throws Exception {
+      Path root = Files.createTempDirectory("story-lua-modules-");
+      try {
+         Files.createDirectories(root.resolve("characters"));
+         Files.createDirectories(root.resolve("cycle"));
+         Files.writeString(root.resolve("characters/hero.lua"), """
+            loads = (loads or 0) + 1
+            return { name = "Проводник", loads = loads }
+            """, StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900099.lua"), """
+            local a = require("characters.hero")
+            local b = require("characters.hero")
+            if a ~= b or b.loads ~= 1 then error("module cache failed") end
+            story(900099)
+            part("main")
+            speaker(0, a.name)
+            speech(0, "Проверка модуля")
+            """, StandardCharsets.UTF_8);
+         if (LuaStory.load(root.resolve("900099.lua")).id() != 900099)
+            throw new AssertionError("Lua character module did not load");
+
+         Files.writeString(root.resolve("cycle/a.lua"), "return require(\"cycle.b\")", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("cycle/b.lua"), "return require(\"cycle.a\")", StandardCharsets.UTF_8);
+         Files.writeString(root.resolve("900100.lua"), "story(900100)\nrequire(\"cycle.a\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900100.lua"));
+            throw new AssertionError("Cyclic Lua module import was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Cyclic Lua module import")) throw expected;
+         }
+
+         Files.writeString(root.resolve("900101.lua"), "story(900101)\nrequire(\"../outside\")\npart(\"main\")\nwait_f8()", StandardCharsets.UTF_8);
+         try {
+            LuaStory.load(root.resolve("900101.lua"));
+            throw new AssertionError("Path traversal in Lua module import was accepted");
+         } catch (IllegalArgumentException expected) {
+            if (!expected.getMessage().contains("Invalid Lua module name")) throw expected;
+         }
+      } finally {
+         try (var files = Files.walk(root)) {
+            for (Path file : files.sorted(java.util.Comparator.reverseOrder()).toList()) Files.deleteIfExists(file);
+         }
+      }
    }
 }
+

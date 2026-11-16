@@ -244,39 +244,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 }
 
-// Optional integrations disabled in the offline build.
-sourceSets.main.java {
-    exclude 'com/storyteam/storytelling/compat/iris/IrisCompat.java'
-    exclude 'com/storyteam/storytelling/mixins/_client/iris/**'
-    exclude 'com/storyteam/storytelling/mixins/dh/**'
-    exclude 'com/storyteam/storytelling/mixins/jei/**'
-    exclude 'com/storyteam/storytelling/mixins/journeymap/**'
-    exclude 'com/storyteam/storytelling/mixins/system/recipes/FastSuiteRecipeManagerMixin.java'
-    exclude 'com/storyteam/storytelling/mixins/system/rts/**'
-    exclude 'com/storyteam/storytelling/mixins/hammermultipart/**'
-    exclude 'com/storyteam/storytelling/mixins/worldedit/**'
-    exclude 'com/storyteam/storytelling/content/commands/sub/ReplaceWithMicroblock.java'
-    exclude 'com/storyteam/storytelling/content/commands/sub/PasteSignLines.java'
-}
-
-sourceSets.main.java {
-    exclude 'com/storyteam/storytelling/system/rts/**'
-    exclude 'com/storyteam/storytelling/content/items/ResourceItem.java'
-}
-
-sourceSets.main.java {
-    exclude 'com/storyteam/storytelling/system/shaders/GLBuffersST.java'
-    exclude 'com/storyteam/storytelling/system/shaders/UniformsST.java'
-    exclude 'com/storyteam/storytelling/system/shaders/AddShaderSettingsButton.java'
-}
-
-sourceSets.main.java {
-    exclude 'com/storyteam/storytelling/compat/jei/**'
-    exclude 'com/storyteam/storytelling/system/gating/jei/**'
-}
-
-// Compile against the original embedded MixinExtras binary, not recovered library sources.
-sourceSets.main.java.exclude 'com/llamalad7/mixinextras/**'
+// MixinExtras uses its binary library; duplicate recovered sources were removed.
 dependencies {
     compileOnly files('gradle/mixinextras/MixinExtras-0.5.0-beta.5.jar')
 }
@@ -315,9 +283,15 @@ tasks.register('verifyLuaStories', JavaExec) {
     dependsOn tasks.named('testClasses')
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'com.storyteam.storytelling.script.story.LuaStorySmokeTest'
-    args file('src/main/resources/data/storytelling/story_scripts/s7.lua').absolutePath,
-         file('dist/story-pack-example/900001.lua').absolutePath,
-         file('run/ST/scripts/900008.lua').absolutePath
+    args file('dist/story-pack-example/900001.lua').absolutePath,
+         file('examples/story_scripts/900032.lua').absolutePath,
+         file('examples/story_scripts/900036.lua').absolutePath,
+         file('examples/story_scripts/900037.lua').absolutePath,
+         file('examples/story_scripts/900038.lua').absolutePath,
+         file('examples/story_scripts/900041.lua').absolutePath,
+         file('examples/story_scripts/900042.lua').absolutePath,
+         file('examples/story_scripts/900043.lua').absolutePath,
+         file('examples/story_scripts/900050.lua').absolutePath
 }
 tasks.register('extractGltfTestDependencies', Copy) {
     from zipTree(file('libs/gfbs_gltf-1.5.1-all.jar'))

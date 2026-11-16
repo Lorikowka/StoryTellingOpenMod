@@ -157,7 +157,9 @@ public class ScriptCommand {
                                                                Commands.argument("scriptCategory", StringArgumentType.string())
                                                                   .suggests((context, builder) -> {
                                                                      for (String category : ScriptCategory.SCRIPTS.keySet()) {
-                                                                        builder.suggest(category);
+                                                                        if (ScriptCategory.SCRIPTS.get(category)
+                                                                           .availableScripts(env.constructors::containsKey).length > 0)
+                                                                           builder.suggest(category);
                                                                      }
 
                                                                      return builder.buildFuture();
@@ -165,8 +167,10 @@ public class ScriptCommand {
                                                                   .executes(
                                                                      cs -> {
                                                                         String category = (String)cs.getArgument("scriptCategory", String.class);
-                                                                        int[] ids = ScriptCategory.SCRIPTS.get(category).getScripts();
-                                                                        if (ids != null) {
+                                                                        ScriptCategory selected = ScriptCategory.SCRIPTS.get(category);
+                                                                        int[] ids = selected == null ? null
+                                                                           : selected.availableScripts(env.constructors::containsKey);
+                                                                        if (ids != null && ids.length > 0) {
                                                                            for (int index : ids) {
                                                                               if (env.getScript(index) == null) {
                                                                                  env.start(index);
@@ -176,7 +180,7 @@ public class ScriptCommand {
                                                                            sendSuccess(
                                                                               cs,
                                                                               Component.literal(
-                                                                                 "§4§l[§cОшибка§4§l]§c: §rНе удалось получить категорию под названием: §c"
+                                                                                 "§4§l[§cОшибка§4§l]§c: §rКатегория пуста или не найдена: §c"
                                                                                     + category
                                                                                     + "§r!"
                                                                               ),
@@ -274,7 +278,9 @@ public class ScriptCommand {
                                                                   Commands.argument("scriptCategory", StringArgumentType.string())
                                                                      .suggests((context, builder) -> {
                                                                         for (String category : ScriptCategory.SCRIPTS.keySet()) {
-                                                                           builder.suggest(category);
+                                                                           if (ScriptCategory.SCRIPTS.get(category)
+                                                                              .availableScripts(env.constructors::containsKey).length > 0)
+                                                                              builder.suggest(category);
                                                                         }
 
                                                                         return builder.buildFuture();
@@ -282,8 +288,10 @@ public class ScriptCommand {
                                                                      .executes(
                                                                         cs -> {
                                                                            String category = (String)cs.getArgument("scriptCategory", String.class);
-                                                                           int[] ids = ScriptCategory.SCRIPTS.get(category).getScripts();
-                                                                           if (ids != null) {
+                                                                           ScriptCategory selected = ScriptCategory.SCRIPTS.get(category);
+                                                                           int[] ids = selected == null ? null
+                                                                              : selected.availableScripts(env.constructors::containsKey);
+                                                                           if (ids != null && ids.length > 0) {
                                                                               for (int index : ids) {
                                                                                  try {
                                                                                     env.stop(index);
@@ -304,7 +312,7 @@ public class ScriptCommand {
                                                                               sendSuccess(
                                                                                  cs,
                                                                                  Component.literal(
-                                                                                    "§4§l[§cОшибка§4§l]§c: §rНе удалось получить категорию под названием: §c"
+                                                                                    "§4§l[§cОшибка§4§l]§c: §rКатегория пуста или не найдена: §c"
                                                                                        + category
                                                                                        + "§r!"
                                                                                  ),
@@ -694,7 +702,18 @@ public class ScriptCommand {
          sendSuccess(ctx, Component.literal("Сценарии перезагружены: " + env.constructors.size()
             + " (Lua: " + env.luaStories.size() + "). Уже запущенные сценарии продолжат прежнюю версию."), true);
          return env.luaStories.size();
-      })));
+      }).then(Commands.argument("file", StringArgumentType.word()).executes(ctx -> {
+         String file = StringArgumentType.getString(ctx, "file");
+         try {
+            int id = env.reloadLuaStory(file);
+            sendSuccess(ctx, Component.literal("Перезагружен " + file + " (ID " + id
+               + "). Остальные сценарии не затронуты; запущенный экземпляр продолжит прежнюю версию."), true);
+            return 1;
+         } catch (Exception error) {
+            ctx.getSource().sendFailure(Component.literal("Не удалось перезагрузить " + file + ": " + error.getMessage()));
+            return 0;
+         }
+      }))));
       dispatcher.register(Commands.literal("script").then(Commands.literal("validate").executes(ctx -> {
          Set<Integer> javaIds = new HashSet<>();
          for (int id : env.constructors.keySet()) {

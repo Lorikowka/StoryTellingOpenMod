@@ -1,0 +1,22 @@
+-- Одна цель и две вложенные подзадачи.
+story(900037)
+
+part("main")
+speaker(0, "Проверка заданий")
+quest_create("journal_subtasks", "Подготовить встречу", "Проверьте вложенные пункты в журнале.")
+quest_source("journal_subtasks", "Тест журнала")
+quest_task("journal_subtasks", "prepare", "Подготовиться")
+quest_subtask("journal_subtasks", "prepare", "place", "Выбрать место встречи")
+quest_subtask("journal_subtasks", "prepare", "time", "Согласовать время")
+quest_start("journal_subtasks")
+
+speech(0, "Откройте J: под пунктом «Подготовиться» должны быть две подзадачи.")
+wait_f8()
+quest_subtask_complete("journal_subtasks", "prepare", "place")
+speech(0, "Первая подзадача выполнена. Родительский пункт ещё не завершён.")
+wait_f8()
+quest_subtask_complete("journal_subtasks", "prepare", "time")
+speech(0, "Обе подзадачи выполнены. Задание и родительский пункт отмечены автоматически.")
+wait_f8()
+speech(0, "Задание уже в готовых. Повторный запуск сценария сбросит все отметки.")
+wait_f8()

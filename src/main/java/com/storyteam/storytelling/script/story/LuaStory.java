@@ -9,18 +9,18 @@ import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfi
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
 import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
+import com.storyteam.storytelling.script.story.camera.NpcCameraFlightAction;
 import com.storyteam.storytelling.net.PacketLuaChoiceScreen;
+import com.storyteam.storytelling.net.PacketStoryHud;
 import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
 import com.storyteam.storytelling.system._core.st_cutscene.ServersideCutsceneHandler;
 import com.storyteam.storytelling.script.story.EntityRepository;
 import com.storyteam.storytelling.util.ScriptUtils;
 import com.storyteam.storytelling.util.world.Location;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.FileAlreadyExistsException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -34,6 +34,7 @@ import java.util.Set;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.compiler.LuaC;
 import org.luaj.vm2.LoadState;
@@ -187,6 +188,10 @@ public final class LuaStory {
             }
             case SPEECH -> builder.thenSpeechMessage(step.speaker, step.text);
             case WARNING -> builder.sendWebWarning(step.text);
+            case HINT -> builder.thenRun(() -> {
+               ServerPlayer player = ScriptUtils.getPlayer();
+               if (player != null) Network.sendTo(player, new PacketStoryHud(true, step.text, step.speaker));
+            });
             case ANCHOR -> builder.saveState(step.text);
             case WAIT_F8 -> builder.thenWaitForF8();
             case WAIT_TICKS -> builder.thenDelay(step.speaker);
@@ -231,6 +236,9 @@ public final class LuaStory {
                @Override public void reset() { release(); elapsed = 0; done = false; }
                @Override public void onScriptStop() { release(); }
             });
+            case CAMERA_FLY_NPC -> builder.append(performer -> new NpcCameraFlightAction(performer,
+               characters.get(step.text), Integer.parseInt(step.arguments[0]),
+               Integer.parseInt(step.arguments[1]), Double.parseDouble(step.arguments[2])));
             case STORY_ENGINE -> builder.thenRun(() -> StoryEngineAdapter.invoke(step.operation, step.arguments));
             case WAIT_POS -> builder.append(p -> new WaitPlayerPositionAction(p, step.position.dimension, step.position.x,
                step.position.y, step.position.z, step.position.radius, step.position.ignoreY));
@@ -253,6 +261,10 @@ public final class LuaStory {
                characters.get(step.text).repositoryEntity(),
                new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
                step.position.dimension));
+            case NPC_SET_LEVER -> builder.thenRun(() -> NpcWorldInteraction.setLever(
+               characters.get(step.text).repositoryEntity(),
+               new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
+               step.position.dimension, Boolean.parseBoolean(step.arguments[0])));
             case NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
                private int waiting;
@@ -493,16 +505,42 @@ public final class LuaStory {
                   if (script.getFlags().has(marker())) { applied = true; return; }
                   ServerPlayer player = ScriptUtils.getPlayer();
                   if (player == null) return;
+                  LuaScriptInstance lua = (LuaScriptInstance) script;
+                  int actionIndex = performer.getActionIndex(this);
+                  if (LuaItemReceipts.has(player.getPersistentData(), lua.runToken, actionIndex)) {
+                     script.getFlags().set(marker());
+                     applied = true;
+                     return;
+                  }
                   Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(step.text));
                   if (item == null) throw new IllegalArgumentException("Unknown item: " + step.text);
                   ItemStack stack = new ItemStack(item, Integer.parseInt(step.arguments[0]));
                   player.getInventory().add(stack);
                   if (!stack.isEmpty()) player.drop(stack, false);
+                  LuaItemReceipts.record(player.getPersistentData(), lua.runToken, actionIndex);
+                  player.server.getPlayerList().saveAll();
                   script.getFlags().set(marker());
                   applied = true;
                }
                @Override public boolean isDone() { return applied; }
                @Override public void reset() { applied = false; }
+            });
+            case WAIT_ITEM -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean found;
+               @Override public void tick() {
+                  ServerPlayer player = ScriptUtils.getPlayer();
+                  if (player == null) return;
+                  Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(step.text));
+                  if (item == null) throw new IllegalArgumentException("Unknown item: " + step.text);
+                  int count = 0;
+                  for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+                     ItemStack stack = player.getInventory().getItem(slot);
+                     if (stack.is(item)) count += stack.getCount();
+                  }
+                  found = count >= Integer.parseInt(step.arguments[0]);
+               }
+               @Override public boolean isDone() { return found; }
+               @Override public void reset() { found = false; }
             });
             case PARTICLE, PARTICLE_HERE -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
@@ -540,62 +578,28 @@ public final class LuaStory {
       }
    }
 
-   public static LuaStory loadBundled(String name) {
-      if (name == null || !name.matches("[a-z0-9_]+")) {
-         throw new IllegalArgumentException("Invalid Lua story name: " + name);
-      }
-      Path override = storyDirectory().resolve(name + ".lua");
-      if (Files.isRegularFile(override)) {
-         return load(override);
-      }
-      String resource = "/data/storytelling/story_scripts/" + name + ".lua";
-      try (InputStream stream = LuaStory.class.getResourceAsStream(resource)) {
-         if (stream == null) {
-            throw new IOException("Missing bundled story " + resource);
-         }
-         return parse(new String(stream.readAllBytes(), StandardCharsets.UTF_8), resource);
-      } catch (IOException e) {
-         throw new IllegalStateException("Cannot load Lua story " + name, e);
-      }
-   }
-
    public static Path storyDirectory() {
       return StoryWorkspace.scripts();
    }
 
-   /** Creates the authoring directory and installs editable examples once. */
+   /** Creates an empty authoring directory. Existing user scenarios are left untouched. */
    public static void initializeStoryDirectory(Path directory) throws IOException {
       Files.createDirectories(directory);
-      installExample(directory, "s7.lua");
-      installExample(directory, "900001.lua");
-   }
-
-   private static void installExample(Path directory, String name) throws IOException {
-      Path target = directory.resolve(name);
-      if (Files.exists(target)) {
-         return;
-      }
-      try (InputStream source = LuaStory.class.getResourceAsStream("/data/storytelling/story_scripts/" + name)) {
-         if (source == null) {
-            throw new IOException("Missing bundled Lua example: " + name);
-         }
-         try {
-            Files.copy(source, target);
-         } catch (FileAlreadyExistsException ignored) {
-            // Another loader created the file after the existence check.
-         }
-      }
    }
 
    public static LuaStory load(Path file) {
       try {
-         return parse(Files.readString(file, StandardCharsets.UTF_8), file.toString());
+         return parse(Files.readString(file, StandardCharsets.UTF_8), file.toString(), file.getParent());
       } catch (IOException e) {
          throw new IllegalStateException("Cannot read Lua story " + file, e);
       }
    }
 
    public static LuaStory parse(String source, String label) {
+      return parse(source, label, null);
+   }
+
+   private static LuaStory parse(String source, String label, Path moduleRoot) {
       Builder builder = new Builder(label);
       Globals globals = new Globals();
       globals.load(new BaseLib());
@@ -605,7 +609,7 @@ public final class LuaStory {
       globals.load(new MathLib());
       LoadState.install(globals);
       LuaC.install(globals);
-      globals.set("require", LuaValue.NIL);
+      globals.set("require", moduleRoot == null ? LuaValue.NIL : new LuaStoryModules(moduleRoot, globals));
       globals.set("package", LuaValue.NIL);
       globals.set("dofile", LuaValue.NIL);
       globals.set("loadfile", LuaValue.NIL);
@@ -690,6 +694,13 @@ public final class LuaStory {
             return NIL;
          }
       });
+      globals.set("wait_item", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 2) throw new IllegalArgumentException("wait_item(id, [count]) expected");
+            builder.waitItem(nonempty(args.arg(1)), args.narg() == 2 ? args.arg(2).checkint() : 1);
+            return NIL;
+         }
+      });
       globals.set("spawn_particle", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() != 5) throw new IllegalArgumentException("spawn_particle(id, x, y, z, count) expected");
@@ -705,10 +716,59 @@ public final class LuaStory {
             return NIL;
          }
       });
-      globals.set("npc", new ThreeArgFunction() {
-         @Override public LuaValue call(LuaValue key, LuaValue type, LuaValue name) {
-            builder.npc(nonempty(key), nonempty(type), nonempty(name));
-            return NIL;
+      globals.set("npc", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() == 3) {
+               builder.npc(nonempty(args.arg(1)), nonempty(args.arg(2)), nonempty(args.arg(3)));
+               return NIL;
+            }
+            if (args.narg() != 1 || !args.arg(1).istable()) {
+               throw new IllegalArgumentException("npc{key=..., model=..., name=...} or npc(key, type, name) expected");
+            }
+            LuaTable spec = args.arg(1).checktable();
+            String key = nonempty(spec.get("key"));
+            String name = nonempty(spec.get("name"));
+            LuaValue model = spec.get("model");
+            LuaValue type = spec.get("type");
+            if (model.isnil() == type.isnil()) {
+               throw new IllegalArgumentException("NPC object requires exactly one of model or type: " + key);
+            }
+            if (!model.isnil()) {
+               builder.npcModel(key, nonempty(model), name);
+               LuaValue width = spec.get("width");
+               LuaValue height = spec.get("height");
+               if (!width.isnil() || !height.isnil()) {
+                  builder.npcHitbox(key, width.isnil() ? 0.6f : (float) width.checkdouble(),
+                     height.isnil() ? 1.8f : (float) height.checkdouble());
+               }
+            } else {
+               if (!spec.get("width").isnil() || !spec.get("height").isnil()) {
+                  throw new IllegalArgumentException("Custom hitbox requires a glTF model: " + key);
+               }
+               builder.npc(key, nonempty(type), name);
+            }
+            LuaTable object = new LuaTable();
+            object.set("key", LuaValue.valueOf(key));
+            object.set("name", LuaValue.valueOf(name));
+            bindNpcMethod(globals, object, key, "spawn", "npc_spawn");
+            bindNpcMethod(globals, object, key, "move", "npc_move");
+            bindNpcMethod(globals, object, key, "look", "npc_look");
+            bindNpcMethod(globals, object, key, "animate", "npc_animation");
+            bindNpcMethod(globals, object, key, "use_block", "npc_approach_use_block");
+            bindNpcMethod(globals, object, key, "try_use_block", "npc_try_use_block");
+            bindNpcMethod(globals, object, key, "set_lever", "npc_set_lever");
+            bindNpcMethod(globals, object, key, "wait_interact", "npc_wait_interact");
+            bindNpcMethod(globals, object, key, "remove", "npc_remove");
+            bindNpcMethod(globals, object, key, "camera", "camera_fly_npc");
+            object.set("speaker", new VarArgFunction() {
+               @Override public Varargs invoke(Varargs call) {
+                  if (call.narg() != 2 || call.arg(1) != object) {
+                     throw new IllegalArgumentException("npc:speaker(id) expected");
+                  }
+                  return globals.get("speaker_npc").call(call.arg(2), LuaValue.valueOf(key));
+               }
+            });
+            return object;
          }
       });
       globals.set("npc_model", new ThreeArgFunction() {
@@ -813,6 +873,22 @@ public final class LuaStory {
             return NIL;
          }
       });
+      globals.set("npc_set_lever", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 5 && args.narg() != 6)
+               throw new IllegalArgumentException("npc_set_lever(key, x, y, z, powered, [dimension]) expected");
+            String key = nonempty(args.arg(1));
+            int x = blockCoordinate(args.arg(2));
+            int y = blockCoordinate(args.arg(3));
+            int z = blockCoordinate(args.arg(4));
+            boolean powered = args.arg(5).checkboolean();
+            String dimension = args.narg() == 6 ? nonempty(args.arg(6)) : "minecraft:overworld";
+            if (ResourceLocation.tryParse(dimension) == null)
+               throw new IllegalArgumentException("Invalid npc_set_lever dimension: " + dimension);
+            builder.npcLever(key, new PositionSpec(dimension, x, y, z, 0, false), powered);
+            return NIL;
+         }
+      });
       globals.set("npc_try_use_block", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() != 5 && args.narg() != 6) {
@@ -864,6 +940,17 @@ public final class LuaStory {
       globals.set("warning", new OneArgFunction() {
          @Override public LuaValue call(LuaValue text) { builder.add(new Step(Type.WARNING, 0, text.checkjstring())); return NIL; }
       });
+      globals.set("hint", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 2) throw new IllegalArgumentException("hint requires text and optional duration in ticks");
+            String text = nonempty(args.arg(1));
+            if (text.length() > 512) throw new IllegalArgumentException("hint text must be at most 512 characters");
+            int ticks = args.narg() == 2 ? args.arg(2).checkint() : 100;
+            if (ticks < 20 || ticks > 600) throw new IllegalArgumentException("hint duration must be 20–600 ticks");
+            builder.add(new Step(Type.HINT, ticks, text));
+            return NIL;
+         }
+      });
       globals.set("wait_f8", new ZeroArgFunction() {
          @Override public LuaValue call() { builder.add(new Step(Type.WAIT_F8, 0, "")); return NIL; }
       });
@@ -890,6 +977,17 @@ public final class LuaStory {
             if (args.narg() != 6) throw new IllegalArgumentException("camera_shot(x, y, z, yaw, pitch, ticks) expected");
             builder.cameraShot(args.arg(1).checkdouble(), args.arg(2).checkdouble(), args.arg(3).checkdouble(),
                args.arg(4).checkdouble(), args.arg(5).checkdouble(), args.arg(6).checkint());
+            return NIL;
+         }
+      });
+      globals.set("camera_fly_npc", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 4) {
+               throw new IllegalArgumentException("camera_fly_npc(key, [flight_ticks], [hold_ticks], [distance]) expects 1 to 4 arguments");
+            }
+            builder.cameraFlyNpc(nonempty(args.arg(1)), args.narg() >= 2 ? args.arg(2).checkint() : 40,
+               args.narg() >= 3 ? args.arg(3).checkint() : 40,
+               args.narg() >= 4 ? args.arg(4).checkdouble() : 1.6);
             return NIL;
          }
       });
@@ -951,14 +1049,33 @@ public final class LuaStory {
       globals.set("quest_task_complete", new TwoArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue task) { external(builder, StoryEngineAdapter.Operation.COMPLETE_TASK, id, task); return NIL; }
       });
+      globals.set("quest_subtask_complete", new ThreeArgFunction() {
+         @Override public LuaValue call(LuaValue id, LuaValue parent, LuaValue child) {
+            external(builder, StoryEngineAdapter.Operation.COMPLETE_SUBTASK, id, parent, child);
+            return NIL;
+         }
+      });
       globals.set("quest_notify", new TwoArgFunction() {
          @Override public LuaValue call(LuaValue title, LuaValue message) { external(builder, StoryEngineAdapter.Operation.NOTIFY, title, message); return NIL; }
       });
       globals.set("quest_create", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue title, LuaValue description) { external(builder, StoryEngineAdapter.Operation.ENSURE_QUEST, id, title, description); return NIL; }
       });
+      globals.set("quest_source", new TwoArgFunction() {
+         @Override public LuaValue call(LuaValue id, LuaValue source) { external(builder, StoryEngineAdapter.Operation.SET_QUEST_SOURCE, id, source); return NIL; }
+      });
       globals.set("quest_task", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue id, LuaValue task, LuaValue title) { external(builder, StoryEngineAdapter.Operation.ADD_TASK, id, task, title); return NIL; }
+      });
+      globals.set("quest_subtask", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 4 && args.narg() != 5)
+               throw new IllegalArgumentException("quest_subtask requires quest, parent, ID, title and optional hidden flag");
+            boolean hidden = args.narg() == 5 && args.arg(5).checkboolean();
+            external(builder, hidden ? StoryEngineAdapter.Operation.ADD_HIDDEN_SUBTASK : StoryEngineAdapter.Operation.ADD_SUBTASK,
+               args.arg(1), args.arg(2), args.arg(3), args.arg(4));
+            return NIL;
+         }
       });
       try {
          globals.load(source, label).call();
@@ -966,6 +1083,21 @@ public final class LuaStory {
       } catch (LuaError | IllegalArgumentException e) {
          throw new IllegalArgumentException("Invalid Lua story " + label + ": " + e.getMessage(), e);
       }
+   }
+
+   private static void bindNpcMethod(Globals globals, LuaTable object, String key,
+                                     String method, String legacyFunction) {
+      object.set(method, new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.arg(1) != object) {
+               throw new IllegalArgumentException("Use npc:" + method + "(...) with a colon");
+            }
+            LuaValue[] forwarded = new LuaValue[args.narg()];
+            forwarded[0] = LuaValue.valueOf(key);
+            for (int i = 2; i <= args.narg(); i++) forwarded[i - 1] = args.arg(i);
+            return globals.get(legacyFunction).invoke(LuaValue.varargsOf(forwarded));
+         }
+      });
    }
 
    private static int positiveTicks(LuaValue value) {
@@ -1022,7 +1154,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, THINK, BLACKOUT, FLASH, CAMERA_SHOT, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1173,6 +1305,12 @@ public final class LuaStory {
          add(new Step(Type.GIVE_ITEM, 0, id, null, new String[] {Integer.toString(count)}));
       }
 
+      private void waitItem(String id, int count) {
+         if (ResourceLocation.tryParse(id) == null || count < 1 || count > 2304)
+            throw new IllegalArgumentException("wait_item requires an item ID and count 1–2304");
+         add(new Step(Type.WAIT_ITEM, 0, id, null, new String[] {Integer.toString(count)}));
+      }
+
       private void particle(String id, double x, double y, double z, int count) {
          if (ResourceLocation.tryParse(id) == null || !Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
             || Math.abs(x) > 30000000 || Math.abs(y) > 30000000 || Math.abs(z) > 30000000
@@ -1202,11 +1340,27 @@ public final class LuaStory {
             Double.toString(yaw), Double.toString(pitch), Integer.toString(ticks)}));
       }
 
+      private void cameraFlyNpc(String key, int flightTicks, int holdTicks, double distance) {
+         if (!npcs.containsKey(key) || flightTicks < 2 || flightTicks > 1200
+            || holdTicks < 0 || holdTicks > 72000 || !Double.isFinite(distance)
+            || distance < 0.5 || distance > 8) {
+            throw new IllegalArgumentException("camera_fly_npc requires a declared NPC, flight 2–1200 ticks, hold 0–72000 ticks and distance 0.5–8 blocks: " + key);
+         }
+         add(new Step(Type.CAMERA_FLY_NPC, 0, key, null,
+            new String[] {Integer.toString(flightTicks), Integer.toString(holdTicks), Double.toString(distance)}));
+      }
+
       private void npcAction(Type type, String key, PositionSpec position) {
          if (!npcs.containsKey(key)) {
             throw new IllegalArgumentException("NPC " + key + " must be defined before its actions in " + label);
          }
          add(new Step(type, 0, key, position));
+      }
+
+      private void npcLever(String key, PositionSpec position, boolean powered) {
+         if (!npcs.containsKey(key)) throw new IllegalArgumentException("Unknown NPC for npc_set_lever: " + key);
+         add(new Step(Type.NPC_SET_LEVER, 0, key, null,
+            new String[] {Boolean.toString(powered)}, position));
       }
 
       private void npcBlockResult(String key, PositionSpec position, String result) {
@@ -1265,3 +1419,4 @@ public final class LuaStory {
       }
    }
 }
+

@@ -1,0 +1,12 @@
+story(900031)
+npc_model("reg", "reg.gltf", "Регир")
+npc_hitbox("reg", 0.6, 2.0)
+
+part("main")
+npc_spawn("reg", 0.5, -59, 8.5)
+speaker_npc(1, "reg")
+speech(1, "После F8 камера плавно подлетит ко мне и вернётся к тебе.")
+wait_f8()
+camera_fly_npc("reg", 45, 40, 1.6)
+speech(1, "Пролёт камеры завершён.")
+wait_f8()

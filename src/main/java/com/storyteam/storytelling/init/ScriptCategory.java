@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
+import java.util.function.IntPredicate;
 import lombok.Generated;
 
 public class ScriptCategory {
@@ -36,6 +37,11 @@ public class ScriptCategory {
       return new ScriptCategory(combinedScripts);
    }
 
+   /** Keep public category IDs intact while commands skip scripts missing from this build. */
+   public int[] availableScripts(IntPredicate registered) {
+      return Arrays.stream(this.scripts).filter(registered).toArray();
+   }
+
    public static ScriptCategory of(int... values) {
       return new ScriptCategory(values);
    }
@@ -48,7 +54,7 @@ public class ScriptCategory {
    public static ScriptCategory allWithoutMechanics() {
       int[] allScripts = SCRIPTS.entrySet()
          .stream()
-         .flatMapToInt(entry -> !entry.getKey().equals("mechanism_new") ? Arrays.stream(entry.getValue().getScripts()) : IntStream.empty())
+         .flatMapToInt(entry -> !entry.getKey().equals("mechanics") ? Arrays.stream(entry.getValue().getScripts()) : IntStream.empty())
          .toArray();
       return new ScriptCategory(allScripts);
    }

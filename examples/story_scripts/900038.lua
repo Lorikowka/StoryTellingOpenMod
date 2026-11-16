@@ -1,0 +1,20 @@
+-- Скрытая подзадача задерживает автоматическое завершение квеста.
+story(900038)
+
+part("main")
+speaker(0, "Проверка заданий")
+quest_create("journal_hidden", "Проверить тайник", "Скрытая цель появится после выполнения.")
+quest_source("journal_hidden", "Тест журнала")
+quest_task("journal_hidden", "search", "Осмотреть место")
+quest_subtask("journal_hidden", "search", "look", "Осмотреть вход")
+quest_subtask("journal_hidden", "search", "secret", "Найти скрытый проход", true)
+quest_start("journal_hidden")
+
+speech(0, "Откройте J: видна только подзадача «Осмотреть вход».")
+wait_f8()
+quest_subtask_complete("journal_hidden", "search", "look")
+speech(0, "Открытая подзадача выполнена, но квест всё ещё в текущих.")
+wait_f8()
+quest_subtask_complete("journal_hidden", "search", "secret")
+speech(0, "Скрытая подзадача раскрыта и выполнена. Квест теперь в готовых.")
+wait_f8()

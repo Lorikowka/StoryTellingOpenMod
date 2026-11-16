@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": 900040,
+  "generatedHash": "",
+  "blocks": [
+    {"kind": "CHOICE", "value": "route", "arguments": ["Как поступим?", "Пойти", "Остаться"]},
+    {"kind": "BRANCH", "value": "route", "arguments": ["1", "go", "stay"]},
+    {"kind": "ANCHOR", "value": "stay", "arguments": []},
+    {"kind": "SPEECH", "value": "Остаёмся", "arguments": []},
+    {"kind": "GOTO", "value": "final", "arguments": []},
+    {"kind": "ANCHOR", "value": "go", "arguments": []},
+    {"kind": "SET_FLAG", "value": "went", "arguments": ["true"]},
+    {"kind": "SPEECH", "value": "Идём", "arguments": []}
+  ]
+}

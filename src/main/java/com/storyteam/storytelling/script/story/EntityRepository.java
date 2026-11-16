@@ -132,6 +132,8 @@ public class EntityRepository implements IAutoNBTSerializable {
 
    public void tick() {
       this.ticks++;
+      // Script states are attached later in this server tick. Keep saved controllers until then.
+      if (this.server.getScriptEnv().hasPendingLoad()) return;
       Iterator<Entry<String, EntityController<?>>> iterator = this.controllerMap.entrySet().iterator();
 
       while (iterator.hasNext()) {

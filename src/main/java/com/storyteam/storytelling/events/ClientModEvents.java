@@ -9,6 +9,7 @@ import com.storyteam.storytelling.client.content.overlays.FlashbackOverlay;
 import com.storyteam.storytelling.client.content.overlays.GameTipOverlay;
 import com.storyteam.storytelling.client.content.overlays.ImageOverlay;
 import com.storyteam.storytelling.client.content.overlays.MessageOverlay;
+import com.storyteam.storytelling.client.content.overlays.StoryHudOverlay;
 import com.storyteam.storytelling.client.content.overlays.TitleOverlay;
 import com.storyteam.storytelling.system.currency.overlay.CurrencyOverlay;
 import com.storyteam.storytelling.system.emotions.events.EmotionsOverlay;
@@ -57,6 +58,7 @@ public class ClientModEvents {
       event.registerAbove(Resources.location("minecraft", "title_text"), "blackout_overlay", new BlackoutOverlay());
       event.registerAbove(Resources.location("minecraft", "title_text"), "flashback_overlay", new FlashbackOverlay());
       event.registerBelow(Resources.location("minecraft", "item_name"), "game_tip_overlay", new GameTipOverlay());
+      event.registerBelow(Resources.location("minecraft", "item_name"), "story_hud_overlay", new StoryHudOverlay());
       event.registerBelow(Resources.location("minecraft", "item_name"), "title_overlay", new TitleOverlay());
       event.registerBelow(Resources.location("minecraft", "item_name"), "message_overlay", new MessageOverlay());
       event.registerBelow(Resources.location("minecraft", "item_name"), "word_overlay", new WordOverlay());

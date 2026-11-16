@@ -57,6 +57,12 @@ public class SpeechMessageAction extends ScriptPerformerAction {
 
    private void printMessage(boolean chatLogOnly) {
       SpeechEntity e = this.getSpeaker();
+      if (e == null) {
+         if (this.entity != 0) {
+            throw new IllegalStateException("Speaker " + this.entity + " is not declared before speech");
+         }
+         e = new SpeechEntity("Система");
+      }
       Component toSend = this.message.get();
       MutableComponent message = Component.empty().append(toSend);
       MutableComponent spkrName;

@@ -27,6 +27,7 @@ public interface ItemsST {
    @RegistryName("world_map")
    @WithScreen(WorldMainTab.class)
    Item WORLD_MAP = new ItemWithGui(props(), Component.empty());
+   // Retain these legacy IDs so older worlds keep their saved item stacks.
    @RegistryName("key")
    Item KEY_ITEM = new Item(props());
    @RegistryName("versiform")

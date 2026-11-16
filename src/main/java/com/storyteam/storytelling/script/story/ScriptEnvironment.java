@@ -63,6 +63,7 @@ public class ScriptEnvironment {
    public final Int2ObjectArrayMap<ScriptInstance> scriptInstances = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<Constructor<? extends ScriptInstance>> constructors = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<LuaStory> luaStories = new Int2ObjectArrayMap();
+   public final QuestJournal questJournal = new QuestJournal();
    private final List<Message> chatHistory = new ArrayList<>();
    private final ScriptFlagStorage worldVariables = new ScriptFlagStorage();
    private final Map<UUID, ScriptFlagStorage> playerVariables = new HashMap<>();
@@ -364,6 +365,33 @@ public class ScriptEnvironment {
       }
    }
 
+   /** Replace one definition only after parsing and validating the complete file. */
+   public int reloadLuaStory(String fileName) throws IOException, NoSuchMethodException {
+      if (fileName == null || !fileName.matches("[1-9][0-9]{0,8}\\.lua")) {
+         throw new IllegalArgumentException("Укажите имя вида 900030.lua без папок");
+      }
+      Path directory = LuaStory.storyDirectory().toAbsolutePath().normalize();
+      Path file = directory.resolve(fileName).normalize();
+      if (!file.getParent().equals(directory) || !Files.isRegularFile(file)
+         || !file.toRealPath().getParent().equals(directory.toRealPath())) {
+         throw new IllegalArgumentException("Lua-файл не найден внутри ST/scripts: " + fileName);
+      }
+      int id = Integer.parseInt(fileName.substring(0, fileName.length() - 4));
+      LuaStory story = LuaStory.load(file);
+      if (story.id() != id) {
+         throw new IllegalArgumentException("ID story(" + story.id() + ") не совпадает с именем " + fileName);
+      }
+      if (constructors.containsKey(id) && !luaStories.containsKey(id)) {
+         throw new IllegalArgumentException("ID " + id + " уже занят встроенным Java-сценарием");
+      }
+      if (this.server != null) story.refreshNpcEntities(this.server.getEntityRepository());
+      var constructor = LuaScriptInstance.class.getConstructor(ScriptEnvironment.class, int.class);
+      luaStories.put(id, story);
+      constructors.put(id, constructor);
+      Storytelling.LOG.info("Reloaded Lua story {} from {}", id, file);
+      return id;
+   }
+
    public void unloadScripts() {
       Storytelling.LOG.info("Unloading scripts...");
       ObjectIterator var1 = this.scriptInstances.values().iterator();
@@ -441,6 +469,7 @@ public class ScriptEnvironment {
       CompoundTag players = new CompoundTag();
       playerVariables.forEach((uuid, values) -> players.put(uuid.toString(), values.serializeNBT()));
       variables.put("players", players);
+      variables.put("quests", questJournal.save());
       ScriptIO.save(variables, variablesFile);
       IntIterator var3 = this.scriptInstances.keySet().iterator();
 
@@ -456,11 +485,22 @@ public class ScriptEnvironment {
          }
       }
 
-      all.forEach(ScriptEnvironment::deleteCompletely);
+      // Remove completed saves only for scripts still known to this build. Removed legacy
+      // chapters may have old world data; keep it on disk so an author can recover it.
+      for (File candidate : all) {
+         try {
+            int id = Integer.parseInt(candidate.getName());
+            if (constructors.containsKey(id)) deleteCompletely(candidate);
+         } catch (NumberFormatException ignored) { }
+      }
    }
 
    public void load(File dir) {
       this.loadDir = dir;
+   }
+
+   public boolean hasPendingLoad() {
+      return this.loadDir != null;
    }
 
    private static void deleteCompletely(File dir) {
@@ -510,9 +550,11 @@ public class ScriptEnvironment {
       if (this.loadDir != null) {
          worldVariables.getFlags().clear();
          playerVariables.clear();
+         questJournal.load(new CompoundTag());
          CompoundTag variables = ScriptIO.read(new File(this.loadDir, "lua-variables.dat"));
          if (variables != null) {
             worldVariables.deserializeNBT(variables.getCompound("world"));
+            questJournal.load(variables.getCompound("quests"));
             CompoundTag players = variables.getCompound("players");
             for (String key : players.getAllKeys()) {
                try {
@@ -548,6 +590,7 @@ public class ScriptEnvironment {
                   ScriptInstance i = this.createInstance(id);
                   i.onInstanceCreated();
                   i.deserializeNBT(read);
+                  if (i instanceof LuaScriptInstance lua) lua.restoreNpcEntities();
                   this.scriptInstances.put(id, i);
                }
             }

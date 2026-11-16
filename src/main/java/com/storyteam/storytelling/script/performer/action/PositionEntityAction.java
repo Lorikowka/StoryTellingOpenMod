@@ -26,6 +26,10 @@ public class PositionEntityAction<T extends Entity> extends EntityPerformerActio
       this.hasFastForward = hasFastForward;
    }
 
+   public Location getTargetPosition() {
+      return this.position.get();
+   }
+
    protected void doRePosition(EntityState<T> entity, Location pos) {
       entity.setPosition(pos, true);
       entity.markForReposition();
