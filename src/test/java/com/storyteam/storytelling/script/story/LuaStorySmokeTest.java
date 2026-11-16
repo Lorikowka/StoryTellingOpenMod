@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 public final class LuaStorySmokeTest {
    public static void main(String[] args) throws Exception {
       checkSafeModules();
+      checkStoryPacks();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -347,6 +348,42 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+   }
+
+   private static void checkStoryPacks() throws Exception {
+      Path root = Files.createTempDirectory("story-pack-test-");
+      Path pack = Files.createDirectories(root.resolve("packs/demo"));
+      Files.writeString(root.resolve("900001.lua"), "story(900001)\npart(\"main\")\nwait_f8()\n");
+      Files.writeString(pack.resolve("storypack.json"), """
+         {"id":"demo","version":"1.0.0","api":1,"stories":["900052.lua"]}
+         """);
+      Files.writeString(pack.resolve("lines.lua"), "return { text = 'ready' }");
+      Files.writeString(pack.resolve("900052.lua"), "local lines = require('lines')\nif lines.text ~= 'ready' then error('module root') end\nstory(900052)\npart(\"main\")\nwait_f8()\n");
+      try {
+         StoryPackCatalog.Scan scan = StoryPackCatalog.scan(root);
+         if (scan.files().size() != 2 || !scan.issues().isEmpty()
+            || !LuaStoryValidator.validate(root, java.util.Set.of()).valid()) {
+            throw new AssertionError("Legacy and packaged stories were not discovered together");
+         }
+         if (LuaStory.load(StoryPackCatalog.resolveStoryFile(root, "packs/demo/900052.lua")).id() != 900052) {
+            throw new AssertionError("Packaged story cannot be reloaded by path");
+         }
+         Files.writeString(pack.resolve("900053.lua"), "story(900053)\npart(\"main\")\nwait_f8()\n");
+         try {
+            StoryPackCatalog.resolveStoryFile(root, "packs/demo/900053.lua");
+            throw new AssertionError("Unlisted pack story was reloadable");
+         } catch (IllegalArgumentException expected) { }
+         Files.writeString(pack.resolve("storypack.json"), """
+            {"id":"demo","version":"1.0.0","api":2,"stories":["900052.lua"]}
+            """);
+         if (LuaStoryValidator.validate(root, java.util.Set.of()).valid()) {
+            throw new AssertionError("Unsupported pack API was accepted");
+         }
+      } finally {
+         try (var paths = Files.walk(root)) {
+            for (Path path : paths.sorted(java.util.Comparator.reverseOrder()).toList()) path.toFile().deleteOnExit();
+         }
+      }
    }
 
    private static void checkSafeModules() throws Exception {

@@ -702,7 +702,7 @@ public class ScriptCommand {
          sendSuccess(ctx, Component.literal("Сценарии перезагружены: " + env.constructors.size()
             + " (Lua: " + env.luaStories.size() + "). Уже запущенные сценарии продолжат прежнюю версию."), true);
          return env.luaStories.size();
-      }).then(Commands.argument("file", StringArgumentType.word()).executes(ctx -> {
+      }).then(Commands.argument("file", StringArgumentType.greedyString()).executes(ctx -> {
          String file = StringArgumentType.getString(ctx, "file");
          try {
             int id = env.reloadLuaStory(file);
@@ -772,3 +772,4 @@ public class ScriptCommand {
          }))));
    }
 }
+

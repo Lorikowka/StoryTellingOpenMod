@@ -63,6 +63,7 @@ public class ScriptEnvironment {
    public final Int2ObjectArrayMap<ScriptInstance> scriptInstances = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<Constructor<? extends ScriptInstance>> constructors = new Int2ObjectArrayMap();
    public final Int2ObjectArrayMap<LuaStory> luaStories = new Int2ObjectArrayMap();
+   private final Map<Integer, Path> luaStoryFiles = new HashMap<>();
    public final QuestJournal questJournal = new QuestJournal();
    private final List<Message> chatHistory = new ArrayList<>();
    private final ScriptFlagStorage worldVariables = new ScriptFlagStorage();
@@ -299,6 +300,7 @@ public class ScriptEnvironment {
          Storytelling.LOG.info("Loading scripts...");
          this.constructors.clear();
          this.luaStories.clear();
+         this.luaStoryFiles.clear();
          Int2ObjectMap<Class<? extends ScriptInstance>> mapped = new Int2ObjectOpenHashMap();
 
          for (Class<? extends ScriptInstance> type : ScanDataHelper.lookupAnnotatedTypes(Script.class, ScriptInstance.class)) {
@@ -338,22 +340,25 @@ public class ScriptEnvironment {
          Storytelling.LOG.error("Cannot initialize Lua story directory {}", storyDirectory, e);
       }
       if (Files.isDirectory(storyDirectory)) {
-         try (Stream<Path> files = Files.list(storyDirectory)) {
-            for (Path file : files.filter(p -> p.getFileName().toString().matches("[0-9]+\\.lua")).sorted().toList()) {
+         try {
+            StoryPackCatalog.Scan catalog = StoryPackCatalog.scan(storyDirectory);
+            catalog.issues().forEach(issue -> Storytelling.LOG.error("Cannot load story pack {}: {}", issue.file(), issue.message()));
+            for (Path file : catalog.files()) {
                try {
-                  LuaStory story = LuaStory.load(LuaStoryPaths.checkedStoryFile(storyDirectory, file));
+                  LuaStory story = LuaStory.load(LuaStoryPaths.checkedStoryFile(file.getParent(), file));
                   String expectedName = story.id() + ".lua";
                   if (!file.getFileName().toString().equals(expectedName)) {
                      throw new IllegalArgumentException("Lua story filename must be " + expectedName);
                   }
                   if (this.constructors.containsKey(story.id())) {
-                     Storytelling.LOG.warn("Lua story {} conflicts with an existing Java script ID; keeping Java script", file);
+                     Storytelling.LOG.warn("Lua story {} conflicts with an already registered script ID {}; keeping the first script", file, story.id());
                      continue;
                   }
                   if (this.server != null) {
                      story.refreshNpcEntities(this.server.getEntityRepository());
                   }
                   this.luaStories.put(story.id(), story);
+                  this.luaStoryFiles.put(story.id(), file.toRealPath());
                   this.constructors.put(story.id(), LuaScriptInstance.class.getConstructor(ScriptEnvironment.class, int.class));
                } catch (Exception e) {
                   Storytelling.LOG.error("Cannot register Lua story {}", file, e);
@@ -367,12 +372,11 @@ public class ScriptEnvironment {
 
    /** Replace one definition only after parsing and validating the complete file. */
    public int reloadLuaStory(String fileName) throws IOException, NoSuchMethodException {
-      if (fileName == null || !fileName.matches("[1-9][0-9]{0,8}\\.lua")) {
-         throw new IllegalArgumentException("Укажите имя вида 900030.lua без папок");
-      }
+      if (fileName == null) throw new IllegalArgumentException("Укажите имя сценария");
       Path directory = LuaStory.storyDirectory().toAbsolutePath().normalize();
-      Path file = LuaStoryPaths.checkedStoryFile(directory, directory.resolve(fileName));
-      int id = Integer.parseInt(fileName.substring(0, fileName.length() - 4));
+      Path file = StoryPackCatalog.resolveStoryFile(directory, fileName);
+      String simpleName = file.getFileName().toString();
+      int id = Integer.parseInt(simpleName.substring(0, simpleName.length() - 4));
       LuaStory story = LuaStory.load(file);
       if (story.id() != id) {
          throw new IllegalArgumentException("ID story(" + story.id() + ") не совпадает с именем " + fileName);
@@ -380,9 +384,14 @@ public class ScriptEnvironment {
       if (constructors.containsKey(id) && !luaStories.containsKey(id)) {
          throw new IllegalArgumentException("ID " + id + " уже занят встроенным Java-сценарием");
       }
+      Path registeredFile = luaStoryFiles.get(id);
+      if (registeredFile != null && !registeredFile.equals(file)) {
+         throw new IllegalArgumentException("ID " + id + " уже зарегистрирован из " + registeredFile);
+      }
       if (this.server != null) story.refreshNpcEntities(this.server.getEntityRepository());
       var constructor = LuaScriptInstance.class.getConstructor(ScriptEnvironment.class, int.class);
       luaStories.put(id, story);
+      luaStoryFiles.put(id, file);
       constructors.put(id, constructor);
       Storytelling.LOG.info("Reloaded Lua story {} from {}", id, file);
       return id;
