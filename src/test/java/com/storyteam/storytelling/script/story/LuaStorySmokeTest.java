@@ -16,6 +16,7 @@ public final class LuaStorySmokeTest {
       checkSpeechSpeakers();
       checkNpcInstances();
       checkNpcPersistentState();
+      checkSceneScope();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -313,6 +314,8 @@ public final class LuaStorySmokeTest {
          if (firstRun.getMainPerformer() == null) {
             throw new AssertionError("New Lua story has no main performer");
          }
+         firstRun.sceneVariables.set("phase", "opening");
+         firstRun.getFlags().set("chapter", "one");
          CompoundTag savedRun = firstRun.serializeNBT();
          if (!firstRun.runToken.equals(LuaScriptInstance.readRunToken(savedRun, "missing"))) {
             throw new AssertionError("Lua run token did not survive script serialization");
@@ -322,6 +325,17 @@ public final class LuaStorySmokeTest {
          LuaScriptInstance nextRun = (LuaScriptInstance) environment.createInstance(900001);
          if (firstRun.runToken.equals(nextRun.runToken)) {
             throw new AssertionError("Fresh Lua run reused an old item receipt token");
+         }
+         if (!savedRun.contains("sceneVariables", 10)) {
+            throw new AssertionError("Scene variables were not serialized with the Lua run");
+         }
+         nextRun.sceneVariables.deserializeNBT(savedRun.getCompound("sceneVariables"));
+         if (!"opening".equals(nextRun.sceneVariables.get("phase"))) {
+            throw new AssertionError("Scene variables did not survive NBT round trip");
+         }
+         nextRun.sceneVariables.getFlags().clear();
+         if (nextRun.sceneVariables.has("phase") || !"one".equals(firstRun.getFlags().get("chapter"))) {
+            throw new AssertionError("Scene reset affected script flags or retained scene variables");
          }
          LuaStoryValidator.Report clean = LuaStoryValidator.validate(storyDirectory, java.util.Set.of());
          if (clean.checked() != 2 || !clean.valid()) {
@@ -351,6 +365,20 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+   }
+
+   private static void checkSceneScope() {
+      LuaStory.parse("""
+         story(900055)
+         part('main')
+         var_set('phase', 'opening', 'scene')
+         scene_reset()
+         var_if('phase', 'opening', 'old', 'new', 'scene')
+         anchor('old')
+         wait_f8()
+         anchor('new')
+         wait_f8()
+         """, "scene-state.lua");
    }
 
    private static void checkNpcPersistentState() {
@@ -565,4 +593,3 @@ public final class LuaStorySmokeTest {
       }
    }
 }
-

@@ -3,6 +3,7 @@ package com.storyteam.storytelling.script.story;
 import com.storyteam.storytelling.api.SaveOnClose;
 import com.storyteam.storytelling.Storytelling;
 import com.storyteam.storytelling.script.ScriptInstance;
+import com.storyteam.storytelling.script.data.ScriptFlagStorage;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.action.PositionEntityAction;
 import com.storyteam.storytelling.script.performer.action.RemoveEntityAction;
@@ -21,6 +22,8 @@ public final class LuaScriptInstance extends ScriptInstance {
    public String runToken = UUID.randomUUID().toString();
    @NBTSerializable
    public final ScriptPerformer mainFlow;
+   @NBTSerializable
+   public final ScriptFlagStorage sceneVariables = new ScriptFlagStorage();
 
    public LuaScriptInstance(ScriptEnvironment env, int id) {
       super(env, id);

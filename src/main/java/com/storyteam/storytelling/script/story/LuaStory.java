@@ -412,6 +412,7 @@ public final class LuaStory {
                      String scope = step.arguments[1];
                      if (scope.equals("player") && ScriptUtils.getPlayer() == null) return;
                      if (scope.equals("script")) script.getFlags().set("lua.var." + step.text, step.arguments[0]);
+                     else if (scope.equals("scene")) ((LuaScriptInstance) script).sceneVariables.set(step.text, step.arguments[0]);
                      else script.env.setVariable(scope, step.text, step.arguments[0], ScriptUtils.getPlayer());
                      applied = true;
                   }
@@ -425,6 +426,7 @@ public final class LuaStory {
                   String scope = step.arguments[3];
                   if (scope.equals("player") && ScriptUtils.getPlayer() == null) return;
                   String current = scope.equals("script") ? script.getFlags().get("lua.var." + step.text)
+                     : scope.equals("scene") ? ((LuaScriptInstance) script).sceneVariables.get(step.text)
                      : script.env.getVariable(scope, step.text, ScriptUtils.getPlayer());
                   String destination = step.arguments[0].equals(current) ? step.arguments[1] : step.arguments[2];
                   performer.gotoSavepoint(destination, true);
@@ -435,6 +437,17 @@ public final class LuaStory {
             case GOTO_ANCHOR -> builder.append(performer -> new ScriptPerformerAction(performer) {
                @Override public void tick() { performer.gotoSavepoint(step.text, true); }
                @Override public boolean isDone() { return false; }
+            });
+            case SCENE_RESET -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean applied;
+               @Override public void tick() {
+                  if (!applied) {
+                     ((LuaScriptInstance) script).sceneVariables.getFlags().clear();
+                     applied = true;
+                  }
+               }
+               @Override public boolean isDone() { return applied; }
+               @Override public void reset() { applied = false; }
             });
             case CHOICE, CHOICE_IF -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean displayed;
@@ -630,6 +643,9 @@ public final class LuaStory {
       });
       globals.set("part", new OneArgFunction() {
          @Override public LuaValue call(LuaValue name) { builder.part(name.checkjstring()); return NIL; }
+      });
+      globals.set("scene_reset", new ZeroArgFunction() {
+         @Override public LuaValue call() { builder.add(new Step(Type.SCENE_RESET, 0, "")); return NIL; }
       });
       globals.set("anchor", new OneArgFunction() {
          @Override public LuaValue call(LuaValue name) { builder.anchor(nonempty(name)); return NIL; }
@@ -1201,7 +1217,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1315,7 +1331,7 @@ public final class LuaStory {
       }
 
       private String variableScope(String scope) {
-         if (Set.of("script", "world", "player").contains(scope)) return scope;
+         if (Set.of("script", "scene", "world", "player").contains(scope)) return scope;
          if (scope.startsWith("npc:")) {
             String key = scope.substring(4);
             if (npcs.containsKey(key)) return "npc:lua_" + id + "_" + key;
@@ -1484,4 +1500,3 @@ public final class LuaStory {
       }
    }
 }
-
