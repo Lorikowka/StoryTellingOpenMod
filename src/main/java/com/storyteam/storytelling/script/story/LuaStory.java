@@ -277,6 +277,10 @@ public final class LuaStory {
                characters.get(step.text).repositoryEntity(),
                new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
                step.position.dimension, Boolean.parseBoolean(step.arguments[0])));
+            case NPC_SET_DOOR -> builder.thenRun(() -> NpcWorldInteraction.setDoor(
+               characters.get(step.text).repositoryEntity(),
+               new BlockPos((int) step.position.x, (int) step.position.y, (int) step.position.z),
+               step.position.dimension, Boolean.parseBoolean(step.arguments[0])));
             case NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean applied;
                private int waiting;
@@ -796,6 +800,7 @@ public final class LuaStory {
             bindNpcMethod(globals, object, key, "use_block", "npc_approach_use_block");
             bindNpcMethod(globals, object, key, "try_use_block", "npc_try_use_block");
             bindNpcMethod(globals, object, key, "set_lever", "npc_set_lever");
+            bindNpcMethod(globals, object, key, "set_door", "npc_set_door");
             bindNpcMethod(globals, object, key, "wait_interact", "npc_wait_interact");
             bindNpcMethod(globals, object, key, "remove", "npc_remove");
             bindNpcMethod(globals, object, key, "camera", "camera_fly_npc");
@@ -966,6 +971,22 @@ public final class LuaStory {
             if (ResourceLocation.tryParse(dimension) == null)
                throw new IllegalArgumentException("Invalid npc_set_lever dimension: " + dimension);
             builder.npcLever(key, new PositionSpec(dimension, x, y, z, 0, false), powered);
+            return NIL;
+         }
+      });
+      globals.set("npc_set_door", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() != 5 && args.narg() != 6)
+               throw new IllegalArgumentException("npc_set_door(key, x, y, z, open, [dimension]) expected");
+            String key = nonempty(args.arg(1));
+            int x = blockCoordinate(args.arg(2));
+            int y = blockCoordinate(args.arg(3));
+            int z = blockCoordinate(args.arg(4));
+            boolean open = args.arg(5).checkboolean();
+            String dimension = args.narg() == 6 ? nonempty(args.arg(6)) : "minecraft:overworld";
+            if (ResourceLocation.tryParse(dimension) == null)
+               throw new IllegalArgumentException("Invalid npc_set_door dimension: " + dimension);
+            builder.npcDoor(key, new PositionSpec(dimension, x, y, z, 0, false), open);
             return NIL;
          }
       });
@@ -1234,7 +1255,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_SET_DOOR, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1457,6 +1478,12 @@ public final class LuaStory {
          if (!npcs.containsKey(key)) throw new IllegalArgumentException("Unknown NPC for npc_set_lever: " + key);
          add(new Step(Type.NPC_SET_LEVER, 0, key, null,
             new String[] {Boolean.toString(powered)}, position));
+      }
+
+      private void npcDoor(String key, PositionSpec position, boolean open) {
+         if (!npcs.containsKey(key)) throw new IllegalArgumentException("Unknown NPC for npc_set_door: " + key);
+         add(new Step(Type.NPC_SET_DOOR, 0, key, null,
+            new String[] {Boolean.toString(open)}, position));
       }
 
       private void npcBlockResult(String key, PositionSpec position, String result) {

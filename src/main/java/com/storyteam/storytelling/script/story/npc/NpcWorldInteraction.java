@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -39,6 +40,21 @@ public final class NpcWorldInteraction {
       useBlock(npc, block, dimension);
       if (level.getBlockState(block).getValue(BlockStateProperties.POWERED) != powered)
          throw new IllegalStateException("Lever did not reach requested state at " + block.toShortString());
+   }
+
+   /** Opens or closes a hand-operated door without reversing it when the step is retried. */
+   public static void setDoor(Entity npc, BlockPos block, String dimension, boolean open) {
+      if (npc == null || !(npc.level() instanceof ServerLevel level))
+         throw new IllegalStateException("NPC must be spawned on the server before npc_set_door");
+      if (!level.dimension().location().toString().equals(dimension) || !level.hasChunkAt(block))
+         throw new IllegalStateException("Door is not loaded in NPC dimension: " + block.toShortString());
+      var state = level.getBlockState(block);
+      if (!(state.getBlock() instanceof DoorBlock))
+         throw new IllegalStateException("npc_set_door requires a door at " + block.toShortString());
+      if (state.getValue(BlockStateProperties.OPEN) == open) return;
+      useBlock(npc, block, dimension);
+      if (level.getBlockState(block).getValue(BlockStateProperties.OPEN) != open)
+         throw new IllegalStateException("Door did not reach requested state at " + block.toShortString());
    }
 
    public static void useBlock(Entity npc, BlockPos block, String dimension) {

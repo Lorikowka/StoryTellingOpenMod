@@ -16,6 +16,7 @@ public final class LuaStorySmokeTest {
       checkSpeechSpeakers();
       checkNpcInstances();
       checkNpcPersistentState();
+      checkDoorAction();
       checkSceneScope();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
@@ -439,6 +440,22 @@ public final class LuaStorySmokeTest {
          throw new AssertionError("Unknown NPC state scope was accepted");
       } catch (IllegalArgumentException expected) {
          if (!expected.getMessage().contains("Unknown variable scope or NPC")) throw expected;
+      }
+   }
+
+   private static void checkDoorAction() {
+      LuaStory.parse("""
+         story(900057)
+         local guide = npc{key='door_guide',type='minecraft:villager',name='Guide'}
+         part('main')
+         guide:set_door(1, 64, 9, true)
+         npc_set_door('door_guide', 1, 64, 9, false, 'minecraft:overworld')
+         """, "npc-set-door.lua");
+      try {
+         LuaStory.parse("story(900057)\npart('main')\nnpc_set_door('missing', 1, 64, 9, true)", "missing-door-npc.lua");
+         throw new AssertionError("Door action accepted an unknown NPC");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Unknown NPC for npc_set_door")) throw expected;
       }
    }
 
