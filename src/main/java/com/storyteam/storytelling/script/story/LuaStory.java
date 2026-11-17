@@ -783,6 +783,22 @@ public final class LuaStory {
             return object;
          }
       });
+      globals.set("npc_instance", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if ((args.narg() != 2 && args.narg() != 3) || !args.arg(1).istable()) {
+               throw new IllegalArgumentException("npc_instance(template, key, [name]) expected");
+            }
+            LuaTable template = args.arg(1).checktable();
+            LuaTable spec = new LuaTable();
+            for (String field : new String[] {"model", "type", "name", "width", "height"}) {
+               LuaValue value = template.get(field);
+               if (!value.isnil()) spec.set(field, value);
+            }
+            spec.set("key", LuaValue.valueOf(nonempty(args.arg(2))));
+            if (args.narg() == 3) spec.set("name", LuaValue.valueOf(nonempty(args.arg(3))));
+            return globals.get("npc").call(spec);
+         }
+      });
       globals.set("npc_model", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue key, LuaValue model, LuaValue name) {
             builder.npcModel(nonempty(key), nonempty(model), nonempty(name));

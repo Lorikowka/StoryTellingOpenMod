@@ -14,6 +14,7 @@ public final class LuaStorySmokeTest {
       checkSafeModules();
       checkStoryPacks();
       checkSpeechSpeakers();
+      checkNpcInstances();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -349,6 +350,31 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+   }
+
+   private static void checkNpcInstances() {
+      String source = """
+         story(900053)
+         local template = { key = 'original', type = 'minecraft:villager', name = 'Guide' }
+         local first = npc_instance(template, 'guide_a')
+         local second = npc_instance(template, 'guide_b', 'Second guide')
+         if template.key ~= 'original' or first.key ~= 'guide_a' or second.key ~= 'guide_b' then
+            error('NPC template was mutated or instance keys collided')
+         end
+         part('main')
+         first:spawn(0, 64, 0)
+         second:spawn(2, 64, 0)
+         wait_f8()
+         """;
+      if (LuaStory.parse(source, "npc-instances.lua").id() != 900053) {
+         throw new AssertionError("NPC instances did not load");
+      }
+      try {
+         LuaStory.parse(source.replace("'guide_b'", "'guide_a'"), "duplicate-instance.lua");
+         throw new AssertionError("Duplicate NPC instance key was accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("duplicate NPC")) throw expected;
+      }
    }
 
    private static void checkSpeechSpeakers() {
