@@ -97,6 +97,23 @@ public class ScriptEnvironment {
       return null;
    }
 
+   /** Move saved NPC variables when a Lua author renames an instance key. Existing target values win. */
+   public boolean migrateNpcVariables(int storyId, String oldKey, String newKey) {
+      if (storyId <= 0 || oldKey == null || newKey == null
+         || !oldKey.matches("[a-z][a-z0-9_]*") || !newKey.matches("[a-z][a-z0-9_]*")
+         || oldKey.equals(newKey)) {
+         throw new IllegalArgumentException("Invalid NPC state migration keys");
+      }
+      String oldId = "lua_" + storyId + "_" + oldKey;
+      String newId = "lua_" + storyId + "_" + newKey;
+      ScriptFlagStorage oldValues = npcVariables.get(oldId);
+      if (oldValues == null) return false;
+      ScriptFlagStorage newValues = npcVariables.computeIfAbsent(newId, ignored -> new ScriptFlagStorage());
+      oldValues.getFlags().forEach((name, value) -> newValues.getFlags().putIfAbsent(name, value));
+      npcVariables.remove(oldId);
+      return true;
+   }
+
    CompoundTag saveNpcVariables() {
       CompoundTag saved = new CompoundTag();
       npcVariables.forEach((id, values) -> saved.put(id, values.serializeNBT()));
@@ -623,4 +640,3 @@ public class ScriptEnvironment {
       }
    }
 }
-

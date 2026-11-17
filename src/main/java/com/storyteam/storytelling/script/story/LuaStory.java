@@ -449,6 +449,17 @@ public final class LuaStory {
                @Override public boolean isDone() { return applied; }
                @Override public void reset() { applied = false; }
             });
+            case NPC_STATE_MIGRATE -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean applied;
+               @Override public void tick() {
+                  if (!applied) {
+                     script.env.migrateNpcVariables(id, step.text, step.arguments[0]);
+                     applied = true;
+                  }
+               }
+               @Override public boolean isDone() { return applied; }
+               @Override public void reset() { applied = false; }
+            });
             case CHOICE, CHOICE_IF -> builder.append(performer -> new ScriptPerformerAction(performer) {
                private boolean displayed;
                private boolean chosen;
@@ -834,6 +845,12 @@ public final class LuaStory {
             return globals.get("npc").call(spec);
          }
       });
+      globals.set("npc_state_migrate", new TwoArgFunction() {
+         @Override public LuaValue call(LuaValue oldKey, LuaValue newKey) {
+            builder.npcStateMigrate(nonempty(oldKey), nonempty(newKey));
+            return NIL;
+         }
+      });
       globals.set("npc_model", new ThreeArgFunction() {
          @Override public LuaValue call(LuaValue key, LuaValue model, LuaValue name) {
             builder.npcModel(nonempty(key), nonempty(model), nonempty(name));
@@ -1217,7 +1234,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1337,6 +1354,13 @@ public final class LuaStory {
             if (npcs.containsKey(key)) return "npc:lua_" + id + "_" + key;
          }
          throw new IllegalArgumentException("Unknown variable scope or NPC: " + scope);
+      }
+
+      private void npcStateMigrate(String oldKey, String newKey) {
+         if (!oldKey.matches("[a-z][a-z0-9_]*") || !npcs.containsKey(newKey) || oldKey.equals(newKey)) {
+            throw new IllegalArgumentException("npc_state_migrate requires an old key and a declared, different new NPC key");
+         }
+         add(new Step(Type.NPC_STATE_MIGRATE, 0, oldKey, null, new String[] {newKey}));
       }
 
       private void gotoAnchor(String name) {

@@ -52,6 +52,9 @@ public final class LuaStorySmokeTest {
       LuaStory sceneExample = LuaStory.parse(Files.readString(Path.of(args[9]), StandardCharsets.UTF_8), "900055.lua");
       if (sceneExample.id() != 900055 || !sceneExample.hasPart("main"))
          throw new AssertionError("Scene-state example did not load");
+      LuaStory migrationExample = LuaStory.parse(Files.readString(Path.of(args[10]), StandardCharsets.UTF_8), "900056.lua");
+      if (migrationExample.id() != 900056 || !migrationExample.hasPart("main"))
+         throw new AssertionError("NPC state migration example did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -367,7 +370,7 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050 and 900055");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055 and 900056");
    }
 
    private static void checkSceneScope() {
@@ -394,6 +397,32 @@ public final class LuaStorySmokeTest {
          || !"2".equals(restored.getVariable("npc:lua_900053_guide_b", "trust", null))) {
          throw new AssertionError("NPC variables were lost or shared across instances after NBT reload");
       }
+      ScriptEnvironment migration = new ScriptEnvironment(null);
+      migration.setVariable("npc:lua_900056_old_guide", "trust", "5", null);
+      migration.setVariable("npc:lua_900056_old_guide", "met", "yes", null);
+      migration.setVariable("npc:lua_900056_new_guide", "trust", "9", null);
+      if (!migration.migrateNpcVariables(900056, "old_guide", "new_guide")
+         || migration.migrateNpcVariables(900056, "old_guide", "new_guide")) {
+         throw new AssertionError("NPC state migration was not idempotent");
+      }
+      ScriptEnvironment migratedReload = new ScriptEnvironment(null);
+      migratedReload.loadNpcVariables(migration.saveNpcVariables());
+      if (migratedReload.getVariable("npc:lua_900056_old_guide", "met", null) != null
+         || !"yes".equals(migratedReload.getVariable("npc:lua_900056_new_guide", "met", null))
+         || !"9".equals(migratedReload.getVariable("npc:lua_900056_new_guide", "trust", null))) {
+         throw new AssertionError("NPC state migration lost values or overwrote newer data");
+      }
+      LuaStory.parse("""
+         story(900056)
+         npc{key='new_guide',type='minecraft:villager',name='Guide'}
+         part('main')
+         npc_state_migrate('old_guide', 'new_guide')
+         var_if('met', 'yes', 'known', 'new', 'npc:new_guide')
+         anchor('known')
+         wait_f8()
+         anchor('new')
+         wait_f8()
+         """, "npc-state-migration.lua");
       LuaStory.parse("""
          story(900053)
          local guide = npc{key='guide_a',type='minecraft:villager',name='Guide'}
