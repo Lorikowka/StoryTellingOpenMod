@@ -56,6 +56,9 @@ public final class LuaStorySmokeTest {
       LuaStory migrationExample = LuaStory.parse(Files.readString(Path.of(args[10]), StandardCharsets.UTF_8), "900056.lua");
       if (migrationExample.id() != 900056 || !migrationExample.hasPart("main"))
          throw new AssertionError("NPC state migration example did not load");
+      LuaStory doorExample = LuaStory.parse(Files.readString(Path.of(args[11]), StandardCharsets.UTF_8), "900057.lua");
+      if (doorExample.id() != 900057 || !doorExample.hasPart("main"))
+         throw new AssertionError("NPC door example did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -371,7 +374,7 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055 and 900056");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055, 900056 and 900057");
    }
 
    private static void checkSceneScope() {
