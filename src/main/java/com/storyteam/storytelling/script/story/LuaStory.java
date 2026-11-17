@@ -780,6 +780,25 @@ public final class LuaStory {
                   return globals.get("speaker_npc").call(call.arg(2), LuaValue.valueOf(key));
                }
             });
+            object.set("state_set", new VarArgFunction() {
+               @Override public Varargs invoke(Varargs call) {
+                  if (call.narg() != 3 || call.arg(1) != object) {
+                     throw new IllegalArgumentException("npc:state_set(name, value) expected");
+                  }
+                  builder.variableSet(nonempty(call.arg(2)), call.arg(3), "npc:" + key);
+                  return NIL;
+               }
+            });
+            object.set("state_if", new VarArgFunction() {
+               @Override public Varargs invoke(Varargs call) {
+                  if (call.narg() != 5 || call.arg(1) != object) {
+                     throw new IllegalArgumentException("npc:state_if(name, value, yes_anchor, no_anchor) expected");
+                  }
+                  builder.variableIf(nonempty(call.arg(2)), call.arg(3), nonempty(call.arg(4)),
+                     nonempty(call.arg(5)), "npc:" + key);
+                  return NIL;
+               }
+            });
             return object;
          }
       });
@@ -1280,19 +1299,28 @@ public final class LuaStory {
       }
 
       private void variableSet(String name, LuaValue value, String scope) {
-         if (!name.matches("[a-z][a-z0-9_]*") || !Set.of("script", "world", "player").contains(scope)
+         if (!name.matches("[a-z][a-z0-9_]*")
             || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
             throw new IllegalArgumentException("var_set requires a simple name and string, number or boolean value");
          }
-         add(new Step(Type.VAR_SET, 0, name, null, new String[] {value.tojstring(), scope}));
+         add(new Step(Type.VAR_SET, 0, name, null, new String[] {value.tojstring(), variableScope(scope)}));
       }
 
       private void variableIf(String name, LuaValue value, String yes, String no, String scope) {
-         if (!name.matches("[a-z][a-z0-9_]*") || !Set.of("script", "world", "player").contains(scope)
+         if (!name.matches("[a-z][a-z0-9_]*")
             || value.isnil() || (!value.isstring() && !value.isnumber() && !value.isboolean())) {
             throw new IllegalArgumentException("var_if requires a simple name and string, number or boolean value");
          }
-         add(new Step(Type.VAR_IF, 0, name, null, new String[] {value.tojstring(), yes, no, scope}));
+         add(new Step(Type.VAR_IF, 0, name, null, new String[] {value.tojstring(), yes, no, variableScope(scope)}));
+      }
+
+      private String variableScope(String scope) {
+         if (Set.of("script", "world", "player").contains(scope)) return scope;
+         if (scope.startsWith("npc:")) {
+            String key = scope.substring(4);
+            if (npcs.containsKey(key)) return "npc:lua_" + id + "_" + key;
+         }
+         throw new IllegalArgumentException("Unknown variable scope or NPC: " + scope);
       }
 
       private void gotoAnchor(String name) {

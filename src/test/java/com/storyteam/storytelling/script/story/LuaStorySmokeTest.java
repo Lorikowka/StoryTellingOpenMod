@@ -15,6 +15,7 @@ public final class LuaStorySmokeTest {
       checkStoryPacks();
       checkSpeechSpeakers();
       checkNpcInstances();
+      checkNpcPersistentState();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -350,6 +351,35 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+   }
+
+   private static void checkNpcPersistentState() {
+      ScriptEnvironment original = new ScriptEnvironment(null);
+      original.setVariable("npc:lua_900053_guide_a", "trust", "5", null);
+      original.setVariable("npc:lua_900053_guide_b", "trust", "2", null);
+      ScriptEnvironment restored = new ScriptEnvironment(null);
+      restored.loadNpcVariables(original.saveNpcVariables());
+      if (!"5".equals(restored.getVariable("npc:lua_900053_guide_a", "trust", null))
+         || !"2".equals(restored.getVariable("npc:lua_900053_guide_b", "trust", null))) {
+         throw new AssertionError("NPC variables were lost or shared across instances after NBT reload");
+      }
+      LuaStory.parse("""
+         story(900053)
+         local guide = npc{key='guide_a',type='minecraft:villager',name='Guide'}
+         part('main')
+         guide:state_set('trust', 5)
+         guide:state_if('trust', 5, 'trusted', 'unknown')
+         anchor('trusted')
+         wait_f8()
+         anchor('unknown')
+         wait_f8()
+         """, "npc-state.lua");
+      try {
+         LuaStory.parse("story(900053)\npart('main')\nvar_set('trust', 5, 'npc:missing')", "missing-npc-state.lua");
+         throw new AssertionError("Unknown NPC state scope was accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Unknown variable scope or NPC")) throw expected;
+      }
    }
 
    private static void checkNpcInstances() {

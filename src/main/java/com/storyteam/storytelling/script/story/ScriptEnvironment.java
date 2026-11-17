@@ -68,6 +68,7 @@ public class ScriptEnvironment {
    private final List<Message> chatHistory = new ArrayList<>();
    private final ScriptFlagStorage worldVariables = new ScriptFlagStorage();
    private final Map<UUID, ScriptFlagStorage> playerVariables = new HashMap<>();
+   private final Map<String, ScriptFlagStorage> npcVariables = new HashMap<>();
    private final Set<Integer> incompatibleLuaSaves = new HashSet<>();
 
    public boolean hasIncompatibleLuaSave(int id) {
@@ -78,6 +79,8 @@ public class ScriptEnvironment {
       if (scope.equals("world")) worldVariables.set(name, value);
       else if (scope.equals("player") && player != null) {
          playerVariables.computeIfAbsent(player.getUUID(), ignored -> new ScriptFlagStorage()).set(name, value);
+      } else if (scope.matches("npc:lua_[1-9][0-9]*_[a-z][a-z0-9_]*")) {
+         npcVariables.computeIfAbsent(scope.substring(4), ignored -> new ScriptFlagStorage()).set(name, value);
       } else throw new IllegalArgumentException("Invalid variable scope or missing player: " + scope);
    }
 
@@ -87,7 +90,27 @@ public class ScriptEnvironment {
          ScriptFlagStorage values = playerVariables.get(player.getUUID());
          return values == null ? null : values.get(name);
       }
+      if (scope.matches("npc:lua_[1-9][0-9]*_[a-z][a-z0-9_]*")) {
+         ScriptFlagStorage values = npcVariables.get(scope.substring(4));
+         return values == null ? null : values.get(name);
+      }
       return null;
+   }
+
+   CompoundTag saveNpcVariables() {
+      CompoundTag saved = new CompoundTag();
+      npcVariables.forEach((id, values) -> saved.put(id, values.serializeNBT()));
+      return saved;
+   }
+
+   void loadNpcVariables(CompoundTag saved) {
+      npcVariables.clear();
+      for (String id : saved.getAllKeys()) {
+         if (!id.matches("lua_[1-9][0-9]*_[a-z][a-z0-9_]*") || !saved.contains(id, Tag.TAG_COMPOUND)) continue;
+         ScriptFlagStorage values = new ScriptFlagStorage();
+         values.deserializeNBT(saved.getCompound(id));
+         npcVariables.put(id, values);
+      }
    }
    public boolean hasInit;
    File loadDir;
@@ -465,6 +488,7 @@ public class ScriptEnvironment {
       CompoundTag players = new CompoundTag();
       playerVariables.forEach((uuid, values) -> players.put(uuid.toString(), values.serializeNBT()));
       variables.put("players", players);
+      variables.put("npcs", saveNpcVariables());
       variables.put("quests", questJournal.save());
       ScriptIO.save(variables, variablesFile);
       IntIterator var3 = this.scriptInstances.keySet().iterator();
@@ -546,10 +570,12 @@ public class ScriptEnvironment {
       if (this.loadDir != null) {
          worldVariables.getFlags().clear();
          playerVariables.clear();
+         npcVariables.clear();
          questJournal.load(new CompoundTag());
          CompoundTag variables = ScriptIO.read(new File(this.loadDir, "lua-variables.dat"));
          if (variables != null) {
             worldVariables.deserializeNBT(variables.getCompound("world"));
+            loadNpcVariables(variables.getCompound("npcs"));
             questJournal.load(variables.getCompound("quests"));
             CompoundTag players = variables.getCompound("players");
             for (String key : players.getAllKeys()) {
