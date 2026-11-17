@@ -15,10 +15,10 @@ var_if("kept", "yes", "success", "broken", "script")
 anchor("success")
 speech(1, "Сцена очищена, значение сценария сохранилось.")
 wait_f8()
-goto_anchor("final")
+goto_anchor("ending")
 
 anchor("broken")
 speech(1, "Проверка состояния не прошла.")
 wait_f8()
 
-anchor("final")
+anchor("ending")

@@ -49,6 +49,9 @@ public final class LuaStorySmokeTest {
       LuaStory chapter = LuaStory.parse(Files.readString(Path.of(args[8]), StandardCharsets.UTF_8), "900050.lua");
       if (chapter.id() != 900050 || !chapter.hasPart("main"))
          throw new AssertionError("Integration chapter did not load");
+      LuaStory sceneExample = LuaStory.parse(Files.readString(Path.of(args[9]), StandardCharsets.UTF_8), "900055.lua");
+      if (sceneExample.id() != 900055 || !sceneExample.hasPart("main"))
+         throw new AssertionError("Scene-state example did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -364,7 +367,7 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050 and 900055");
    }
 
    private static void checkSceneScope() {
