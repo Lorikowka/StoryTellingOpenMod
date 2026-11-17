@@ -1406,6 +1406,15 @@ public final class LuaStory {
          if (id == 0 || !parts.containsKey("main") || parts.get("main").isEmpty()) {
             throw new IllegalArgumentException("Lua story needs story(id) and a nonempty main part: " + label);
          }
+         Set<Integer> declaredSpeakers = new HashSet<>();
+         parts.values().forEach(actions -> actions.stream()
+            .filter(step -> step.type == Type.SPEAKER)
+            .forEach(step -> declaredSpeakers.add(step.speaker)));
+         parts.forEach((partName, actions) -> actions.stream()
+            .filter(step -> step.type == Type.SPEECH && step.speaker != 0 && !declaredSpeakers.contains(step.speaker))
+            .findFirst().ifPresent(step -> {
+               throw new IllegalArgumentException("Speaker " + step.speaker + " is not declared for speech in " + partName);
+            }));
          parts.forEach((partName, actions) -> {
             for (int index = 0; index < actions.size(); index++) {
                Step step = actions.get(index);

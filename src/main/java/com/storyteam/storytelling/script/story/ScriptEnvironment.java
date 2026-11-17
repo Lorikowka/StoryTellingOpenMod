@@ -161,16 +161,7 @@ public class ScriptEnvironment {
                try {
                   value.update();
                } catch (Throwable var10) {
-                  String message = String.format("An error has occurred while updating %s script.", value.getId());
-                  var10.printStackTrace();
-                  RuntimeException exception = new RuntimeException(message, var10);
-                  var10.printStackTrace();
-                  exception.printStackTrace();
-                  LocalPlayer local = Minecraft.getInstance().player;
-                  if (local != null) {
-                     local.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
-                  }
-
+                  reportScriptUpdateError(value, var10);
                   value.stop(false);
                   shouldRemove = true;
                }
@@ -267,16 +258,7 @@ public class ScriptEnvironment {
                   }
                   break;
                } catch (Throwable var11) {
-                  String message = String.format("An error has occurred while updating %s script.", value.getId());
-                  var11.printStackTrace();
-                  RuntimeException exception = new RuntimeException(message, var11);
-                  var11.printStackTrace();
-                  exception.printStackTrace();
-                  LocalPlayer local = Minecraft.getInstance().player;
-                  if (local != null) {
-                     local.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
-                  }
-
+                  reportScriptUpdateError(value, var11);
                   value.stop(false);
                   iterator.remove();
                }
@@ -293,6 +275,15 @@ public class ScriptEnvironment {
             iterator.remove();
          }
       }
+   }
+
+   private static void reportScriptUpdateError(ScriptInstance script, Throwable error) {
+      Storytelling.LOG.error("Error while updating script {}", script.getId(), error);
+      String detail = error.getMessage();
+      String message = "Ошибка сценария " + script.getId() + ": "
+         + (detail == null || detail.isBlank() ? error.getClass().getSimpleName() : detail);
+      LocalPlayer local = Minecraft.getInstance().player;
+      if (local != null) local.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.RED));
    }
 
    public void loadScripts() {

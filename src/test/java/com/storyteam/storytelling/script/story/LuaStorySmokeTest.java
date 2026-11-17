@@ -13,6 +13,7 @@ public final class LuaStorySmokeTest {
    public static void main(String[] args) throws Exception {
       checkSafeModules();
       checkStoryPacks();
+      checkSpeechSpeakers();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -348,6 +349,18 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043 and 900050");
+   }
+
+   private static void checkSpeechSpeakers() {
+      try {
+         LuaStory.parse("story(900052)\npart('main')\nspeech(1, 'hello')", "missing-speaker.lua");
+         throw new AssertionError("Speech without a speaker passed validation");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Speaker 1 is not declared")) throw expected;
+      }
+      if (LuaStory.parse("story(900052)\npart('main')\nspeaker(1, 'System')\nspeech(1, 'hello')", "speaker.lua").id() != 900052) {
+         throw new AssertionError("Declared speaker was rejected");
+      }
    }
 
    private static void checkStoryPacks() throws Exception {
