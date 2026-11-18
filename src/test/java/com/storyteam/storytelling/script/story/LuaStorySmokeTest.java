@@ -3,6 +3,8 @@ package com.storyteam.storytelling.script.story;
 import com.storyteam.storytelling.client.content.overlays.Message;
 import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import com.storyteam.storytelling.init.ScriptCategory;
+import com.storyteam.storytelling.script.performer.ScriptPerformer;
+import com.storyteam.storytelling.script.performer.action.SpeechMessageAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +20,7 @@ public final class LuaStorySmokeTest {
       checkNpcPersistentState();
       checkDoorAction();
       checkTrapdoorAction();
+      checkSpeechResumeState();
       checkSceneScope();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
@@ -480,6 +483,22 @@ public final class LuaStorySmokeTest {
       } catch (IllegalArgumentException expected) {
          if (!expected.getMessage().contains("Unknown NPC for npc_set_trapdoor")) throw expected;
       }
+   }
+
+   private static void checkSpeechResumeState() {
+      ScriptPerformer original = new ScriptPerformer(null);
+      SpeechMessageAction displayed = new SpeechMessageAction(original, 0, null,
+         () -> Component.literal("Сохранённая реплика"), true);
+      original.addAction(displayed);
+      displayed.restoreDisplayState(true, false);
+
+      ScriptPerformer restored = new ScriptPerformer(null);
+      SpeechMessageAction resumed = new SpeechMessageAction(restored, 0, null,
+         () -> Component.literal("Сохранённая реплика"), true);
+      restored.addAction(resumed);
+      restored.deserializeNBT(original.serializeNBT());
+      if (!resumed.wasPrinted() || resumed.wasRead())
+         throw new AssertionError("Displayed speech state was lost after save reload");
    }
 
    private static void checkNpcInstances() {

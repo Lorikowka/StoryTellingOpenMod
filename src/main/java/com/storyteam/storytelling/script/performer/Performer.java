@@ -9,6 +9,7 @@ import com.storyteam.storytelling.script.performer.action.LabelAction;
 import com.storyteam.storytelling.script.performer.action.PerformerAction;
 import com.storyteam.storytelling.script.performer.action.SavePointAction;
 import com.storyteam.storytelling.script.performer.action.SpeechSetEntityNameAction;
+import com.storyteam.storytelling.script.performer.action.SpeechMessageAction;
 import com.storyteam.storytelling.script.performer.action.modificators.PerformerModifier;
 import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
 import com.storyteam.storytelling.script.performer.state.State;
@@ -202,11 +203,14 @@ public class Performer<P extends Performer<P>> implements IPerformer<P>, IAutoNB
       CompoundTag nbt = IAutoNBTSerializable.super.serializeNBT();
       nbt.putString("stage", this.stage);
       nbt.putInt("actionIndex", this.actionIndex);
+      if (this.actionIndex < this.actions.size() && this.actions.get(this.actionIndex) instanceof SpeechMessageAction speech) {
+         nbt.putBoolean("activeSpeechPrinted", speech.wasPrinted());
+         nbt.putBoolean("activeSpeechRead", speech.wasRead());
+      }
       return nbt;
    }
 
    public void deserializeNBT(CompoundTag nbt) {
-      Storytelling.LOG.info("Deserialization of performer \"" + this.selfKnownName + "\"...");
       String stage = nbt.getString("stage");
       if (!stage.equals("start")) {
          String oldStage = this.stage;
@@ -230,6 +234,10 @@ public class Performer<P extends Performer<P>> implements IPerformer<P>, IAutoNB
             if (this.actions.get(i) instanceof SpeechSetEntityNameAction speaker) {
                speaker.fastForwardToStage();
             }
+         }
+         if (nbt.contains("activeSpeechPrinted") && this.actionIndex < this.actions.size()
+            && this.actions.get(this.actionIndex) instanceof SpeechMessageAction speech) {
+            speech.restoreDisplayState(nbt.getBoolean("activeSpeechPrinted"), nbt.getBoolean("activeSpeechRead"));
          }
       }
    }

@@ -22,6 +22,7 @@ public class SpeechMessageAction extends ScriptPerformerAction {
    protected final boolean waitForF8;
    private boolean printed;
    private boolean read;
+   private boolean restoreOverlay;
 
    public SpeechMessageAction(ScriptPerformer performer, int entity, @Nullable Supplier<Component> flavor, Supplier<Component> message, boolean waitForF8) {
       super(performer);
@@ -33,8 +34,11 @@ public class SpeechMessageAction extends ScriptPerformerAction {
 
    @Override
    public void tick() {
-      if (!this.printed) {
-         this.printMessage(false);
+      if (this.restoreOverlay) {
+         this.restoreOverlay = false;
+         if (!this.read) this.printMessage(false, false);
+      } else if (!this.printed) {
+         this.printMessage(false, true);
          this.printed = true;
       }
    }
@@ -43,19 +47,31 @@ public class SpeechMessageAction extends ScriptPerformerAction {
    public void reset() {
       this.printed = false;
       this.read = false;
+      this.restoreOverlay = false;
    }
 
    @Override
    public void rewindToStage() {
       this.printed = false;
       this.read = false;
+      this.restoreOverlay = false;
+   }
+
+   public boolean wasPrinted() { return this.printed; }
+
+   public boolean wasRead() { return this.read; }
+
+   public void restoreDisplayState(boolean printed, boolean read) {
+      this.printed = printed;
+      this.read = read;
+      this.restoreOverlay = printed && !read;
    }
 
    protected SpeechEntity getSpeaker() {
       return ((SpeechState)this.performer.getState(SpeechState.TYPE)).getEntity(this.entity);
    }
 
-   private void printMessage(boolean chatLogOnly) {
+   private void printMessage(boolean chatLogOnly, boolean addToHistory) {
       SpeechEntity e = this.getSpeaker();
       if (e == null) {
          if (this.entity != 0) {
@@ -83,13 +99,13 @@ public class SpeechMessageAction extends ScriptPerformerAction {
          Network.sendToAll(new PacketMessageOverlay(msg));
       }
 
-      this.performer.script.addMessageToChatlog(msg);
+      if (addToHistory) this.performer.script.addMessageToChatlog(msg);
    }
 
    @Override
    public void fastForwardToStage() {
       super.fastForwardToStage();
-      this.printMessage(true);
+      this.printMessage(true, true);
    }
 
    @Override
