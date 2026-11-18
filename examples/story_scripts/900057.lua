@@ -1,6 +1,6 @@
 story(900057)
 
-local tester = npc{key="door_tester", model="reg.gltf", name="Проверяющий дверь", width=0.6, height=2.0}
+local tester = npc{key="door_tester_model", model="reg.gltf", name="Проверяющий дверь", width=0.6, height=2.0}
 
 part("main")
 speaker(1, "Система")
