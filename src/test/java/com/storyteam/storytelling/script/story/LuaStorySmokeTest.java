@@ -17,6 +17,7 @@ public final class LuaStorySmokeTest {
       checkNpcInstances();
       checkNpcPersistentState();
       checkDoorAction();
+      checkTrapdoorAction();
       checkSceneScope();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
@@ -59,6 +60,9 @@ public final class LuaStorySmokeTest {
       LuaStory doorExample = LuaStory.parse(Files.readString(Path.of(args[11]), StandardCharsets.UTF_8), "900057.lua");
       if (doorExample.id() != 900057 || !doorExample.hasPart("main"))
          throw new AssertionError("NPC door example did not load");
+      LuaStory trapdoorExample = LuaStory.parse(Files.readString(Path.of(args[12]), StandardCharsets.UTF_8), "900058.lua");
+      if (trapdoorExample.id() != 900058 || !trapdoorExample.hasPart("main"))
+         throw new AssertionError("NPC trapdoor example did not load");
       LuaStory expanded = LuaStory.parse("""
          story(900004)
          part("main")
@@ -374,7 +378,7 @@ public final class LuaStorySmokeTest {
             }
          }
       }
-      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055, 900056 and 900057");
+      System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055, 900056, 900057 and 900058");
    }
 
    private static void checkSceneScope() {
@@ -459,6 +463,22 @@ public final class LuaStorySmokeTest {
          throw new AssertionError("Door action accepted an unknown NPC");
       } catch (IllegalArgumentException expected) {
          if (!expected.getMessage().contains("Unknown NPC for npc_set_door")) throw expected;
+      }
+   }
+
+   private static void checkTrapdoorAction() {
+      LuaStory.parse("""
+         story(900058)
+         local guide = npc{key='trapdoor_guide',model='reg.gltf',name='Guide'}
+         part('main')
+         guide:set_trapdoor(1, 64, 9, true)
+         npc_set_trapdoor('trapdoor_guide', 1, 64, 9, false, 'minecraft:overworld')
+         """, "npc-set-trapdoor.lua");
+      try {
+         LuaStory.parse("story(900058)\npart('main')\nnpc_set_trapdoor('missing', 1, 64, 9, true)", "missing-trapdoor-npc.lua");
+         throw new AssertionError("Trapdoor action accepted an unknown NPC");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Unknown NPC for npc_set_trapdoor")) throw expected;
       }
    }
 

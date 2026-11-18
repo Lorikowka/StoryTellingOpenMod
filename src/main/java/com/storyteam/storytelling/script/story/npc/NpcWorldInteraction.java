@@ -8,6 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -55,6 +56,21 @@ public final class NpcWorldInteraction {
       useBlock(npc, block, dimension);
       if (level.getBlockState(block).getValue(BlockStateProperties.OPEN) != open)
          throw new IllegalStateException("Door did not reach requested state at " + block.toShortString());
+   }
+
+   /** Opens or closes a hand-operated trapdoor without reversing it on replay. */
+   public static void setTrapdoor(Entity npc, BlockPos block, String dimension, boolean open) {
+      if (npc == null || !(npc.level() instanceof ServerLevel level))
+         throw new IllegalStateException("NPC must be spawned on the server before npc_set_trapdoor");
+      if (!level.dimension().location().toString().equals(dimension) || !level.hasChunkAt(block))
+         throw new IllegalStateException("Trapdoor is not loaded in NPC dimension: " + block.toShortString());
+      var state = level.getBlockState(block);
+      if (!(state.getBlock() instanceof TrapDoorBlock))
+         throw new IllegalStateException("npc_set_trapdoor requires a trapdoor at " + block.toShortString());
+      if (state.getValue(BlockStateProperties.OPEN) == open) return;
+      useBlock(npc, block, dimension);
+      if (level.getBlockState(block).getValue(BlockStateProperties.OPEN) != open)
+         throw new IllegalStateException("Trapdoor did not reach requested state at " + block.toShortString());
    }
 
    public static void useBlock(Entity npc, BlockPos block, String dimension) {

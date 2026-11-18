@@ -294,7 +294,8 @@ tasks.register('verifyLuaStories', JavaExec) {
          file('examples/story_scripts/900050.lua').absolutePath,
          file('examples/story_scripts/900055.lua').absolutePath,
          file('examples/story_scripts/900056.lua').absolutePath,
-         file('examples/story_scripts/900057.lua').absolutePath
+         file('examples/story_scripts/900057.lua').absolutePath,
+         file('examples/story_scripts/900058.lua').absolutePath
 }
 tasks.register('extractGltfTestDependencies', Copy) {
     from zipTree(file('libs/gfbs_gltf-1.5.1-all.jar'))

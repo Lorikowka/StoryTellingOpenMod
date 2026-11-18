@@ -70,6 +70,7 @@ npc_move("reg", 2.5, -60, 8.5, 0.7)
 | `npc_approach_use_block("reg", x, y, z, "pressed")` | NPC подходит и пытается нажать блок; результат пишется в переменную. |
 | `npc_set_lever("reg", x, y, z, true)` | NPC включает рычаг, если тот ещё выключен. Повторный шаг не переключит его обратно. Для объектного NPC: `reg:set_lever(x, y, z, true)`. |
 | `npc_set_door("reg", x, y, z, true)` | NPC открывает деревянную дверь, если она закрыта. Для объектного NPC: `reg:set_door(x, y, z, true)`. NPC должен стоять рядом. |
+| `npc_set_trapdoor("reg", x, y, z, true)` | NPC открывает деревянный люк, если он закрыт. Для объектного NPC: `reg:set_trapdoor(x, y, z, true)`. NPC должен стоять рядом. |
 | `npc_animation("reg", "wave", "once")` | Проигрывает клип из glTF. |
 | `play_sound("minecraft:block.note_block.pling")` | Воспроизводит звук у игрока. |
 | `give_item("minecraft:apple", 1)` | Выдаёт предмет один раз за запуск сценария; квитанция хранится в данных игрока. |
