@@ -12,6 +12,7 @@ import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.script.story.npc.ScriptNpcEntity;
 import com.storyteam.storytelling.script.story.npc.NpcWorldInteraction;
 import com.storyteam.storytelling.script.story.camera.NpcCameraFlightAction;
+import com.storyteam.storytelling.script.story.camera.CameraShotAction;
 import com.storyteam.storytelling.net.PacketLuaChoiceScreen;
 import com.storyteam.storytelling.net.PacketStoryHud;
 import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
@@ -214,42 +215,10 @@ public final class LuaStory {
             case THINK -> builder.thenThink(step.text);
             case BLACKOUT -> builder.blackout(step.speaker);
             case FLASH -> builder.flash(step.speaker);
-            case CAMERA_SHOT -> builder.append(performer -> new ScriptPerformerAction(performer) {
-               private STCutsceneData camera;
-               private int elapsed;
-               private boolean done;
-
-               private void release() {
-                  if (camera != null && ServersideCutsceneHandler.currentData == camera)
-                     ServersideCutsceneHandler.stopCamera();
-                  camera = null;
-               }
-
-               @Override public void tick() {
-                  if (done) return;
-                  ServerPlayer player = ScriptUtils.getPlayer();
-                  if (player == null) return;
-                  if (camera == null) {
-                     if (ServersideCutsceneHandler.currentData != null) {
-                        throw new IllegalStateException("Another camera scene is already active");
-                     }
-                     Location location = new Location(player.level().dimension(),
-                        Double.parseDouble(step.arguments[0]), Double.parseDouble(step.arguments[1]),
-                        Double.parseDouble(step.arguments[2]), Float.parseFloat(step.arguments[3]),
-                        Float.parseFloat(step.arguments[4]));
-                     camera = new STCutsceneData(location, false);
-                     ServersideCutsceneHandler.initOrTpCamera(camera);
-                  }
-                  if (++elapsed >= Integer.parseInt(step.arguments[5])) {
-                     release();
-                     done = true;
-                  }
-               }
-
-               @Override public boolean isDone() { return done; }
-               @Override public void reset() { release(); elapsed = 0; done = false; }
-               @Override public void onScriptStop() { release(); }
-            });
+            case CAMERA_SHOT -> builder.append(performer -> new CameraShotAction(performer,
+               Double.parseDouble(step.arguments[0]), Double.parseDouble(step.arguments[1]),
+               Double.parseDouble(step.arguments[2]), Float.parseFloat(step.arguments[3]),
+               Float.parseFloat(step.arguments[4]), Integer.parseInt(step.arguments[5])));
             case CAMERA_FLY_NPC -> builder.append(performer -> new NpcCameraFlightAction(performer,
                characters.get(step.text), Integer.parseInt(step.arguments[0]),
                Integer.parseInt(step.arguments[1]), Double.parseDouble(step.arguments[2])));

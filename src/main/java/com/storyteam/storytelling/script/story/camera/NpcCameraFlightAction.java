@@ -2,6 +2,7 @@ package com.storyteam.storytelling.script.story.camera;
 
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.action.ScriptPerformerAction;
+import com.storyteam.storytelling.script.performer.action.ActionCheckpoint;
 import com.storyteam.storytelling.script.story.characters.Character;
 import com.storyteam.storytelling.system._core.st_cutscene.InterpolationType;
 import com.storyteam.storytelling.system._core.st_cutscene.STCutsceneData;
@@ -12,11 +13,12 @@ import com.storyteam.storytelling.util.world.Location;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 /** Flies to the front of a story NPC, holds the shot, then flies back to the player. */
-public final class NpcCameraFlightAction extends ScriptPerformerAction {
+public final class NpcCameraFlightAction extends ScriptPerformerAction implements ActionCheckpoint {
    private final Character<?> character;
    private final int flightTicks;
    private final int holdTicks;
@@ -124,4 +126,15 @@ public final class NpcCameraFlightAction extends ScriptPerformerAction {
    @Override public void stop() { release(); }
    @Override public void onScriptStop() { release(); }
    @Override public void reset() { release(); phase = 0; elapsed = 0; missingTicks = 0; }
+
+   @Override public CompoundTag saveActionState() {
+      CompoundTag state = new CompoundTag();
+      state.putBoolean("started", phase != 0);
+      return state;
+   }
+
+   @Override public void restoreActionState(CompoundTag state) {
+      // The camera belongs to the previous client session. Continue the story without replaying it.
+      if (state.getBoolean("started")) phase = 4;
+   }
 }

@@ -10,6 +10,8 @@ import com.storyteam.storytelling.script.performer.action.BlockArea;
 import com.storyteam.storytelling.script.performer.action.DelayAction;
 import com.storyteam.storytelling.script.performer.action.F8PressAction;
 import com.storyteam.storytelling.script.performer.action.SpeechMessageAction;
+import com.storyteam.storytelling.script.story.camera.CameraShotAction;
+import com.storyteam.storytelling.script.story.camera.NpcCameraFlightAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +31,7 @@ public final class LuaStorySmokeTest {
       checkF8ResumeState();
       checkDelayResumeState();
       checkChatResumeState();
+      checkCameraResumeState();
       checkSceneScope();
       checkWaitArea();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
@@ -512,6 +515,31 @@ public final class LuaStorySmokeTest {
       } catch (IllegalArgumentException expected) {
          if (!expected.getMessage().contains("Unknown NPC for npc_set_trapdoor")) throw expected;
       }
+   }
+
+   private static void checkCameraResumeState() {
+      CompoundTag started = new CompoundTag();
+      started.putBoolean("started", true);
+
+      ScriptPerformer originalShot = new ScriptPerformer(null);
+      CameraShotAction shot = new CameraShotAction(originalShot, 0, 64, 0, 0, 0, 100);
+      originalShot.addAction(shot);
+      shot.restoreActionState(started);
+      ScriptPerformer restoredShot = new ScriptPerformer(null);
+      CameraShotAction resumedShot = new CameraShotAction(restoredShot, 0, 64, 0, 0, 0, 100);
+      restoredShot.addAction(resumedShot);
+      restoredShot.deserializeNBT(originalShot.serializeNBT());
+      if (!resumedShot.isDone()) throw new AssertionError("Interrupted camera shot replayed after reload");
+
+      ScriptPerformer originalFlight = new ScriptPerformer(null);
+      NpcCameraFlightAction flight = new NpcCameraFlightAction(originalFlight, null, 60, 600, 1.6);
+      originalFlight.addAction(flight);
+      flight.restoreActionState(started);
+      ScriptPerformer restoredFlight = new ScriptPerformer(null);
+      NpcCameraFlightAction resumedFlight = new NpcCameraFlightAction(restoredFlight, null, 60, 600, 1.6);
+      restoredFlight.addAction(resumedFlight);
+      restoredFlight.deserializeNBT(originalFlight.serializeNBT());
+      if (!resumedFlight.isDone()) throw new AssertionError("Interrupted NPC camera flight replayed after reload");
    }
 
    private static void checkSpeechResumeState() {
