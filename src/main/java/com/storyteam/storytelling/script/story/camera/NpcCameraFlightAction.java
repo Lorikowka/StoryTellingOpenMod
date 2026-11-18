@@ -115,8 +115,8 @@ public final class NpcCameraFlightAction extends ScriptPerformerAction {
    }
 
    private void release() {
-      if (camera != null && ServersideCutsceneHandler.currentData == camera
-         && ScriptUtils.getPlayer() != null) ServersideCutsceneHandler.stopCamera();
+      if (camera != null && ServersideCutsceneHandler.currentData == camera)
+         ServersideCutsceneHandler.stopCamera();
       camera = null;
    }
 

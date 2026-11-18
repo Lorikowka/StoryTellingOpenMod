@@ -86,10 +86,12 @@ public class ServersideCutsceneHandler {
       timeInterpolation = null;
       spline = null;
       ServerPlayer player = ScriptUtils.getPlayer();
-      STCutscenePacket packet = new STCutscenePacket(STCutscenePacket.Action.STOP_CAMERA, new STCutsceneData());
-      Network.sendTo(player, packet);
-      if (cachedGameType != null && currentData.cameraOut) {
-         player.setGameMode(cachedGameType);
+      if (player != null) {
+         STCutscenePacket packet = new STCutscenePacket(STCutscenePacket.Action.STOP_CAMERA, new STCutsceneData());
+         Network.sendTo(player, packet);
+         if (cachedGameType != null && currentData != null && currentData.cameraOut) {
+            player.setGameMode(cachedGameType);
+         }
       }
 
       cachedGameType = null;

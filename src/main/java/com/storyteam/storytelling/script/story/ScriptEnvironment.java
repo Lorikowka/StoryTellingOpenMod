@@ -13,6 +13,7 @@ import com.storyteam.storytelling.script.data.ScriptFlagStorage;
 import com.storyteam.storytelling.script.performer.Performer;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.action.PerformerAction;
+import com.storyteam.storytelling.system._core.st_cutscene.ServersideCutsceneHandler;
 import com.storyteam.storytelling.util.Title;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -435,6 +436,10 @@ public class ScriptEnvironment {
       while (var1.hasNext()) {
          ScriptInstance scriptInstance = (ScriptInstance)var1.next();
          scriptInstance.onInstanceDestroyed();
+      }
+
+      if (ServersideCutsceneHandler.currentData != null) {
+         ServersideCutsceneHandler.stopCamera();
       }
 
       Storytelling.LOG.info("Scripts unloaded.");
