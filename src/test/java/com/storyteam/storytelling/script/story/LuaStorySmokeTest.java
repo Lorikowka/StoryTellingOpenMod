@@ -1,5 +1,6 @@
 package com.storyteam.storytelling.script.story;
 
+import com.storyteam.storytelling.api.events.EventType;
 import com.storyteam.storytelling.client.content.overlays.Message;
 import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import com.storyteam.storytelling.init.ScriptCategory;
@@ -517,7 +518,7 @@ public final class LuaStorySmokeTest {
       ScriptPerformer original = new ScriptPerformer(null);
       F8PressAction pressed = new F8PressAction(original);
       original.addAction(pressed);
-      pressed.fastForwardToStage();
+      pressed.handleEvent(EventType.F8_PRESS, null);
 
       ScriptPerformer restored = new ScriptPerformer(null);
       F8PressAction resumed = new F8PressAction(restored);
