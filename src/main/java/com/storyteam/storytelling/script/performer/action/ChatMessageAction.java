@@ -6,8 +6,9 @@ import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
 import com.storyteam.storytelling.util.ToStringBuilder;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import net.minecraft.nbt.CompoundTag;
 
-public class ChatMessageAction extends ScriptPerformerAction {
+public class ChatMessageAction extends ScriptPerformerAction implements ActionCheckpoint {
    private final Predicate<String> filter;
    private final Supplier<String> filterInfo;
    private final boolean wait;
@@ -97,5 +98,19 @@ public class ChatMessageAction extends ScriptPerformerAction {
    @Override
    public String toString() {
       return ToStringBuilder.builder(this).append("filter", this.filter).build();
+   }
+
+   @Override
+   public CompoundTag saveActionState() {
+      CompoundTag state = new CompoundTag();
+      state.putBoolean("matched", this.isDone);
+      state.putInt("remainingDelay", this.delay);
+      return state;
+   }
+
+   @Override
+   public void restoreActionState(CompoundTag state) {
+      this.isDone = state.getBoolean("matched");
+      this.delay = Math.min(10, Math.max(0, state.getInt("remainingDelay")));
    }
 }

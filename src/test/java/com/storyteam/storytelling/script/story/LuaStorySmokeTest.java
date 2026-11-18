@@ -5,6 +5,8 @@ import com.storyteam.storytelling.client.content.overlays.Message;
 import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import com.storyteam.storytelling.init.ScriptCategory;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
+import com.storyteam.storytelling.script.performer.action.ChatMessageAction;
+import com.storyteam.storytelling.script.performer.action.DelayAction;
 import com.storyteam.storytelling.script.performer.action.F8PressAction;
 import com.storyteam.storytelling.script.performer.action.SpeechMessageAction;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +26,8 @@ public final class LuaStorySmokeTest {
       checkTrapdoorAction();
       checkSpeechResumeState();
       checkF8ResumeState();
+      checkDelayResumeState();
+      checkChatResumeState();
       checkSceneScope();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
@@ -526,6 +530,44 @@ public final class LuaStorySmokeTest {
       restored.deserializeNBT(original.serializeNBT());
       if (!resumed.isDone())
          throw new AssertionError("F8 press was lost after save reload");
+   }
+
+   private static void checkDelayResumeState() {
+      ScriptPerformer original = new ScriptPerformer(null);
+      int[] calls = {0};
+      DelayAction<ScriptPerformer> waiting = new DelayAction<>(original, () -> { calls[0]++; return 6; });
+      original.addAction(waiting);
+      if (calls[0] != 1) throw new AssertionError("Delay source was evaluated more than once");
+      waiting.tick();
+      waiting.tick();
+
+      ScriptPerformer restored = new ScriptPerformer(null);
+      DelayAction<ScriptPerformer> resumed = new DelayAction<>(restored, () -> 99);
+      restored.addAction(resumed);
+      restored.deserializeNBT(original.serializeNBT());
+      CompoundTag state = resumed.saveActionState();
+      if (state.getInt("delay") != 6 || state.getInt("remaining") != 4)
+         throw new AssertionError("Remaining wait ticks were lost after save reload");
+   }
+
+   private static void checkChatResumeState() {
+      ScriptPerformer original = new ScriptPerformer(null);
+      ChatMessageAction waiting = new ChatMessageAction(original, "готово"::equals, null, true);
+      original.addAction(waiting);
+      waiting.handleEvent(EventType.CHAT_MESSAGE_SENT, "готово");
+      for (int i = 0; i < 3; i++) waiting.isDone();
+
+      ScriptPerformer restored = new ScriptPerformer(null);
+      ChatMessageAction resumed = new ChatMessageAction(restored, "готово"::equals, null, true);
+      restored.addAction(resumed);
+      restored.deserializeNBT(original.serializeNBT());
+      CompoundTag state = resumed.saveActionState();
+      if (!state.getBoolean("matched") || state.getInt("remainingDelay") != 7)
+         throw new AssertionError("Accepted chat message was lost after save reload");
+      for (int i = 0; i < 7; i++) {
+         if (resumed.isDone()) throw new AssertionError("Chat wait completed before its saved delay");
+      }
+      if (!resumed.isDone()) throw new AssertionError("Chat wait did not complete after its saved delay");
    }
 
    private static void checkNpcInstances() {
