@@ -25,6 +25,7 @@ import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
 import com.storyteam.storytelling.script.story.ScriptEnvironment;
 import com.storyteam.storytelling.script.story.LuaStoryValidator;
 import com.storyteam.storytelling.script.story.LuaStory;
+import com.storyteam.storytelling.script.story.LuaScriptInstance;
 import com.storyteam.storytelling.util.ServerScheduler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
@@ -624,7 +625,8 @@ public class ScriptCommand {
                                        } else {
                                           String label = StringArgumentType.getString(cs, "label");
                                           if (mainPerformer.containsLabel(label)) {
-                                             ServerScheduler.schedule(100, () -> mainPerformer.gotoLabel(label));
+                                             ServerScheduler.schedule(100, () ->
+                                                mainPerformer.gotoLabel(label, script instanceof LuaScriptInstance));
                                              return 1;
                                           } else {
                                              throw ERROR_SCRIPT_DOES_NOT_HAVE_MAIN_PERFORMER_LABEL.create(script.getId(), label);
@@ -772,4 +774,3 @@ public class ScriptCommand {
          }))));
    }
 }
-
