@@ -1,6 +1,7 @@
 package com.storyteam.storytelling.script.performer.action.behaviour;
 
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
+import com.storyteam.storytelling.script.data.EntityController;
 import com.storyteam.storytelling.script.performer.action.ActionCheckpoint;
 import com.storyteam.storytelling.script.performer.entity.EntityState;
 import com.storyteam.storytelling.script.performer.entity.behaviour.movement.EntityPathfinderBehaviour;
@@ -74,6 +75,15 @@ public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, En
    public void stop() {
       if (this.behavior != null) {
          this.optionalState().ifPresent(s -> s.stopBehaviour(this.behavior.getType()));
+         EntityController<T> controller = this.script.env.server.getEntityRepository().get(this.character);
+         if (controller != null) {
+            controller.navigator.stop();
+            T entity = controller.getEntity();
+            if (entity != null) {
+               entity.getNavigation().stop();
+               if (entity instanceof ScriptNpcEntity npc) npc.walking(false);
+            }
+         }
       }
    }
 

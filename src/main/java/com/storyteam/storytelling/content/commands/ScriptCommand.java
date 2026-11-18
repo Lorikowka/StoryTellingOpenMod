@@ -625,8 +625,9 @@ public class ScriptCommand {
                                        } else {
                                           String label = StringArgumentType.getString(cs, "label");
                                           if (mainPerformer.containsLabel(label)) {
-                                             ServerScheduler.schedule(100, () ->
-                                                mainPerformer.gotoLabel(label, script instanceof LuaScriptInstance));
+                                             boolean lua = script instanceof LuaScriptInstance;
+                                             ServerScheduler.schedule(lua ? 1 : 100, () ->
+                                                mainPerformer.gotoLabel(label, lua));
                                              return 1;
                                           } else {
                                              throw ERROR_SCRIPT_DOES_NOT_HAVE_MAIN_PERFORMER_LABEL.create(script.getId(), label);
