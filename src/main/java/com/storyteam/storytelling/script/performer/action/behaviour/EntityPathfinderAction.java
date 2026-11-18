@@ -1,6 +1,7 @@
 package com.storyteam.storytelling.script.performer.action.behaviour;
 
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
+import com.storyteam.storytelling.script.performer.action.ActionCheckpoint;
 import com.storyteam.storytelling.script.performer.entity.EntityState;
 import com.storyteam.storytelling.script.performer.entity.behaviour.movement.EntityPathfinderBehaviour;
 import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
@@ -12,8 +13,9 @@ import com.storyteam.storytelling.util.world.Location;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.nbt.CompoundTag;
 
-public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, EntityPathfinderBehaviour<T>> {
+public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, EntityPathfinderBehaviour<T>> implements ActionCheckpoint {
    Supplier<List<Location>> positions;
    protected final double speed;
    boolean parallel;
@@ -55,6 +57,7 @@ public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, En
 
    @Override
    public void tick() {
+      if (this.completed) return;
       super.tick();
       if (!this.completed && ++elapsedTicks > 2400) {
          throw new IllegalStateException("NPC route timed out after 120 seconds: " + this.character.getReferenceId());
@@ -65,6 +68,21 @@ public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, En
    public void reset() {
       super.reset();
       elapsedTicks = 0;
+   }
+
+   @Override
+   public CompoundTag saveActionState() {
+      CompoundTag state = new CompoundTag();
+      state.putInt("elapsedTicks", elapsedTicks);
+      state.putBoolean("completed", completed);
+      return state;
+   }
+
+   @Override
+   public void restoreActionState(CompoundTag state) {
+      if (state.contains("elapsedTicks")) elapsedTicks = Math.max(0, state.getInt("elapsedTicks"));
+      completed = state.getBoolean("completed");
+      // The old navigator belongs to the previous world session; tick() creates a new one if needed.
    }
 
    @Override
