@@ -4,8 +4,9 @@ import com.storyteam.storytelling.api.events.EventType;
 import com.storyteam.storytelling.network.utils.WebMessageHandler;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.report.HelpReportBuilder;
+import net.minecraft.nbt.CompoundTag;
 
-public class F8PressAction extends ScriptPerformerAction {
+public class F8PressAction extends ScriptPerformerAction implements ActionCheckpoint {
    private boolean isDone = false;
 
    public F8PressAction(ScriptPerformer performer) {
@@ -44,6 +45,7 @@ public class F8PressAction extends ScriptPerformerAction {
 
    @Override
    public void tick() {
+      if (this.isDone) return;
       super.tick();
       WebMessageHandler.sendInstructionLine(
          this.performer.getName() + "_" + this.performer.getActionIndex(),
@@ -58,5 +60,17 @@ public class F8PressAction extends ScriptPerformerAction {
       if (eventType.equals(EventType.F8_PRESS)) {
          this.isDone = true;
       }
+   }
+
+   @Override
+   public CompoundTag saveActionState() {
+      CompoundTag state = new CompoundTag();
+      state.putBoolean("done", this.isDone);
+      return state;
+   }
+
+   @Override
+   public void restoreActionState(CompoundTag state) {
+      this.isDone = state.getBoolean("done");
    }
 }

@@ -6,6 +6,7 @@ import com.storyteam.storytelling.api.events.EventType;
 import com.storyteam.storytelling.network.StoryServerHooks;
 import com.storyteam.storytelling.network.utils.WebMessageHandler;
 import com.storyteam.storytelling.script.performer.action.LabelAction;
+import com.storyteam.storytelling.script.performer.action.ActionCheckpoint;
 import com.storyteam.storytelling.script.performer.action.PerformerAction;
 import com.storyteam.storytelling.script.performer.action.SavePointAction;
 import com.storyteam.storytelling.script.performer.action.SpeechSetEntityNameAction;
@@ -22,6 +23,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import lombok.Generated;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import org.zeith.hammerlib.api.io.IAutoNBTSerializable;
 
@@ -203,9 +205,19 @@ public class Performer<P extends Performer<P>> implements IPerformer<P>, IAutoNB
       CompoundTag nbt = IAutoNBTSerializable.super.serializeNBT();
       nbt.putString("stage", this.stage);
       nbt.putInt("actionIndex", this.actionIndex);
-      if (this.actionIndex < this.actions.size() && this.actions.get(this.actionIndex) instanceof SpeechMessageAction speech) {
-         nbt.putBoolean("activeSpeechPrinted", speech.wasPrinted());
-         nbt.putBoolean("activeSpeechRead", speech.wasRead());
+      if (this.actionIndex < this.actions.size()) {
+         PerformerAction<P> active = this.actions.get(this.actionIndex);
+         if (active instanceof ActionCheckpoint checkpoint) {
+            CompoundTag saved = new CompoundTag();
+            saved.putInt("version", 1);
+            saved.putString("type", active.getClass().getName());
+            saved.put("state", checkpoint.saveActionState());
+            nbt.put("activeAction", saved);
+         }
+         if (active instanceof SpeechMessageAction speech) {
+            nbt.putBoolean("activeSpeechPrinted", speech.wasPrinted());
+            nbt.putBoolean("activeSpeechRead", speech.wasRead());
+         }
       }
       return nbt;
    }
@@ -235,9 +247,20 @@ public class Performer<P extends Performer<P>> implements IPerformer<P>, IAutoNB
                speaker.fastForwardToStage();
             }
          }
-         if (nbt.contains("activeSpeechPrinted") && this.actionIndex < this.actions.size()
-            && this.actions.get(this.actionIndex) instanceof SpeechMessageAction speech) {
-            speech.restoreDisplayState(nbt.getBoolean("activeSpeechPrinted"), nbt.getBoolean("activeSpeechRead"));
+         if (this.actionIndex < this.actions.size()) {
+            PerformerAction<P> active = this.actions.get(this.actionIndex);
+            boolean restored = false;
+            if (nbt.contains("activeAction", Tag.TAG_COMPOUND) && active instanceof ActionCheckpoint checkpoint) {
+               CompoundTag saved = nbt.getCompound("activeAction");
+               if (saved.getInt("version") == 1 && active.getClass().getName().equals(saved.getString("type"))
+                  && saved.contains("state", Tag.TAG_COMPOUND)) {
+                  checkpoint.restoreActionState(saved.getCompound("state"));
+                  restored = true;
+               }
+            }
+            if (!restored && nbt.contains("activeSpeechPrinted") && active instanceof SpeechMessageAction speech) {
+               speech.restoreDisplayState(nbt.getBoolean("activeSpeechPrinted"), nbt.getBoolean("activeSpeechRead"));
+            }
          }
       }
    }

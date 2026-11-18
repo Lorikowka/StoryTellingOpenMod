@@ -9,13 +9,14 @@ import com.storyteam.storytelling.script.performer.state.SpeechEntity;
 import com.storyteam.storytelling.script.performer.state.SpeechState;
 import com.storyteam.storytelling.util.ToStringBuilder;
 import java.util.function.Supplier;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import org.jetbrains.annotations.Nullable;
 import org.zeith.hammerlib.net.Network;
 
-public class SpeechMessageAction extends ScriptPerformerAction {
+public class SpeechMessageAction extends ScriptPerformerAction implements ActionCheckpoint {
    protected final int entity;
    private final Supplier<Component> flavor;
    protected final Supplier<Component> message;
@@ -65,6 +66,19 @@ public class SpeechMessageAction extends ScriptPerformerAction {
       this.printed = printed;
       this.read = read;
       this.restoreOverlay = printed && !read;
+   }
+
+   @Override
+   public CompoundTag saveActionState() {
+      CompoundTag state = new CompoundTag();
+      state.putBoolean("printed", this.printed);
+      state.putBoolean("read", this.read);
+      return state;
+   }
+
+   @Override
+   public void restoreActionState(CompoundTag state) {
+      this.restoreDisplayState(state.getBoolean("printed"), state.getBoolean("read"));
    }
 
    protected SpeechEntity getSpeaker() {

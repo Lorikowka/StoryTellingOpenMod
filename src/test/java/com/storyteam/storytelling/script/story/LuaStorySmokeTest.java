@@ -4,6 +4,7 @@ import com.storyteam.storytelling.client.content.overlays.Message;
 import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import com.storyteam.storytelling.init.ScriptCategory;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
+import com.storyteam.storytelling.script.performer.action.F8PressAction;
 import com.storyteam.storytelling.script.performer.action.SpeechMessageAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +22,7 @@ public final class LuaStorySmokeTest {
       checkDoorAction();
       checkTrapdoorAction();
       checkSpeechResumeState();
+      checkF8ResumeState();
       checkSceneScope();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
@@ -499,6 +501,30 @@ public final class LuaStorySmokeTest {
       restored.deserializeNBT(original.serializeNBT());
       if (!resumed.wasPrinted() || resumed.wasRead())
          throw new AssertionError("Displayed speech state was lost after save reload");
+
+      CompoundTag legacy = original.serializeNBT();
+      legacy.remove("activeAction");
+      ScriptPerformer olderRestored = new ScriptPerformer(null);
+      SpeechMessageAction olderSpeech = new SpeechMessageAction(olderRestored, 0, null,
+         () -> Component.literal("Сохранённая реплика"), true);
+      olderRestored.addAction(olderSpeech);
+      olderRestored.deserializeNBT(legacy);
+      if (!olderSpeech.wasPrinted() || olderSpeech.wasRead())
+         throw new AssertionError("Alpha.79 speech checkpoint was not restored");
+   }
+
+   private static void checkF8ResumeState() {
+      ScriptPerformer original = new ScriptPerformer(null);
+      F8PressAction pressed = new F8PressAction(original);
+      original.addAction(pressed);
+      pressed.fastForwardToStage();
+
+      ScriptPerformer restored = new ScriptPerformer(null);
+      F8PressAction resumed = new F8PressAction(restored);
+      restored.addAction(resumed);
+      restored.deserializeNBT(original.serializeNBT());
+      if (!resumed.isDone())
+         throw new AssertionError("F8 press was lost after save reload");
    }
 
    private static void checkNpcInstances() {
