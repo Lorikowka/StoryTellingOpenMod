@@ -411,6 +411,9 @@ public class Performer<P extends Performer<P>> implements IPerformer<P>, IAutoNB
       Preconditions.checkArgument(
          dest >= 0 && dest <= this.actions.size(), "Can't perform rewind. Save state '" + this.stage + "' located after current state."
       );
+      if (dest != this.actionIndex && this.actionIndex < this.actions.size()) {
+         this.actions.get(this.actionIndex).stop();
+      }
       int rewindFrom = Mth.clamp(this.actionIndex, 0, this.actions.size() - 1);
 
       for (int i = rewindFrom; i >= dest; i--) {

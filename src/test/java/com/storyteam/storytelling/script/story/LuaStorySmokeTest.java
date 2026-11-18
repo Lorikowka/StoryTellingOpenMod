@@ -5,6 +5,8 @@ import com.storyteam.storytelling.client.content.overlays.Message;
 import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import com.storyteam.storytelling.init.ScriptCategory;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
+import com.storyteam.storytelling.script.performer.Performer;
+import com.storyteam.storytelling.script.performer.action.PerformerAction;
 import com.storyteam.storytelling.script.performer.action.ChatMessageAction;
 import com.storyteam.storytelling.script.performer.action.BlockArea;
 import com.storyteam.storytelling.script.performer.action.DelayAction;
@@ -32,6 +34,7 @@ public final class LuaStorySmokeTest {
       checkDelayResumeState();
       checkChatResumeState();
       checkCameraResumeState();
+      checkJumpCancelsAction();
       checkSceneScope();
       checkWaitArea();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
@@ -515,6 +518,19 @@ public final class LuaStorySmokeTest {
       } catch (IllegalArgumentException expected) {
          if (!expected.getMessage().contains("Unknown NPC for npc_set_trapdoor")) throw expected;
       }
+   }
+
+   private static void checkJumpCancelsAction() {
+      class TestPerformer extends Performer<TestPerformer> { }
+      TestPerformer performer = new TestPerformer();
+      int[] stops = {0};
+      performer.addAction(new PerformerAction<>(performer) {
+         @Override public void stop() { stops[0]++; }
+      });
+      performer.addAction(new PerformerAction<>(performer) { });
+      performer.jumpTo(1, true);
+      if (stops[0] != 1 || performer.getActionIndex() != 1)
+         throw new AssertionError("Jump did not cancel the active action");
    }
 
    private static void checkCameraResumeState() {

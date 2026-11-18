@@ -71,6 +71,18 @@ public class EntityPathfinderAction<T extends Mob> extends BehaviourAction<T, En
    }
 
    @Override
+   public void stop() {
+      if (this.behavior != null) {
+         this.optionalState().ifPresent(s -> s.stopBehaviour(this.behavior.getType()));
+      }
+   }
+
+   @Override
+   public void onScriptStop() {
+      stop();
+   }
+
+   @Override
    public CompoundTag saveActionState() {
       CompoundTag state = new CompoundTag();
       state.putInt("elapsedTicks", elapsedTicks);
