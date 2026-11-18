@@ -4,6 +4,8 @@ import com.storyteam.storytelling.script.performer.builder.ScriptPerformerBuilde
 import com.storyteam.storytelling.Storytelling;
 import com.storyteam.storytelling.api.events.EventType;
 import com.storyteam.storytelling.script.performer.action.WaitPlayerPositionAction;
+import com.storyteam.storytelling.script.performer.action.WaitPlayerAreaAction;
+import com.storyteam.storytelling.script.performer.action.BlockArea;
 import com.storyteam.storytelling.script.performer.action.ScriptPerformerAction;
 import com.storyteam.storytelling.script.performer.action.behaviour.EntityPathfinderAction;
 import com.storyteam.storytelling.script.story.characters.Character;
@@ -254,6 +256,10 @@ public final class LuaStory {
             case STORY_ENGINE -> builder.thenRun(() -> StoryEngineAdapter.invoke(step.operation, step.arguments));
             case WAIT_POS -> builder.append(p -> new WaitPlayerPositionAction(p, step.position.dimension, step.position.x,
                step.position.y, step.position.z, step.position.radius, step.position.ignoreY));
+            case WAIT_AREA -> builder.append(p -> new WaitPlayerAreaAction(p, step.text,
+               BlockArea.between(Integer.parseInt(step.arguments[0]), Integer.parseInt(step.arguments[1]),
+                  Integer.parseInt(step.arguments[2]), Integer.parseInt(step.arguments[3]),
+                  Integer.parseInt(step.arguments[4]), Integer.parseInt(step.arguments[5]))));
             case TELEPORT_PLAYER -> builder.teleportPlayer(() -> teleportLocation(step.arguments));
             case NPC_SPAWN -> {
                builder.positionEntity(characters.get(step.text), () -> npcLocation(step.position));
@@ -1132,6 +1138,22 @@ public final class LuaStory {
             return NIL;
          }
       });
+      globals.set("wait_area", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 6 || args.narg() > 7) {
+               throw new IllegalArgumentException("wait_area(x1, y1, z1, x2, y2, z2, [dimension]) expects 6 or 7 arguments");
+            }
+            int[] coordinates = new int[6];
+            for (int i = 0; i < coordinates.length; i++) coordinates[i] = args.arg(i + 1).checkint();
+            String dimension = args.narg() == 7 ? nonempty(args.arg(7)) : "minecraft:overworld";
+            if (ResourceLocation.tryParse(dimension) == null) {
+               throw new IllegalArgumentException("Invalid wait_area dimension: " + dimension);
+            }
+            builder.add(new Step(Type.WAIT_AREA, 0, dimension, null,
+               Arrays.stream(coordinates).mapToObj(Integer::toString).toArray(String[]::new)));
+            return NIL;
+         }
+      });
       globals.set("teleport_player", new VarArgFunction() {
          @Override public Varargs invoke(Varargs args) {
             if (args.narg() != 3 && args.narg() != 4 && args.narg() != 6) {
@@ -1276,7 +1298,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_SET_DOOR, NPC_SET_TRAPDOOR, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, WAIT_AREA, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_SET_DOOR, NPC_SET_TRAPDOOR, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {

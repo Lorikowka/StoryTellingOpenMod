@@ -6,6 +6,7 @@ import com.storyteam.storytelling.client.screen.QuestJournalSelection;
 import com.storyteam.storytelling.init.ScriptCategory;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.performer.action.ChatMessageAction;
+import com.storyteam.storytelling.script.performer.action.BlockArea;
 import com.storyteam.storytelling.script.performer.action.DelayAction;
 import com.storyteam.storytelling.script.performer.action.F8PressAction;
 import com.storyteam.storytelling.script.performer.action.SpeechMessageAction;
@@ -29,6 +30,7 @@ public final class LuaStorySmokeTest {
       checkDelayResumeState();
       checkChatResumeState();
       checkSceneScope();
+      checkWaitArea();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
          || java.util.Arrays.stream(ScriptCategory.allWithoutMechanics().getScripts()).anyMatch(id -> id == -100))
          throw new AssertionError("Legacy script categories expose unavailable or mechanical entries");
@@ -389,6 +391,26 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055, 900056, 900057 and 900058");
+   }
+
+   private static void checkWaitArea() {
+      BlockArea area = BlockArea.between(2, -59, 9, 0, -61, 8);
+      if (!area.contains(0, -61, 8) || !area.contains(2, -59, 9)
+         || !area.contains(1, -60, 8) || area.contains(3, -60, 8)
+         || area.contains(1, -62, 8)) {
+         throw new AssertionError("wait_area bounds are not inclusive or normalized");
+      }
+      LuaStory story = LuaStory.parse("story(900059)\npart(\"main\")\nwait_area(2, -59, 9, 0, -61, 8)",
+         "wait-area.lua");
+      if (story.id() != 900059 || !story.hasPart("main"))
+         throw new AssertionError("wait_area did not register a story step");
+      try {
+         LuaStory.parse("story(900060)\npart(\"main\")\nwait_area(0, 0, 0, 1, 1, 1, \"bad dimension\")",
+            "invalid-area.lua");
+         throw new AssertionError("Invalid wait_area dimension was accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Invalid wait_area")) throw expected;
+      }
    }
 
    private static void checkSceneScope() {
