@@ -118,6 +118,12 @@ public final class LuaStory {
       return parts.containsKey(name);
    }
 
+   /** The first parallel milestone permits only actions with independent, checkpointed timers. */
+   boolean isWaitOnlyPart(String name) {
+      List<Step> steps = parts.get(name);
+      return steps != null && !steps.isEmpty() && steps.stream().allMatch(step -> step.type == Type.WAIT_TICKS);
+   }
+
    public Map<String, Character<?>> createNpcCharacters() {
       Map<String, Character<?>> characters = new LinkedHashMap<>();
       Map<String, EntityType<?>> types = new LinkedHashMap<>();
@@ -210,6 +216,24 @@ public final class LuaStory {
             case ANCHOR -> builder.saveState(step.text);
             case WAIT_F8 -> builder.thenWaitForF8();
             case WAIT_TICKS -> builder.thenDelay(step.speaker);
+            case PARALLEL_START -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               private boolean started;
+               @Override public void tick() {
+                  if (!started) {
+                     ((LuaScriptInstance) script).startParallelBranch(step.text);
+                     started = true;
+                  }
+               }
+               @Override public boolean isDone() { return started; }
+               @Override public void reset() { started = false; }
+            });
+            case PARALLEL_JOIN -> builder.append(performer -> new ScriptPerformerAction(performer) {
+               @Override public boolean isDone() {
+                  LuaScriptInstance lua = (LuaScriptInstance) script;
+                  for (String key : step.arguments) if (!lua.isParallelBranchDone(key)) return false;
+                  return true;
+               }
+            });
             case WAIT_CHAT -> builder.thenWaitChatMessage(step.text);
             case WAIT_FLAG -> builder.thenWaitForFlag(step.text);
             case THINK -> builder.thenThink(step.text);
@@ -1054,6 +1078,23 @@ public final class LuaStory {
       globals.set("wait_ticks", new OneArgFunction() {
          @Override public LuaValue call(LuaValue ticks) { builder.add(new Step(Type.WAIT_TICKS, positiveTicks(ticks), "")); return NIL; }
       });
+      globals.set("parallel_start", new OneArgFunction() {
+         @Override public LuaValue call(LuaValue key) {
+            builder.add(new Step(Type.PARALLEL_START, 0, nonempty(key)));
+            return NIL;
+         }
+      });
+      globals.set("parallel_join", new VarArgFunction() {
+         @Override public Varargs invoke(Varargs args) {
+            if (args.narg() < 1 || args.narg() > 8) {
+               throw new IllegalArgumentException("parallel_join needs 1–8 branch keys");
+            }
+            String[] keys = new String[args.narg()];
+            for (int i = 0; i < keys.length; i++) keys[i] = nonempty(args.arg(i + 1));
+            builder.add(new Step(Type.PARALLEL_JOIN, 0, "", null, keys));
+            return NIL;
+         }
+      });
       globals.set("wait_chat", new OneArgFunction() {
          @Override public LuaValue call(LuaValue text) { builder.add(new Step(Type.WAIT_CHAT, 0, nonempty(text))); return NIL; }
       });
@@ -1267,7 +1308,7 @@ public final class LuaStory {
          () -> List.of(npcLocation(position))));
    }
 
-   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, WAIT_AREA, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_SET_DOOR, NPC_SET_TRAPDOOR, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
+   private enum Type { SPEAKER, SPEECH, WARNING, HINT, ANCHOR, WAIT_F8, WAIT_TICKS, PARALLEL_START, PARALLEL_JOIN, WAIT_CHAT, WAIT_FLAG, WAIT_ITEM, THINK, BLACKOUT, FLASH, CAMERA_SHOT, CAMERA_FLY_NPC, STORY_ENGINE, WAIT_POS, WAIT_AREA, TELEPORT_PLAYER, NPC_SPAWN, NPC_MOVE, NPC_USE_BLOCK, NPC_SET_LEVER, NPC_SET_DOOR, NPC_SET_TRAPDOOR, NPC_TRY_USE_BLOCK, NPC_APPROACH_USE_BLOCK, NPC_INTERACT, NPC_REMOVE, NPC_ANIMATION, NPC_LOOK, VAR_SET, VAR_IF, GOTO_ANCHOR, SCENE_RESET, NPC_STATE_MIGRATE, CHOICE, CHOICE_IF, PLAY_SOUND, GIVE_ITEM, PARTICLE, PARTICLE_HERE }
    private record NpcSpec(String type, String name, String model, float width, float height) { }
    private record PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY, double speed) {
       private PositionSpec(String dimension, double x, double y, double z, double radius, boolean ignoreY) {
@@ -1534,6 +1575,39 @@ public final class LuaStory {
       private LuaStory build() {
          if (id == 0 || !parts.containsKey("main") || parts.get("main").isEmpty()) {
             throw new IllegalArgumentException("Lua story needs story(id) and a nonempty main part: " + label);
+         }
+         Set<String> startedBranches = new HashSet<>();
+         Set<String> joinedBranches = new HashSet<>();
+         parts.forEach((partName, actions) -> {
+            if (!partName.equals("main") && actions.stream().anyMatch(step ->
+               step.type == Type.PARALLEL_START || step.type == Type.PARALLEL_JOIN)) {
+               throw new IllegalArgumentException("parallel_start and parallel_join belong in main: " + partName);
+            }
+         });
+         for (Step step : parts.get("main")) {
+            if (step.type == Type.PARALLEL_START) {
+               List<Step> branch = parts.get(step.text);
+               if (step.text.equals("main") || step.text.equals("setup") || branch == null || branch.isEmpty()
+                  || branch.stream().anyMatch(action -> action.type != Type.WAIT_TICKS)) {
+                  throw new IllegalArgumentException("Parallel branch must contain only wait_ticks: " + step.text);
+               }
+               if (!startedBranches.add(step.text)) {
+                  throw new IllegalArgumentException("Parallel branch started twice: " + step.text);
+               }
+            } else if (step.type == Type.PARALLEL_JOIN) {
+               for (String key : step.arguments) {
+                  if (!startedBranches.contains(key) || !joinedBranches.add(key)) {
+                     throw new IllegalArgumentException("Parallel branch is missing, repeated or already joined: " + key);
+                  }
+               }
+            }
+         }
+         if (!startedBranches.equals(joinedBranches)) {
+            throw new IllegalArgumentException("Every started parallel branch needs parallel_join: " + label);
+         }
+         if (!startedBranches.isEmpty() && parts.get("main").stream().anyMatch(step ->
+            step.type == Type.GOTO_ANCHOR || step.type == Type.VAR_IF || step.type == Type.ANCHOR)) {
+            throw new IllegalArgumentException("Anchors and var_if cannot yet be combined with parallel branches: " + label);
          }
          Set<Integer> declaredSpeakers = new HashSet<>();
          parts.values().forEach(actions -> actions.stream()

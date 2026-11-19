@@ -37,6 +37,24 @@ wait_f8()
 
 `choice` показывает кнопки; Escape закрывает окно, после чего можно выбрать номер через чат. `choice_if` принимает таблицы вариантов с `text`, `when`, `equals`, `scope` и скрывает неподходящие ответы. `anchor("name")` обозначает точку перехода, `goto_anchor("final")` завершает сценарий.
 
+## Параллельные ожидания
+
+```lua
+story(900063)
+part("main")
+parallel_start("short_wait")
+parallel_start("long_wait")
+parallel_join("short_wait", "long_wait")
+
+part("short_wait")
+wait_ticks(40)
+
+part("long_wait")
+wait_ticks(100)
+```
+
+Оба таймера идут одновременно; `parallel_join` продолжает основной сценарий после завершения обоих. Ветка запускается один раз, содержит только `wait_ticks` и должна быть перечислена в `parallel_join`. Остаток времени каждой ветки сохраняется при выходе из мира. Пока в сценарии с параллельными ветками нельзя использовать якоря, `goto_anchor`, `var_if`, `/script goto` и `/script jump`. Полный пример — `900063.lua`.
+
 ## NPC с glTF-моделью
 
 Положи `reg.gltf` (или `.glb`) в `ST/assets/models/` и связанные текстуры туда, где их ожидает модель.

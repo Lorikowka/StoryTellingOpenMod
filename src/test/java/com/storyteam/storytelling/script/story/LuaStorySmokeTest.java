@@ -35,6 +35,11 @@ public final class LuaStorySmokeTest {
       checkChatResumeState();
       checkCameraResumeState();
       checkJumpCancelsAction();
+      checkParallelWaitSave();
+      LuaStory parallelExample = LuaStory.parse(Files.readString(Path.of(args[13]), StandardCharsets.UTF_8), "900063.lua");
+      if (parallelExample.id() != 900063 || !parallelExample.hasPart("short_wait") || !parallelExample.hasPart("long_wait")) {
+         throw new AssertionError("Parallel wait example did not load");
+      }
       checkSceneScope();
       checkWaitArea();
       if (!java.util.Arrays.equals(ScriptCategory.of(-100, -999).availableScripts(id -> id == -100), new int[] {-100})
@@ -397,6 +402,70 @@ public final class LuaStorySmokeTest {
          }
       }
       System.out.println("Lua stories parsed and registered: 900001, 900032, 900036, 900037, 900038, 900041, 900042, 900043, 900050, 900055, 900056, 900057 and 900058");
+   }
+
+   private static void checkParallelWaitSave() throws Exception {
+      ScriptEnvironment environment = new ScriptEnvironment(null);
+      environment.luaStories.put(900063, LuaStory.parse("""
+         story(900063)
+         part("main")
+         parallel_start("short")
+         parallel_start("long")
+         parallel_join("short", "long")
+         part("short")
+         wait_ticks(1)
+         wait_ticks(10)
+         part("long")
+         wait_ticks(20)
+         """, "parallel-waits.lua"));
+      if (!environment.luaStories.get(900063).hasPart("long")) {
+         throw new AssertionError("Parallel wait branch was not parsed");
+      }
+      try {
+         LuaStory.parse("story(900064)\npart('main')\nparallel_start('missing')\nparallel_join('missing')", "bad-parallel.lua");
+         throw new AssertionError("Missing parallel branch was accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Parallel branch")) throw expected;
+      }
+      LuaScriptInstance original = new LuaScriptInstance(environment, 900063);
+      original.startParallelBranch("short");
+      original.startParallelBranch("long");
+      // The smoke runner has no Forge client/server bootstrap, so advance the checkpointed
+      // actions directly and set the first branch's action index as a completed step would.
+      DelayAction<?> shortOriginalWait = (DelayAction<?>) original.getParallelPerformer("short").getActions().get(1);
+      DelayAction<?> longOriginalWait = (DelayAction<?>) original.getParallelPerformer("long").getActions().get(0);
+      shortOriginalWait.tick();
+      longOriginalWait.tick();
+      longOriginalWait.tick();
+      longOriginalWait.tick();
+      var indexField = Performer.class.getDeclaredField("actionIndex");
+      indexField.setAccessible(true);
+      indexField.setInt(original.getParallelPerformer("short"), 1);
+      CompoundTag saved = original.serializeNBT();
+      LuaScriptInstance restored = new LuaScriptInstance(environment, 900063);
+      restored.deserializeNBT(saved);
+      ScriptPerformer shortBranch = restored.getParallelPerformer("short");
+      ScriptPerformer longBranch = restored.getParallelPerformer("long");
+      if (shortBranch == null || longBranch == null || shortBranch.getActionIndex() != 1
+         || longBranch.getActionIndex() != 0 || restored.isParallelBranchDone("short")
+         || restored.isParallelBranchDone("long")) {
+         throw new AssertionError("Parallel waits lost their independent action indexes after save");
+      }
+      DelayAction<?> shortWait = (DelayAction<?>) shortBranch.getActions().get(1);
+      DelayAction<?> longWait = (DelayAction<?>) longBranch.getActions().get(0);
+      if (shortWait.saveActionState().getInt("remaining") != 9
+         || longWait.saveActionState().getInt("remaining") != 17) {
+         throw new AssertionError("Parallel waits lost remaining ticks after save");
+      }
+      indexField.setInt(longBranch, longBranch.getActionsAmount());
+      if (!restored.isParallelBranchDone("long") || restored.isParallelBranchDone("short")) {
+         throw new AssertionError("Parallel branch completion affected another branch");
+      }
+      LuaScriptInstance restoredAgain = new LuaScriptInstance(environment, 900063);
+      restoredAgain.deserializeNBT(restored.serializeNBT());
+      if (!restoredAgain.isParallelBranchDone("long") || restoredAgain.getParallelPerformer("short") == null) {
+         throw new AssertionError("Completed parallel branch was restarted after save");
+      }
    }
 
    private static void checkWaitArea() {

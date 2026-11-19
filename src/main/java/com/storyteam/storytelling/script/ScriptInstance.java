@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class ScriptInstance implements IAutoNBTSerializable {
    @NBTSerializable
    final EntityStatesRepository repository = new EntityStatesRepository(this, EntityControlPriority.HIGHEST);
    private final Map<String, StoryTicker> POST_TICKERS = new HashMap<>();
-   private final Map<String, ScriptPerformer> PARALLEL_PERFORMERS = new HashMap<>();
+   private final Map<String, ScriptPerformer> PARALLEL_PERFORMERS = new LinkedHashMap<>();
    private final List<String> STOPPED_PARALLEL_PERFORMERS = new ArrayList<>();
    private static final String MAIN_PERFORMER_RESERVED_NAME = "main";
    private final HashMap<String, Integer> DIALOG_ANSWER = new HashMap<>();

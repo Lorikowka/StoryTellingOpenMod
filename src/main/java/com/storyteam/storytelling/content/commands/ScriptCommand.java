@@ -590,6 +590,10 @@ public class ScriptCommand {
                               return 1;
                            } else {
                               ScriptPerformer mainPerformer = script.getMainPerformer();
+                              if (script instanceof LuaScriptInstance lua && lua.hasStartedParallelBranches()) {
+                                 ((CommandSourceStack)cs.getSource()).sendFailure(Component.literal("Переход по сценарию с параллельными ветками пока недоступен."));
+                                 return 0;
+                              }
                               if (mainPerformer == null) {
                                  throw ERROR_SCRIPT_DOES_NOT_HAVE_MAIN_PERFORMER.create(script.getId());
                               } else {
@@ -600,6 +604,10 @@ public class ScriptCommand {
                         })).then(Commands.argument("index", IntegerArgumentType.integer()).executes(cs -> {
                            ScriptInstance script = (ScriptInstance)env.scriptInstances.get((Integer)cs.getArgument("script", Integer.class));
                            ScriptPerformer mainPerformer = script.getMainPerformer();
+                           if (script instanceof LuaScriptInstance lua && lua.hasStartedParallelBranches()) {
+                              ((CommandSourceStack)cs.getSource()).sendFailure(Component.literal("Переход по сценарию с параллельными ветками пока недоступен."));
+                              return 0;
+                           }
                            if (mainPerformer == null) {
                               throw ERROR_SCRIPT_DOES_NOT_HAVE_MAIN_PERFORMER.create(script.getId());
                            } else {
@@ -620,6 +628,10 @@ public class ScriptCommand {
                                        return 1;
                                     } else {
                                        ScriptPerformer mainPerformer = script.getMainPerformer();
+                                       if (script instanceof LuaScriptInstance lua && lua.hasStartedParallelBranches()) {
+                                          ((CommandSourceStack)cs.getSource()).sendFailure(Component.literal("Переход по сценарию с параллельными ветками пока недоступен."));
+                                          return 0;
+                                       }
                                        if (mainPerformer == null) {
                                           throw ERROR_SCRIPT_DOES_NOT_HAVE_MAIN_PERFORMER.create(script.getId());
                                        } else {

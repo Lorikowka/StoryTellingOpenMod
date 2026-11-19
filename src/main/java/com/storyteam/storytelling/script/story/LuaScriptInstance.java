@@ -10,9 +10,13 @@ import com.storyteam.storytelling.script.performer.action.RemoveEntityAction;
 import com.storyteam.storytelling.script.performer.builder.ScriptPerformerBuilder;
 import com.storyteam.storytelling.util.world.Location;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import org.zeith.hammerlib.api.io.NBTSerializable;
 
 /** One shared Java wrapper for all externally registered Lua stories. */
@@ -24,6 +28,7 @@ public final class LuaScriptInstance extends ScriptInstance {
    public final ScriptPerformer mainFlow;
    @NBTSerializable
    public final ScriptFlagStorage sceneVariables = new ScriptFlagStorage();
+   private final Set<String> startedParallelBranches = new LinkedHashSet<>();
 
    public LuaScriptInstance(ScriptEnvironment env, int id) {
       super(env, id);
@@ -44,12 +49,75 @@ public final class LuaScriptInstance extends ScriptInstance {
    @Override public CompoundTag serializeNBT() {
       CompoundTag tag = super.serializeNBT();
       tag.putString("luaRunToken", runToken);
+      ListTag branches = new ListTag();
+      for (String key : startedParallelBranches) {
+         CompoundTag branch = new CompoundTag();
+         branch.putString("key", key);
+         ScriptPerformer performer = getParallelPerformer(key);
+         branch.putString("status", performer == null ? "done" : "running");
+         if (performer != null) branch.put("performer", performer.serializeNBT());
+         branches.add(branch);
+      }
+      tag.put("luaParallelBranches", branches);
       return tag;
    }
 
    @Override public void deserializeNBT(CompoundTag tag) {
       runToken = readRunToken(tag, runToken);
       super.deserializeNBT(tag);
+      if (!tag.contains("luaParallelBranches", Tag.TAG_LIST)) return;
+      ListTag branches = tag.getList("luaParallelBranches", Tag.TAG_COMPOUND);
+      for (int i = 0; i < branches.size(); i++) {
+         CompoundTag branch = branches.getCompound(i);
+         String key = branch.getString("key");
+         if (!startedParallelBranches.add(key)) {
+            throw new IllegalStateException("Duplicate Lua parallel branch in save: " + key);
+         }
+         String status = branch.getString("status");
+         if (status.equals("done")) continue;
+         if (!status.equals("running") || !branch.contains("performer", Tag.TAG_COMPOUND)) {
+            throw new IllegalStateException("Invalid saved Lua parallel branch: " + key);
+         }
+         ScriptPerformer performer = createParallelBranch(key);
+         performer.deserializeNBT(branch.getCompound("performer"));
+      }
+   }
+
+   /** Starts a checkpointed wait-only part for the Lua parallel_start action. */
+   void startParallelBranch(String key) {
+      if (!startedParallelBranches.add(key)) {
+         throw new IllegalStateException("Lua parallel branch already started: " + key);
+      }
+      try {
+         createParallelBranch(key);
+      } catch (RuntimeException error) {
+         startedParallelBranches.remove(key);
+         throw error;
+      }
+   }
+
+   boolean isParallelBranchDone(String key) {
+      if (!startedParallelBranches.contains(key)) {
+         throw new IllegalArgumentException("Lua parallel branch was not started: " + key);
+      }
+      ScriptPerformer performer = getParallelPerformer(key);
+      return performer == null || performer.isCompleted();
+   }
+
+   public boolean hasStartedParallelBranches() {
+      return !startedParallelBranches.isEmpty();
+   }
+
+   private ScriptPerformer createParallelBranch(String key) {
+      LuaStory story = env.luaStories.get(getId());
+      if (key.equals("main") || key.equals("setup") || !story.isWaitOnlyPart(key)) {
+         throw new IllegalArgumentException("Lua parallel branch must be a wait_ticks-only part: " + key);
+      }
+      ScriptPerformerBuilder builder = new ScriptPerformerBuilder(this);
+      story.appendTo(builder, key);
+      ScriptPerformer performer = builder.build();
+      addParallelPerformer(key, performer);
+      return performer;
    }
 
    static String readRunToken(CompoundTag tag, String fallback) {
