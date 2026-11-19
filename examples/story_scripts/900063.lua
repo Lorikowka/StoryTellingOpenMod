@@ -11,7 +11,7 @@ speech(1, "Оба таймера завершились.")
 wait_f8()
 
 part("short_wait")
-wait_ticks(40)
+wait_ticks(200)
 
 part("long_wait")
-wait_ticks(100)
+wait_ticks(600)

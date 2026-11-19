@@ -47,10 +47,10 @@ parallel_start("long_wait")
 parallel_join("short_wait", "long_wait")
 
 part("short_wait")
-wait_ticks(40)
+wait_ticks(200)
 
 part("long_wait")
-wait_ticks(100)
+wait_ticks(600)
 ```
 
 Оба таймера идут одновременно; `parallel_join` продолжает основной сценарий после завершения обоих. Ветка запускается один раз, содержит только `wait_ticks` и должна быть перечислена в `parallel_join`. Остаток времени каждой ветки сохраняется при выходе из мира. Пока в сценарии с параллельными ветками нельзя использовать якоря, `goto_anchor`, `var_if`, `/script goto` и `/script jump`. Полный пример — `900063.lua`.
