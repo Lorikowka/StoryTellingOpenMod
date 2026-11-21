@@ -36,9 +36,14 @@ public final class LuaStorySmokeTest {
       checkCameraResumeState();
       checkJumpCancelsAction();
       checkParallelWaitSave();
+      checkParallelFlagSave();
       LuaStory parallelExample = LuaStory.parse(Files.readString(Path.of(args[13]), StandardCharsets.UTF_8), "900063.lua");
       if (parallelExample.id() != 900063 || !parallelExample.hasPart("short_wait") || !parallelExample.hasPart("long_wait")) {
          throw new AssertionError("Parallel wait example did not load");
+      }
+      LuaStory flagExample = LuaStory.parse(Files.readString(Path.of(args[14]), StandardCharsets.UTF_8), "900064.lua");
+      if (flagExample.id() != 900064 || !flagExample.hasPart("gate")) {
+         throw new AssertionError("Parallel flag example did not load");
       }
       checkSceneScope();
       checkWaitArea();
@@ -465,6 +470,36 @@ public final class LuaStorySmokeTest {
       restoredAgain.deserializeNBT(restored.serializeNBT());
       if (!restoredAgain.isParallelBranchDone("long") || restoredAgain.getParallelPerformer("short") == null) {
          throw new AssertionError("Completed parallel branch was restarted after save");
+      }
+   }
+
+   private static void checkParallelFlagSave() {
+      ScriptEnvironment environment = new ScriptEnvironment(null);
+      environment.luaStories.put(900064, LuaStory.parse("""
+         story(900064)
+         part("main")
+         parallel_start("gate")
+         parallel_join("gate")
+         part("gate")
+         wait_flag("lua.var.ready")
+         """, "parallel-flag.lua"));
+      LuaScriptInstance original = new LuaScriptInstance(environment, 900064);
+      original.startParallelBranch("gate");
+      LuaScriptInstance restored = new LuaScriptInstance(environment, 900064);
+      restored.deserializeNBT(original.serializeNBT());
+      ScriptPerformer branch = restored.getParallelPerformer("gate");
+      if (branch == null || branch.getActions().get(0).isDone()) {
+         throw new AssertionError("Parallel flag branch did not resume waiting");
+      }
+      restored.getFlags().set("lua.var.ready", "true");
+      if (!branch.getActions().get(0).isDone()) {
+         throw new AssertionError("Parallel flag branch did not see shared script state");
+      }
+      try {
+         LuaStory.parse("story(900065)\npart('main')\nparallel_start('bad')\nparallel_join('bad')\npart('bad')\nwait_chat('ready')", "parallel-chat.lua");
+         throw new AssertionError("Event consuming parallel branch was accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("wait_flag")) throw expected;
       }
    }
 

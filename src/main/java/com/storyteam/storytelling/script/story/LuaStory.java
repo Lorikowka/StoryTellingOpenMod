@@ -118,10 +118,11 @@ public final class LuaStory {
       return parts.containsKey(name);
    }
 
-   /** The first parallel milestone permits only actions with independent, checkpointed timers. */
-   boolean isWaitOnlyPart(String name) {
+   /** Parallel branches may wait on time or read a shared flag without consuming it. */
+   boolean isParallelSafePart(String name) {
       List<Step> steps = parts.get(name);
-      return steps != null && !steps.isEmpty() && steps.stream().allMatch(step -> step.type == Type.WAIT_TICKS);
+      return steps != null && !steps.isEmpty() && steps.stream().allMatch(step ->
+         step.type == Type.WAIT_TICKS || step.type == Type.WAIT_FLAG);
    }
 
    public Map<String, Character<?>> createNpcCharacters() {
@@ -1588,8 +1589,8 @@ public final class LuaStory {
             if (step.type == Type.PARALLEL_START) {
                List<Step> branch = parts.get(step.text);
                if (step.text.equals("main") || step.text.equals("setup") || branch == null || branch.isEmpty()
-                  || branch.stream().anyMatch(action -> action.type != Type.WAIT_TICKS)) {
-                  throw new IllegalArgumentException("Parallel branch must contain only wait_ticks: " + step.text);
+                  || branch.stream().anyMatch(action -> action.type != Type.WAIT_TICKS && action.type != Type.WAIT_FLAG)) {
+                  throw new IllegalArgumentException("Parallel branch must contain only wait_ticks or wait_flag: " + step.text);
                }
                if (!startedBranches.add(step.text)) {
                   throw new IllegalArgumentException("Parallel branch started twice: " + step.text);
