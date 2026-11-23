@@ -3,7 +3,6 @@ package com.storyteam.storytelling.proxy;
 import com.storyteam.storytelling.Storytelling;
 import com.storyteam.storytelling.api.itf.IStoryEntity;
 import com.storyteam.storytelling.client.model.ArmorModelHolder;
-import com.storyteam.storytelling.logging.LoggingController;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Generated;
@@ -45,8 +44,6 @@ public class STClientProxy extends STCommonProxy implements IClientProxy {
    @Override
    public void setup() {
       super.setup();
-      LoggingController.uuid = Minecraft.getInstance().getUser().getGameProfile().getId();
-      LoggingController.nickname = Minecraft.getInstance().getUser().getGameProfile().getName();
       FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
    }
 
