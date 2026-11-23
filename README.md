@@ -15,7 +15,7 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 .\gradlew.bat build
 ```
 
-При первом запуске Gradle и Forge загружают компоненты. Текущая версия исходников — `20.1.34-update-lua-alpha.93`. Для игры нужны TellingEngine, HammerLib, HammerAnimations и GFBS: glTF; версии обязательных зависимостей указаны в `src/main/resources/META-INF/mods.toml`. Портрет NPC из группы `Head` создаётся из glTF-модели и кэшируется. Публичная бета ещё не выпущена: необходимые проверки перечислены в [плане](docs/engine-expansion-plan.md).
+При первом запуске Gradle и Forge загружают компоненты. Текущая версия исходников — `20.1.34-update-lua-alpha.94`. Для игры нужны TellingEngine, HammerLib, HammerAnimations и GFBS: glTF; версии обязательных зависимостей указаны в `src/main/resources/META-INF/mods.toml`. Портрет NPC из группы `Head` создаётся из glTF-модели и кэшируется. Публичная бета ещё не выпущена: необходимые проверки перечислены в [плане](docs/engine-expansion-plan.md).
 
 Зависимости устанавливаются отдельными JAR-файлами: [HammerLib 20.1.50](https://www.curseforge.com/minecraft/mc-mods/hammer-lib/files/6337292), [HammerAnimations 20.1.57](https://www.curseforge.com/minecraft/mc-mods/hammer-animations) и [GFBS: glTF 1.5.1](https://www.curseforge.com/minecraft/mc-mods/gfbs-gltf/files/9511785). HammerLib и HammerAnimations запрещают встраивать их классы в JAR другого мода; сборка TellingEngine их не включает.
 
