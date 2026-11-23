@@ -328,14 +328,3 @@ tasks.named('processResources', ProcessResources).configure {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
-// Disabled integrations and stale resource data from the recovered mod.
-tasks.named('processResources', ProcessResources).configure {
-    exclude 'data/curios/**'
-    exclude 'data/storytelling/curios/**'
-    exclude 'data/storytelling/structio/attachments/immersiveengineering.js'
-    exclude 'data/storytelling/recipes/README.txt'
-    exclude 'data/storytelling/loot_tables/blocks/laptop.json'
-    exclude 'data/storytelling/loot_tables/blocks/goose_poop.json'
-    exclude 'data/storytelling/loot_tables/blocks/charger.json'
-    exclude 'data/storytelling/loot_tables/blocks/stella_cover_block.json'
-}
