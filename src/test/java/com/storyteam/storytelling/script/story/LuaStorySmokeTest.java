@@ -37,6 +37,7 @@ public final class LuaStorySmokeTest {
       checkJumpCancelsAction();
       checkParallelWaitSave();
       checkParallelFlagSave();
+      checkParallelEventWaits();
       LuaStory parallelExample = LuaStory.parse(Files.readString(Path.of(args[13]), StandardCharsets.UTF_8), "900063.lua");
       if (parallelExample.id() != 900063 || !parallelExample.hasPart("short_wait") || !parallelExample.hasPart("long_wait")) {
          throw new AssertionError("Parallel wait example did not load");
@@ -44,6 +45,10 @@ public final class LuaStorySmokeTest {
       LuaStory flagExample = LuaStory.parse(Files.readString(Path.of(args[14]), StandardCharsets.UTF_8), "900064.lua");
       if (flagExample.id() != 900064 || !flagExample.hasPart("gate")) {
          throw new AssertionError("Parallel flag example did not load");
+      }
+      LuaStory eventExample = LuaStory.parse(Files.readString(Path.of(args[15]), StandardCharsets.UTF_8), "900065.lua");
+      if (eventExample.id() != 900065 || !eventExample.hasPart("key_wait") || !eventExample.hasPart("chat_wait")) {
+         throw new AssertionError("Parallel event example did not load");
       }
       checkSceneScope();
       checkWaitArea();
@@ -496,10 +501,52 @@ public final class LuaStorySmokeTest {
          throw new AssertionError("Parallel flag branch did not see shared script state");
       }
       try {
-         LuaStory.parse("story(900065)\npart('main')\nparallel_start('bad')\nparallel_join('bad')\npart('bad')\nwait_chat('ready')", "parallel-chat.lua");
-         throw new AssertionError("Event consuming parallel branch was accepted");
+         LuaStory.parse("story(900065)\npart('main')\nparallel_start('bad')\nparallel_join('bad')\npart('bad')\nvar_set('x', 1)", "parallel-side-effect.lua");
+         throw new AssertionError("Side effect in parallel branch was accepted");
       } catch (IllegalArgumentException expected) {
-         if (!expected.getMessage().contains("wait_flag")) throw expected;
+         if (!expected.getMessage().contains("unsupported action")) throw expected;
+      }
+   }
+
+   private static void checkParallelEventWaits() {
+      ScriptEnvironment environment = new ScriptEnvironment(null);
+      environment.luaStories.put(900065, LuaStory.parse("""
+         story(900065)
+         part("main")
+         parallel_start("key_wait")
+         parallel_start("chat_wait")
+         parallel_join("key_wait", "chat_wait")
+         part("key_wait")
+         wait_f8()
+         part("chat_wait")
+         wait_chat("ready")
+         """, "parallel-events.lua"));
+      LuaScriptInstance original = new LuaScriptInstance(environment, 900065);
+      original.startParallelBranch("key_wait");
+      original.startParallelBranch("chat_wait");
+      LuaScriptInstance restored = new LuaScriptInstance(environment, 900065);
+      restored.deserializeNBT(original.serializeNBT());
+      var key = restored.getParallelPerformer("key_wait").getActions().get(0);
+      var chat = restored.getParallelPerformer("chat_wait").getActions().get(0);
+      key.handleEvent(EventType.F8_PRESS, null);
+      chat.handleEvent(EventType.CHAT_MESSAGE_SENT, "ready");
+      if (!((com.storyteam.storytelling.script.performer.action.F8PressAction) key).saveActionState().getBoolean("done")
+         || !((ChatMessageAction) chat).saveActionState().getBoolean("matched")) {
+         throw new AssertionError("Parallel event waits did not receive their distinct events");
+      }
+      LuaScriptInstance resumed = new LuaScriptInstance(environment, 900065);
+      resumed.deserializeNBT(restored.serializeNBT());
+      if (!((com.storyteam.storytelling.script.performer.action.F8PressAction) resumed.getParallelPerformer("key_wait").getActions().get(0))
+         .saveActionState().getBoolean("done")
+         || !((ChatMessageAction) resumed.getParallelPerformer("chat_wait").getActions().get(0))
+            .saveActionState().getBoolean("matched")) {
+         throw new AssertionError("Parallel event receipts were lost after save");
+      }
+      try {
+         LuaStory.parse("story(900066)\npart('main')\nparallel_start('a')\nparallel_start('b')\nparallel_join('a', 'b')\npart('a')\nwait_f8()\npart('b')\nwait_f8()", "ambiguous-f8.lua");
+         throw new AssertionError("Two F8 branches were accepted");
+      } catch (IllegalArgumentException expected) {
+         if (!expected.getMessage().contains("Ambiguous parallel event")) throw expected;
       }
    }
 

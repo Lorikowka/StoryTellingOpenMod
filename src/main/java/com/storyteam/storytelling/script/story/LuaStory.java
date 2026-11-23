@@ -118,11 +118,12 @@ public final class LuaStory {
       return parts.containsKey(name);
    }
 
-   /** Parallel branches may wait on time or read a shared flag without consuming it. */
+   /** Parallel branches contain only checkpointed waits and non-consuming flag reads. */
    boolean isParallelSafePart(String name) {
       List<Step> steps = parts.get(name);
       return steps != null && !steps.isEmpty() && steps.stream().allMatch(step ->
-         step.type == Type.WAIT_TICKS || step.type == Type.WAIT_FLAG);
+         step.type == Type.WAIT_TICKS || step.type == Type.WAIT_FLAG
+            || step.type == Type.WAIT_F8 || step.type == Type.WAIT_CHAT);
    }
 
    public Map<String, Character<?>> createNpcCharacters() {
@@ -1579,6 +1580,7 @@ public final class LuaStory {
          }
          Set<String> startedBranches = new HashSet<>();
          Set<String> joinedBranches = new HashSet<>();
+         Set<String> activeBranches = new HashSet<>();
          parts.forEach((partName, actions) -> {
             if (!partName.equals("main") && actions.stream().anyMatch(step ->
                step.type == Type.PARALLEL_START || step.type == Type.PARALLEL_JOIN)) {
@@ -1589,17 +1591,39 @@ public final class LuaStory {
             if (step.type == Type.PARALLEL_START) {
                List<Step> branch = parts.get(step.text);
                if (step.text.equals("main") || step.text.equals("setup") || branch == null || branch.isEmpty()
-                  || branch.stream().anyMatch(action -> action.type != Type.WAIT_TICKS && action.type != Type.WAIT_FLAG)) {
-                  throw new IllegalArgumentException("Parallel branch must contain only wait_ticks or wait_flag: " + step.text);
+                  || branch.stream().anyMatch(action -> action.type != Type.WAIT_TICKS && action.type != Type.WAIT_FLAG
+                     && action.type != Type.WAIT_F8 && action.type != Type.WAIT_CHAT)) {
+                  throw new IllegalArgumentException("Parallel branch contains an unsupported action: " + step.text);
                }
                if (!startedBranches.add(step.text)) {
                   throw new IllegalArgumentException("Parallel branch started twice: " + step.text);
                }
+               for (String other : activeBranches) {
+                  List<Step> otherSteps = parts.get(other);
+                  if (branch.stream().anyMatch(action -> action.type == Type.WAIT_F8)
+                     && otherSteps.stream().anyMatch(action -> action.type == Type.WAIT_F8)
+                     || branch.stream().anyMatch(action -> action.type == Type.WAIT_CHAT)
+                     && otherSteps.stream().anyMatch(action -> action.type == Type.WAIT_CHAT)) {
+                     throw new IllegalArgumentException("Ambiguous parallel event wait: " + other + " and " + step.text);
+                  }
+               }
+               activeBranches.add(step.text);
             } else if (step.type == Type.PARALLEL_JOIN) {
                for (String key : step.arguments) {
                   if (!startedBranches.contains(key) || !joinedBranches.add(key)) {
                      throw new IllegalArgumentException("Parallel branch is missing, repeated or already joined: " + key);
                   }
+                  activeBranches.remove(key);
+               }
+            } else if (!activeBranches.isEmpty()) {
+               boolean branchWaitsF8 = activeBranches.stream().anyMatch(key -> parts.get(key).stream()
+                  .anyMatch(action -> action.type == Type.WAIT_F8));
+               boolean branchWaitsChat = activeBranches.stream().anyMatch(key -> parts.get(key).stream()
+                  .anyMatch(action -> action.type == Type.WAIT_CHAT));
+               if (branchWaitsF8 && (step.type == Type.WAIT_F8 || step.type == Type.SPEECH
+                  || step.type == Type.CHOICE || step.type == Type.CHOICE_IF)
+                  || branchWaitsChat && step.type == Type.WAIT_CHAT) {
+                  throw new IllegalArgumentException("Main action conflicts with a parallel event wait: " + step.type);
                }
             }
          }

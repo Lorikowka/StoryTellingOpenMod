@@ -83,7 +83,7 @@ public final class LuaScriptInstance extends ScriptInstance {
       }
    }
 
-   /** Starts a parallel part containing checkpointed timers and non-consuming flag checks. */
+   /** Starts a parallel part containing checkpointed waits. */
    void startParallelBranch(String key) {
       if (!startedParallelBranches.add(key)) {
          throw new IllegalStateException("Lua parallel branch already started: " + key);
@@ -111,7 +111,7 @@ public final class LuaScriptInstance extends ScriptInstance {
    private ScriptPerformer createParallelBranch(String key) {
       LuaStory story = env.luaStories.get(getId());
       if (key.equals("main") || key.equals("setup") || !story.isParallelSafePart(key)) {
-         throw new IllegalArgumentException("Lua parallel branch must contain only wait_ticks or wait_flag: " + key);
+         throw new IllegalArgumentException("Lua parallel branch contains an unsupported action: " + key);
       }
       ScriptPerformerBuilder builder = new ScriptPerformerBuilder(this);
       story.appendTo(builder, key);

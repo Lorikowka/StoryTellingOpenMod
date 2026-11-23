@@ -1,0 +1,16 @@
+story(900065)
+part("main")
+speaker(1, "Система")
+speech(1, "После F8 запустятся два ожидания: клавиша и сообщение в чате.")
+wait_f8()
+parallel_start("key_wait")
+parallel_start("chat_wait")
+parallel_join("key_wait", "chat_wait")
+speech(1, "Оба сигнала получены.")
+wait_f8()
+
+part("key_wait")
+wait_f8()
+
+part("chat_wait")
+wait_chat("готово")
