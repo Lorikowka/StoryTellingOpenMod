@@ -4,8 +4,6 @@ import com.storyteam.storytelling.client.Animations;
 import com.storyteam.storytelling.compat.base.BaseCompatST;
 import com.storyteam.storytelling.content.items.ItemEntityOnHand;
 import com.storyteam.storytelling.init.ext.ExternalBlocks;
-import com.storyteam.storytelling.logging.LoggingController;
-import com.storyteam.storytelling.network.StoryServer;
 import com.storyteam.storytelling.proxy.STClientProxy;
 import com.storyteam.storytelling.proxy.STCommonProxy;
 import com.storyteam.storytelling.script.story.LuaStory;
@@ -22,14 +20,10 @@ import java.util.Set;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.GameShuttingDownEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.util.thread.EffectiveSide;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeith.hammeranims.api.HammerAnimationsApi;
@@ -64,7 +58,6 @@ public class Storytelling {
       bus.addListener(this::loadComplete);
       ItemEntityOnHand.setup();
       SystemOfSystems.construct(BUS, bus);
-      BUS.addListener(EventPriority.HIGHEST, true, Storytelling::onClose);
 
       for (BaseCompatST c : COMPATS.getActive()) {
          c.construct(bus, BUS);
@@ -79,11 +72,6 @@ public class Storytelling {
       ExternalBlocks.setup();
       ExternalBlocks.bind();
       LOG.info("Minecraft loaded in {} seconds.", new DecimalFormat("#.###").format((double)bootupTime / 1000.0));
-      StoryServer.getInstance().connect();
-      if (EffectiveSide.get().isClient()) {
-         new LoggingController();
-      }
-
       if (Boolean.parseBoolean(System.getProperty("runability", "false"))) {
          System.exit(0);
       }
@@ -101,8 +89,4 @@ public class Storytelling {
       }
    }
 
-   @SubscribeEvent
-   public static void onClose(GameShuttingDownEvent event) {
-      StoryServer.getInstance().disconnect();
-   }
 }

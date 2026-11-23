@@ -39,7 +39,6 @@ public class CloudIO {
    public static final Logger LOG = LoggerFactory.getLogger("Storytelling/CloudIO");
    private static final List<RepositoryWorker> WORKERS = new ArrayList<>();
    public static final String BRANCH = "st-" + Since.Season.CURRENT.getSt();
-   public static final String AUTHORIZATION = "d9f40b22-40f7-4d3a-8521-29cf44bc2c20";
    public static final ExecutorService REPOSITORY_EXECUTOR = Executors.newWorkStealingPool();
    private static long lastRefresh = 0L;
    public static final String USER_AGENT = "Storytelling Mod";

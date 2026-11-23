@@ -1,6 +1,6 @@
-# Storytelling — Forge MDK
+# TellingEngine — Forge MDK
 
-Основной проект мода Storytelling для Minecraft 1.20.1 и Forge 47.4.28.
+Сюжетный движок TellingEngine для Minecraft 1.20.1 и Forge 47.4.28. Технический mod ID текущей версии — `storytelling`: он сохранён для совместимости с существующими мирами до проверки миграции зарегистрированных блоков и сущностей.
 
 - `src/main/java/com/storyteam/storytelling` — Java-код мода.
 - `src/main/resources` — ресурсы, данные и метаданные мода.
@@ -15,11 +15,11 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-17'
 .\gradlew.bat build
 ```
 
-При первом запуске Gradle и Forge загружают компоненты. Текущая версия исходников — `20.1.34-update-lua-alpha.91`. Для игры нужны Storytelling, HammerLib, HammerAnimations и GFBS: glTF; версии обязательных зависимостей указаны в `src/main/resources/META-INF/mods.toml`. Портрет NPC из группы `Head` создаётся из glTF-модели и кэшируется. Рабочий mod ID пока `storytelling`; ребрендинг в TellingEngine и миграция сохранений запланированы перед публичной бетой.
+При первом запуске Gradle и Forge загружают компоненты. Текущая версия исходников — `20.1.34-update-lua-alpha.92`. Для игры нужны TellingEngine, HammerLib, HammerAnimations и GFBS: glTF; версии обязательных зависимостей указаны в `src/main/resources/META-INF/mods.toml`. Портрет NPC из группы `Head` создаётся из glTF-модели и кэшируется. Публичная бета ещё не выпущена: необходимые проверки перечислены в [плане](docs/engine-expansion-plan.md).
 
 Базовое состояние и проведённые изменения: [отчёт alpha.66](docs/progress-report-alpha66.md). Дальнейшие шаги: [актуальный план развития](docs/engine-expansion-plan.md). Формат новых пакетов: [Story Pack API 1](docs/story-pack-format.md). Повторное создание NPC: [шаблоны и экземпляры](docs/lua-npc-instances.md). Области переменных: [долговременное состояние](docs/lua-persistent-state.md).
 
-Lua-сценарии находятся в папке игры `ST/scripts`, а GLB-модели NPC — в `ST/assets/models`. Подробности: [docs/story-packs.md](docs/story-packs.md).
+При новой установке Lua-сценарии находятся в папке игры `TellingEngine/scripts`, а GLB-модели NPC — в `TellingEngine/assets/models`. Если уже существует папка `ST`, мод продолжает использовать `ST/scripts` и `ST/assets/models` без переноса или удаления файлов. Подробности: [docs/story-packs.md](docs/story-packs.md).
 
 В родительском каталоге находятся прежние материалы исследования и отдельный экспериментальный `storytelling_rewrite`; они не входят в сборку этого проекта.
 

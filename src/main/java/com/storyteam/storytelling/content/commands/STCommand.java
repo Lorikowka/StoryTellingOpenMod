@@ -6,7 +6,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.storyteam.storytelling.Storytelling;
 import com.storyteam.storytelling.api.itf.IStoryServer;
 import com.storyteam.storytelling.events.base.GatherSTSubcommandsEvent;
-import com.storyteam.storytelling.network.StoryServer;
 import com.storyteam.storytelling.script.ScriptInstance;
 import com.storyteam.storytelling.script.performer.ScriptPerformer;
 import com.storyteam.storytelling.script.story.ScriptEnvironment;
@@ -26,7 +25,6 @@ public class STCommand {
    public static void gatherSubcommands(CommandBuildContext ctx, Consumer<ArgumentBuilder<CommandSourceStack, ?>> register) {
       register.accept(createInvulfix());
       register.accept(createStatus());
-      register.accept(createReconnect());
       Storytelling.BUS.post(new GatherSTSubcommandsEvent(ctx, register));
    }
 
@@ -88,17 +86,4 @@ public class STCommand {
          );
    }
 
-   public static ArgumentBuilder<CommandSourceStack, ?> createReconnect() {
-      return Commands.literal("reconnect")
-         .executes(
-            cs -> {
-               sendSuccess(cs, Component.literal("§6§l[§e§l>§6§l] §rПопытка соединения с сервером!"), true);
-               StoryServer.getInstance().disconnect();
-               StoryServer.getInstance()
-                  .connect()
-                  .whenComplete((result, throwable) -> sendSuccess(cs, Component.literal("§6§l[§e§l>§6§l] §rСоединение с сервером установлено!"), true));
-               return 1;
-            }
-         );
-   }
 }

@@ -33,7 +33,7 @@ final class StoryPackCatalog {
       Path packs = scripts.resolve("packs");
       if (!Files.exists(packs)) return new Scan(List.copyOf(files), List.copyOf(issues));
       if (!Files.isDirectory(packs) || !packs.toRealPath().startsWith(scripts.toRealPath())) {
-         issues.add(new Issue("packs", "Pack directory escapes ST/scripts or is not a directory"));
+         issues.add(new Issue("packs", "Pack directory escapes " + scripts + " or is not a directory"));
          return new Scan(List.copyOf(files), List.copyOf(issues));
       }
       try (Stream<Path> entries = Files.list(packs)) {
@@ -74,7 +74,7 @@ final class StoryPackCatalog {
       String id = directory.getFileName().toString();
       if (!id.matches(PACK_ID)) throw new IllegalArgumentException("Invalid pack ID: " + id);
       if (!directory.toRealPath().getParent().equals(packs.toRealPath())) {
-         throw new IllegalArgumentException("Pack directory escapes ST/scripts: " + id);
+         throw new IllegalArgumentException("Pack directory escapes " + packs.getParent() + ": " + id);
       }
       Path manifest = directory.resolve("storypack.json");
       if (!Files.isRegularFile(manifest) || !manifest.toRealPath().getParent().equals(directory.toRealPath())) {
@@ -118,4 +118,3 @@ final class StoryPackCatalog {
    record Issue(String file, String message) { }
    record Scan(List<Path> files, List<Issue> issues) { }
 }
-

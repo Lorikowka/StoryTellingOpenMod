@@ -12,7 +12,9 @@ public final class StoryWorkspace {
    private StoryWorkspace() { }
 
    public static Path root() {
-      return FMLPaths.GAMEDIR.get().resolve("ST");
+      Path gameDirectory = FMLPaths.GAMEDIR.get();
+      Path legacy = gameDirectory.resolve("ST");
+      return Files.isDirectory(legacy) ? legacy : gameDirectory.resolve("TellingEngine");
    }
 
    public static Path scripts() {
@@ -38,7 +40,7 @@ public final class StoryWorkspace {
                try {
                   Files.copy(source, scripts().resolve(source.getFileName()));
                } catch (FileAlreadyExistsException ignored) {
-                  // The author's version in ST/scripts takes precedence.
+                  // The author's version in the active scripts directory takes precedence.
                }
             }
          }

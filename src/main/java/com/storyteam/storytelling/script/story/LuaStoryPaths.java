@@ -12,14 +12,13 @@ final class LuaStoryPaths {
       Path lexicalRoot = directory.toAbsolutePath().normalize();
       Path lexicalFile = file.toAbsolutePath().normalize();
       if (!lexicalRoot.equals(lexicalFile.getParent())) {
-         throw new IllegalArgumentException("Lua story must be directly inside ST/scripts: " + file);
+         throw new IllegalArgumentException("Lua story must be directly inside " + directory + ": " + file);
       }
       Path realRoot = lexicalRoot.toRealPath();
       Path realFile = lexicalFile.toRealPath();
       if (!realRoot.equals(realFile.getParent()) || !Files.isRegularFile(realFile)) {
-         throw new IllegalArgumentException("Lua story escapes ST/scripts: " + file);
+         throw new IllegalArgumentException("Lua story escapes " + directory + ": " + file);
       }
       return realFile;
    }
 }
-
